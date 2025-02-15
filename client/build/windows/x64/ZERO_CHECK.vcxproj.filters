@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\dwalb\repo\attenda-scan\client\build\windows\x64\CMakeFiles\b83cf0aabe9ae3d40ce7f053af19e8a4\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{4E316099-F4E2-3880-9099-E353EC74C378}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
