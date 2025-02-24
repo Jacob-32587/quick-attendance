@@ -1,0 +1,21 @@
+@base=http://0.0.0.0:8080/quick-scan-api
+
+###
+# @name=CreateAccount
+POST {{base}}/account HTTP/1.1
+Content-Type: application/json
+
+{
+    "username": "FooBar",
+    "password": "FooBarZaa"
+}
+
+###
+# @name=LoginAccount
+POST {{base}}/account/login HTTP/1.1
+Content-Type: application/json
+
+{
+    "username": "FooBar",
+    "password": "FooBarZaa"
+}
