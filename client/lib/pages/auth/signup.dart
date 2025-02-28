@@ -57,7 +57,7 @@ class _SignupState extends State<Signup> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: "Email",
+                    labelText: "Email *",
                     border: OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.email),
                   ),
@@ -78,7 +78,7 @@ class _SignupState extends State<Signup> {
                   controller: _firstNameController,
                   keyboardType: TextInputType.name,
                   decoration: InputDecoration(
-                    labelText: "First Name",
+                    labelText: "First Name *",
                     border: OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.person),
                   ),
@@ -94,7 +94,7 @@ class _SignupState extends State<Signup> {
                   controller: _lastNameController,
                   keyboardType: TextInputType.name,
                   decoration: InputDecoration(
-                    labelText: "First Name",
+                    labelText: "Last Name",
                     border: OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.person),
                   ),
@@ -108,7 +108,7 @@ class _SignupState extends State<Signup> {
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
-                    labelText: "Password",
+                    labelText: "Password *",
                     border: OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
@@ -139,7 +139,7 @@ class _SignupState extends State<Signup> {
                   controller: _confirmPasswordController,
                   obscureText: !_isConfirmPasswordVisible,
                   decoration: InputDecoration(
-                    labelText: "Confirm Password",
+                    labelText: "Confirm Password *",
                     border: OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
@@ -169,6 +169,7 @@ class _SignupState extends State<Signup> {
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 10, horizontal: 40),
                     textStyle: TextStyle(fontSize: 18),
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     backgroundColor: Theme.of(context).colorScheme.primary,
                   ),
                   child: Text("Sign Up"),
