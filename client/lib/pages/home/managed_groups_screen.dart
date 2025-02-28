@@ -10,7 +10,7 @@ class ManagedGroupsScreen extends StatefulWidget
   const ManagedGroupsScreen({super.key});
 
   @override
-  Widget buildFAB() {
+  Widget buildFAB(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
         // Todo add managed group

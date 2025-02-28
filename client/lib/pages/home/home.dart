@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> {
             _pages[controller.currentIndex.value] is HasFloatingActionButton
                 ? (_pages[controller.currentIndex.value]
                         as HasFloatingActionButton)
-                    .buildFAB()
+                    .buildFAB(context)
                 : null,
         bottomNavigationBar: Obx(
           () => BottomNavigationBar(
