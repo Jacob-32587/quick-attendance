@@ -1,5 +1,5 @@
-import { Context, Hono } from "@hono/hono";
-import { jwt } from "@hono/hono/jwt";
+import { Context, Hono } from "npm:hono";
+import { jwt } from "npm:hono/jwt";
 import HttpStatusCode from "./http_status_code.ts";
 import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
@@ -20,10 +20,10 @@ app.onError((err, ctx) => {
   // Allow explicit HTTPExceptions to propagate through, otherwise return a generic
   // internal server error
   if (err instanceof HTTPException) {
-    return err.getResponse();
+    return ctx.json({ message: err.message, cause: err.cause }, err.status);
   }
   console.timeLog("Uncaught error: ", err);
-  return ctx.text(
+  return ctx.json(
     "internal server error",
     HttpStatusCode.INTERNAL_SERVER_ERROR,
   );

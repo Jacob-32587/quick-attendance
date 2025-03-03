@@ -1,7 +1,11 @@
-export interface AccountPostReq {
-  username: string;
-  email: string;
-  first_name: string;
-  last_name: string | null;
-  password: string;
-}
+import { z } from "npm:zod";
+
+export const account_post_req_val = z.object({
+  username: z.string().max(32).min(2),
+  email: z.string().email(),
+  first_name: z.string().max(32),
+  last_name: z.string().max(32).nullable(),
+  password: z.string().max(32).min(8),
+});
+
+export type AccountPostReq = z.infer<typeof account_post_req_val>;
