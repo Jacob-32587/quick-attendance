@@ -5,9 +5,9 @@
   "imports": {
     "@babia/uuid-v7": "jsr:@babia/uuid-v7@^0.2.0",
     "@hono/hono": "jsr:@hono/hono@^4.7.2",
-    "@result/result": "jsr:@result/result@^1.1.1",
     "@std/assert": "jsr:@std/assert@1",
-    "@std/uuid": "jsr:@std/uuid@^1.0.4"
+    "@std/uuid": "jsr:@std/uuid@^1.0.4",
+    "effect": "npm:effect@^3.13.4"
   },
   "compilerOptions": {
     "jsx": "precompile",

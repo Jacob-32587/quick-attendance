@@ -2,6 +2,7 @@ import { Context, Hono } from "@hono/hono";
 import { jwt } from "@hono/hono/jwt";
 import HttpStatusCode from "./http_status_code.ts";
 import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
+import { HTTPException } from "@hono/hono/http-exception";
 
 const app = new Hono().basePath("/quick-scan-api");
 
@@ -14,6 +15,19 @@ app.use(
     alg: jwt_alg,
   }),
 );
+
+app.onError((err, ctx) => {
+  // Allow explicit HTTPExceptions to propagate through, otherwise return a generic
+  // internal server error
+  if (err instanceof HTTPException) {
+    return err.getResponse();
+  }
+  console.timeLog("Uncaught error: ", err);
+  return ctx.text(
+    "internal server error",
+    HttpStatusCode.INTERNAL_SERVER_ERROR,
+  );
+});
 
 app.get("/", (ctx: Context) => {
   return ctx.json({ utc_time: (new Date()).toUTCString() }, HttpStatusCode.OK);
