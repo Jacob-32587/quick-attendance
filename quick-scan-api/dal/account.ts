@@ -6,6 +6,7 @@ import { Result } from "@result/result";
 import HttpStatusCode from "../http_status_code.ts";
 import { AccountLoginPostReq } from "../models/account/account_login_post_req.ts";
 import { data_views_are_equal } from "../util/array_buffer.ts";
+import AccountGetModel from "../models/account/account_get_model.ts";
 
 function merge_password_and_salt(password: string, salt: Uint8Array) {
   // Put the utf-8 char code points into an array
@@ -28,7 +29,7 @@ function hash_password(password: string, salt: Uint8Array) {
 export async function create_account(account: AccountPostReq) {
   // Ensure the username is not already in use
   const maybe_account = await kv.get<[string, Uuid]>([
-    "account_by_user_name",
+    "account_by_username",
     account.username,
   ]);
 
@@ -49,9 +50,12 @@ export async function create_account(account: AccountPostReq) {
   const entity: AccountEntity = {
     username: account.username,
     password: password_hash,
+    first_name: account.first_name,
+    last_name: account.last_name,
     salt: salt,
     user_id: newUuid(),
-    created_utc: (new Date()).toUTCString(),
+    fk_owned_group_ids: null,
+    fk_member_group_ids: null,
   };
 
   const pk = ["account", entity.user_id];
@@ -63,8 +67,6 @@ export async function create_account(account: AccountPostReq) {
       pk,
       entity,
     )
-    .commit();
-  const user_res = await kv.atomic()
     .set(
       ["account_by_user_name", entity.username],
       pk,
@@ -72,17 +74,8 @@ export async function create_account(account: AccountPostReq) {
     .commit();
 
   switch (res.ok) {
-    // deno-lint-ignore no-fallthrough
     case true:
-      switch (user_res.ok) {
-        case true:
-          return Result.ok(entity.user_id);
-        case false:
-          return Result.err({
-            reason: "Unable to insert user secondary key",
-            status_code: HttpStatusCode.INTERNAL_SERVER_ERROR,
-          } as DbErr);
-      }
+      return Result.ok(entity.user_id);
     case false:
       return Result.err(
         {
@@ -90,6 +83,29 @@ export async function create_account(account: AccountPostReq) {
           status_code: HttpStatusCode.INTERNAL_SERVER_ERROR,
         } as DbErr,
       );
+  }
+}
+
+export async function get_account(user_id: Uuid) {
+  const entity = await kv.get<AccountEntity>(["account", user_id]);
+  switch (entity.value) {
+    case null:
+      return Result.err(
+        {
+          reason: "User with the given id not found",
+          status_code: HttpStatusCode.NOT_FOUND,
+        } as DbErr,
+      );
+    default:
+      return Result.ok({
+        username: entity.value.username,
+        first_name: entity.value.first_name,
+        last_name: entity.value.last_name,
+        user_id: entity.value.user_id,
+        fk_owned_group_ids: entity.value.fk_owned_group_ids,
+        fk_member_group_ids: entity.value.fk_member_group_ids,
+        versionstamp: entity.value.versionstamp,
+      } as AccountGetModel);
   }
 }
 

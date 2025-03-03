@@ -8,15 +8,28 @@ import {
   db_res_to_json_res_async,
 } from "../util/res_helper.ts";
 import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
+import { Uuid } from "../uuid.ts";
 
-const account = new Hono().basePath("/account");
+export const jwt_secret: string =
+  "ca882e5c-dfd5-45fc-bc04-0a2fb7326305--86d452ef-778d-4443-812d-b19398b4e67f";
+export const jwt_alg = "HS512";
 
-account.post("/", async (ctx: Context) => {
+const account_base_path = "/account";
+const auth_account_base_path = `/auth${account_base_path}`;
+
+const account = new Hono();
+
+account.post(account_base_path, async (ctx: Context) => {
   const req = await ctx.req.json<AccountPostReq>();
   return db_res_to_json_res_async(ctx, dal.create_account(req));
 });
 
-account.post("/login", async (ctx: Context) => {
+account.get(auth_account_base_path, (ctx: Context) => {
+  const jwt = ctx.get("jwtPayload") as { user_id: Uuid };
+  return db_res_to_json_res_async(ctx, dal.get_account(jwt.user_id));
+});
+
+account.post(`${account_base_path}/login`, async (ctx: Context) => {
   // Parse request and send to dal
   const req = await ctx.req.json<AccountLoginPostReq>();
   const dal_res = await dal.login_account(req);
@@ -35,9 +48,7 @@ account.post("/login", async (ctx: Context) => {
     user_id: user.user_id,
     exp: Math.round(((Date.now()) / 1000) + 86400 * 7),
   };
-  const secret =
-    "ca882e5c-dfd5-45fc-bc04-0a2fb7326305--86d452ef-778d-4443-812d-b19398b4e67f";
-  const token = await sign(payload, secret, "HS512");
+  const token = await sign(payload, jwt_secret, jwt_alg);
 
   return ctx.json({ jwt: token } as AccountLoginPostRes);
 });
