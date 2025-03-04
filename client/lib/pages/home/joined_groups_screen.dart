@@ -5,16 +5,18 @@ import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/pages/home/components/group_header.dart';
 import 'package:quick_attendance/pages/home/components/group_list.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
+import 'package:quick_attendance/pages/home/components/join_group_popup.dart';
 
 class JoinedGroupsScreen extends StatefulWidget
     implements HasFloatingActionButton {
   const JoinedGroupsScreen({super.key});
 
   @override
-  Widget buildFAB() {
+  Widget buildFAB(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
         // Todo add joined group
+        showJoinGroupPopup(context);
       },
       child: const Icon(Icons.add),
     );
@@ -33,6 +35,7 @@ class _JoinedGroupsScreenState extends State<JoinedGroupsScreen> {
         padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
             // Greeting to the user
             Text(

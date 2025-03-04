@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 
 class Login extends StatefulWidget {
@@ -92,18 +93,11 @@ class _LoginState extends State<Login> {
                   },
                 ),
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _login,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 40),
-                    textStyle: TextStyle(fontSize: 18),
-                  ),
-                  child: Text("Login"),
-                ),
+                PrimaryButton(text: "Login", onPressed: _login),
                 SizedBox(height: 10),
                 TextButton(
                   onPressed: () {
-                    Get.toNamed("/signup");
+                    Get.offNamed("/signup");
                   },
                   child: Text("Don't have an account?"),
                 ),
@@ -113,5 +107,12 @@ class _LoginState extends State<Login> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
