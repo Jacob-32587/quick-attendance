@@ -1,6 +1,7 @@
 import { Uuid } from "../uuid.ts";
 
 export interface GroupEntity {
+  group_id: Uuid;
   owner_id: Uuid;
   manager_ids: Set<Uuid> | null;
   member_ids: Set<Uuid> | null;

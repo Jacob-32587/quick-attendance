@@ -1,5 +1,5 @@
 import { Hono } from "npm:hono";
-import { Uuid } from "../uuid.ts";
+import { newUuid, Uuid } from "../uuid.ts";
 import { sign } from "npm:hono/jwt";
 import { account_post_req_val } from "../models/account/account_post_req.ts";
 import {
@@ -20,6 +20,6 @@ group.post(
   zValidator("json", group_post_req),
   async (ctx) => {
     const req = ctx.req.valid("json");
-    await dal.create_group(req);
+    await dal.create_group(newUuid(), req);
   },
 );
