@@ -29,7 +29,7 @@ class ProfileController extends GetxController {
     // TODO: Connect to backend
   }
 
-  void joinGroup(String groupId) {
+  void joinGroup(String groupCode) {
     // TODO: Connect to backend
   }
 }
