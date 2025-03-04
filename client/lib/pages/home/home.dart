@@ -1,32 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/instance_manager.dart';
 import 'package:get/state_manager.dart';
-import 'package:quick_attendance/controllers/auth_controller.dart';
+import 'package:quick_attendance/controllers/home_controller.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 import 'package:quick_attendance/pages/home/history_screen.dart';
 import 'package:quick_attendance/pages/home/home_screen.dart';
 import 'package:quick_attendance/pages/home/joined_groups_screen.dart';
 import 'package:quick_attendance/pages/home/managed_groups_screen.dart';
 import 'package:quick_attendance/pages/home/profile_screen.dart';
-
-class HomeController extends GetxController {
-  // Start the user on the home page
-  var currentIndex = 2.obs;
-  PageController pageController = PageController(initialPage: 2);
-
-  void changePage(int index) {
-    currentIndex.value = index;
-    pageController.animateToPage(
-      index,
-      duration: Duration(milliseconds: 300),
-      curve: Curves.ease,
-    );
-  }
-
-  void onPageChanged(int index) {
-    currentIndex.value = index;
-  }
-}
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -38,8 +19,20 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _count = 0;
-  final HomeController controller = Get.put(HomeController());
+  late final HomeController controller = Get.find();
+
+  late final PageController pageController = PageController(
+    initialPage: controller.currentIndex.value,
+  );
+
+  void changePage(int index) {
+    controller.currentIndex.value = index;
+    pageController.jumpToPage(index);
+  }
+
+  void onPageChanged(int index) {
+    controller.currentIndex.value = index;
+  }
 
   final List<Widget> _pages = [
     HistoryScreen(),
@@ -49,20 +42,13 @@ class _HomePageState extends State<HomePage> {
     ProfileScreen(),
   ];
 
-  void _incrementCounter() {
-    setState(() {
-      _count++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final AuthController authController = Get.find();
     return Obx(
       () => Scaffold(
         body: PageView(
-          controller: controller.pageController,
-          onPageChanged: controller.onPageChanged,
+          controller: pageController,
+          onPageChanged: onPageChanged,
           children: _pages,
         ),
         floatingActionButton:
@@ -71,37 +57,35 @@ class _HomePageState extends State<HomePage> {
                         as HasFloatingActionButton)
                     .buildFAB(context)
                 : null,
-        bottomNavigationBar: Obx(
-          () => BottomNavigationBar(
-            currentIndex: controller.currentIndex.value,
-            onTap: controller.changePage,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            selectedItemColor: Theme.of(context).colorScheme.primary,
-            unselectedItemColor: Theme.of(context).colorScheme.onSurface,
-            enableFeedback: true,
-            items: [
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.history),
-                label: "History",
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.group),
-                label: "Manage",
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.home),
-                label: "Home",
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.calendar_today_rounded),
-                label: "Attend",
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.person),
-                label: "Profile",
-              ),
-            ],
-          ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: controller.currentIndex.value,
+          onTap: changePage,
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          unselectedItemColor: Theme.of(context).colorScheme.onSurface,
+          enableFeedback: true,
+          items: [
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.history),
+              label: "History",
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.calendar_today_rounded),
+              label: "Attend",
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.home),
+              label: "Home",
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.group),
+              label: "Manage",
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.person),
+              label: "Profile",
+            ),
+          ],
         ),
       ),
     );

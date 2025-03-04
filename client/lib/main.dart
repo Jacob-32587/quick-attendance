@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
+import 'package:quick_attendance/controllers/home_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/pages/auth/auth_gate.dart';
 import 'package:quick_attendance/pages/auth/login.dart';
@@ -11,6 +12,7 @@ import 'package:quick_attendance/pages/home/home.dart';
 void main() {
   Get.put(AuthController());
   Get.put(ProfileController());
+  Get.put(HomeController());
   runApp(const MyApp());
 }
 
