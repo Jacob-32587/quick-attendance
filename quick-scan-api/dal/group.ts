@@ -14,15 +14,7 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
     owner_id: owner_id,
     group_description: req.group_description,
     group_name: req.group_name,
-    unique_id_settings: Match.value(req.unique_id_settings).pipe(
-      Match.when(Match.null, (_) => null),
-      Match.orElse((s) => ({
-        prompt_message: s.prompt_message,
-        min_length: s.min_length,
-        max_length: s.max_length,
-        required_for_managers: s.required_for_managers,
-      } as UniqueIdSettings)),
-    ),
+    unique_id_settings: req.unique_id_settings,
   } as GroupEntity;
 
   const account_entity = DbErr.err_on_empty_val(
