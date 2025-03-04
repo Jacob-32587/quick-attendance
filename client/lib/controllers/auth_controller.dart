@@ -18,11 +18,11 @@ class AuthController extends GetxController {
 
   bool signUp(
     String email,
+    String username,
     String firstName,
     String lastName,
     String password,
   ) {
-    // TODO: Set up registering a user with the backend.
     login();
     return true;
   }
