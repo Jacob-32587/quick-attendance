@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/controllers/profile_controller.dart';
 
 /// Based on the width of the screen, shows a modal or popover
 /// which contains a form to join a group
@@ -63,6 +64,7 @@ class _JoinGroupForm extends StatefulWidget {
 class _JoinGroupFormState extends State<_JoinGroupForm> {
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
+  late final ProfileController profileController = Get.find();
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -87,7 +89,7 @@ class _JoinGroupFormState extends State<_JoinGroupForm> {
           ElevatedButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
-                Get.snackbar("Awesome!", "You joined a new group!");
+                profileController.joinGroup(_codeController.text.trim());
                 Navigator.pop(context); // Close the modal / popover
               }
             },
