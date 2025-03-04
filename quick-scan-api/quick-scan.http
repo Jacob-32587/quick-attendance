@@ -1,5 +1,4 @@
 @base=http://0.0.0.0:8080/quick-scan-api
-@auth_token=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJxdWljay1zY2FuLWFwaSIsInN1YiI6InVzZXItYXV0aCIsImF1ZCI6InF1aWNrLXNjYW4tY2xpZW50IiwidXNlcl9pZCI6IjAxOTU0YjBkLWY3NTYtNzQ2Ni1iMjFlLTk3MjJkMDE2ODM1MCIsImV4cCI6MTc0MTMyNTc3Mn0.a5jG7uAdopuiCRWDwrxX3CBkrK7S5t4tdoA2fVS3SA1KXB4IaNVVreYoGytmMeHjemWkfjLQ1_KdlEksNxnS_A
 
 ###
 # @name=CreateAccount
@@ -8,6 +7,7 @@ Content-Type: application/json
 
 {
     "username": "FooBar",
+    "email": "foo@bar.com",
     "first_name": "Zab",
     "last_name": "Baz",
     "password": "FooBarZaa"
@@ -24,6 +24,12 @@ POST {{base}}/account/login HTTP/1.1
 Content-Type: application/json
 
 {
-    "username": "FooBar",
+    "email": "foo@bar.com",
     "password": "FooBarZaa"
 }
+
+# @lang=lua
+> {%
+    local body = vim.json.decode(response.body)
+    client.global.set("auth_token", body.jwt);
+%}

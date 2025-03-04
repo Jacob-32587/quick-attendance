@@ -1,14 +1,13 @@
-import { Context, Hono } from "@hono/hono";
-import { decode, sign, verify } from "npm:hono/jwt";
-import { AccountPostReq } from "../models/account/account_post_req.ts";
-import { AccountLoginPostReq } from "../models/account/account_login_post_req.ts";
-import * as dal from "../dal/account.ts";
-import {
-  db_res_to_json_res,
-  db_res_to_json_res_async,
-} from "../util/res_helper.ts";
-import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
+import { Hono } from "npm:hono";
 import { Uuid } from "../uuid.ts";
+import { sign } from "npm:hono/jwt";
+import { account_post_req_val } from "../models/account/account_post_req.ts";
+import {
+  account_login_post_req,
+} from "../models/account/account_login_post_req.ts";
+import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
+import { zValidator } from "npm:@hono/zod-validator";
+import * as dal from "../dal/account.ts";
 
 export const jwt_secret: string =
   "ca882e5c-dfd5-45fc-bc04-0a2fb7326305--86d452ef-778d-4443-812d-b19398b4e67f";
@@ -19,38 +18,41 @@ const auth_account_base_path = `/auth${account_base_path}`;
 
 const account = new Hono();
 
-account.post(account_base_path, async (ctx: Context) => {
-  const req = await ctx.req.json<AccountPostReq>();
-  return db_res_to_json_res_async(ctx, dal.create_account(req));
-});
+account.post(
+  account_base_path,
+  zValidator("json", account_post_req_val),
+  async (ctx) => {
+    const req = ctx.req.valid("json");
+    await dal.create_account(req);
+    return ctx.text("ok");
+  },
+);
 
-account.get(auth_account_base_path, (ctx: Context) => {
+account.get(auth_account_base_path, async (ctx) => {
   const jwt = ctx.get("jwtPayload") as { user_id: Uuid };
-  return db_res_to_json_res_async(ctx, dal.get_account(jwt.user_id));
+  return ctx.json(await dal.get_account(jwt.user_id));
 });
 
-account.post(`${account_base_path}/login`, async (ctx: Context) => {
-  // Parse request and send to dal
-  const req = await ctx.req.json<AccountLoginPostReq>();
-  const dal_res = await dal.login_account(req);
+account.post(
+  `${account_base_path}/login`,
+  zValidator("json", account_login_post_req),
+  async (ctx) => {
+    // Parse request and send to dal
+    const req = ctx.req.valid("json");
+    const entity = await dal.login_account(req);
 
-  // If any errors occurred return
-  if (dal_res.isErr()) {
-    return db_res_to_json_res(ctx, dal_res);
-  }
-  const user = dal_res.ok()!;
+    // Create a JWT token that will last a week
+    const payload = {
+      iss: "quick-scan-api",
+      sub: "user-auth",
+      aud: "quick-scan-client",
+      user_id: entity.user_id,
+      exp: Math.round(((Date.now()) / 1000) + 86400 * 7),
+    };
+    const token = await sign(payload, jwt_secret, jwt_alg);
 
-  // Create a JWT token that will last a week
-  const payload = {
-    iss: "quick-scan-api",
-    sub: "user-auth",
-    aud: "quick-scan-client",
-    user_id: user.user_id,
-    exp: Math.round(((Date.now()) / 1000) + 86400 * 7),
-  };
-  const token = await sign(payload, jwt_secret, jwt_alg);
-
-  return ctx.json({ jwt: token } as AccountLoginPostRes);
-});
+    return ctx.json({ jwt: token } as AccountLoginPostRes);
+  },
+);
 
 export { account };

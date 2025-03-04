@@ -1,15 +1,15 @@
 import kv, { DbErr } from "./db.ts";
-import AccountEntity from "../entities/account.ts";
+import AccountEntity from "../entities/account_entity.ts";
 import { newUuid, Uuid } from "../uuid.ts";
 import { AccountPostReq } from "../models/account/account_post_req.ts";
-import { Result } from "@result/result";
-import HttpStatusCode from "../http_status_code.ts";
 import { AccountLoginPostReq } from "../models/account/account_login_post_req.ts";
+import { Match } from "effect";
+import HttpStatusCode from "../http_status_code.ts";
 import { data_views_are_equal } from "../util/array_buffer.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
 
 function merge_password_and_salt(password: string, salt: Uint8Array) {
-  // Put the utf-8 char code points into an array
+  // Put the UTF-8 char code points into an array
   const txt = new TextEncoder();
   const password_en = txt.encode(password);
 
@@ -28,16 +28,35 @@ function hash_password(password: string, salt: Uint8Array) {
 
 export async function create_account(account: AccountPostReq) {
   // Ensure the username is not already in use
-  const maybe_account = await kv.get<[string, Uuid]>([
+  const maybe_account = await kv.getMany<[[string, Uuid], [string, Uuid]]>([[
     "account_by_username",
     account.username,
-  ]);
+  ], [
+    "account_by_email",
+    account.email,
+  ]]);
 
-  if (maybe_account.value != null) {
-    return Result.err({
-      reason: "Username taken",
-      status_code: HttpStatusCode.CONFLICT,
-    } as DbErr);
+  if (maybe_account[0].value != null || maybe_account[1].value != null) {
+    const msg = Match.value([
+      maybe_account[0].value != null,
+      maybe_account[1].value != null,
+    ]).pipe(
+      Match.when(
+        [true, true],
+        (_) => "Username and email taken",
+      ),
+      Match.when(
+        [false, true],
+        (_) => "Email taken",
+      ),
+      Match.when(
+        [true, false],
+        (_) => "Username taken",
+      ),
+      Match.orElse((_) => "Unable to create account"),
+    );
+
+    DbErr.err(msg, HttpStatusCode.CONFLICT); //!! throw
   }
 
   // Generate salt and hash password
@@ -49,110 +68,97 @@ export async function create_account(account: AccountPostReq) {
 
   const entity: AccountEntity = {
     username: account.username,
+    email: account.email,
     password: password_hash,
     first_name: account.first_name,
     last_name: account.last_name,
     salt: salt,
     user_id: newUuid(),
     fk_owned_group_ids: null,
+    fk_managed_group_ids: null,
     fk_member_group_ids: null,
   };
 
   const pk = ["account", entity.user_id];
-
   // Attempt to insert the user with the hashed password
-  const res = await kv
-    .atomic()
-    .set(
-      pk,
-      entity,
-    )
-    .set(
-      ["account_by_user_name", entity.username],
-      pk,
-    )
-    .commit();
-
-  switch (res.ok) {
-    case true:
-      return Result.ok(entity.user_id);
-    case false:
-      return Result.err(
-        {
-          reason: "Unable to insert user",
-          status_code: HttpStatusCode.INTERNAL_SERVER_ERROR,
-        } as DbErr,
-      );
-  }
+  DbErr.err_on_commit(
+    await kv
+      .atomic()
+      .set(
+        pk,
+        entity,
+      )
+      .set(
+        ["account_by_username", entity.username],
+        pk,
+      )
+      .set(
+        ["account_by_email", entity.email],
+        pk,
+      )
+      .commit(),
+    "Unable to insert user",
+  );
 }
 
 export async function get_account(user_id: Uuid) {
   const entity = await kv.get<AccountEntity>(["account", user_id]);
-  switch (entity.value) {
-    case null:
-      return Result.err(
-        {
-          reason: "User with the given id not found",
-          status_code: HttpStatusCode.NOT_FOUND,
-        } as DbErr,
-      );
-    default:
-      return Result.ok({
-        username: entity.value.username,
-        first_name: entity.value.first_name,
-        last_name: entity.value.last_name,
-        user_id: entity.value.user_id,
-        fk_owned_group_ids: entity.value.fk_owned_group_ids,
-        fk_member_group_ids: entity.value.fk_member_group_ids,
-        versionstamp: entity.value.versionstamp,
-      } as AccountGetModel);
-  }
+  return Match.value(entity.value).pipe(
+    Match.when(Match.null, () =>
+      DbErr.err(
+        "User with the given id not found",
+        HttpStatusCode.NOT_FOUND,
+      )), //!! throw
+    Match.orElse((entity) => ({
+      username: entity.username,
+      email: entity.email,
+      first_name: entity.first_name,
+      last_name: entity.last_name,
+      user_id: entity.user_id,
+      fk_owned_group_ids: entity.fk_owned_group_ids,
+      fk_managed_group_ids: entity.fk_managed_group_ids,
+      fk_member_group_ids: entity.fk_member_group_ids,
+      versionstamp: entity.versionstamp,
+    } as AccountGetModel)),
+  );
 }
 
 // Get the user account and check if the given password is valid
 // If the user exists and the password is valid then an Ok value will be returned
 export async function login_account(account: AccountLoginPostReq) {
   // Lookup the user by the secondary key, error if no record is found
-  const user_name_key = await kv.get<[string, Uuid]>([
-    "account_by_user_name",
-    account.username,
-  ]);
+  const account_email_key = (await kv.get<[string, Uuid]>([
+    "account_by_email",
+    account.email,
+  ])).value;
 
-  if (user_name_key.value == null) {
-    return Result.err(
-      {
-        reason: "User does not exist",
-        status_code: HttpStatusCode.NOT_FOUND,
-      } as DbErr,
-    );
+  if (account_email_key == null) {
+    DbErr.err("User does not exist", HttpStatusCode.NOT_FOUND); //!! throw
   }
 
   // Lookup by the primary key, this should never error but still
   // handle the case if this data does not exist
-  const entity = (await kv.get<AccountEntity>(user_name_key.value)).value;
+  const entity = (await kv.get<AccountEntity>(account_email_key)).value;
 
   if (entity == null) {
-    return Result.err({
-      reason: "User was found but no data associated with accoutn, missing pk",
-      status_code: HttpStatusCode.INTERNAL_SERVER_ERROR,
-    } as DbErr);
+    DbErr.err("Account deleted"); //!! throw
   }
 
   // Hash the given password and compare to the password in the database
   // return Ok if the records match
   const password_hash = await hash_password(account.password, entity.salt);
-  switch (
+  return Match.value(
     data_views_are_equal(
       new DataView(password_hash),
       new DataView(entity.password),
-    )
-  ) {
-    case true:
-      return Result.ok(entity);
-    case false:
-      return Result.err({
-        reason: "Incorrect Password",
-        status_code: HttpStatusCode.UNAUTHORIZED,
-      } as DbErr);
-  }
+    ),
+  ).pipe(
+    Match.when(true, (_) => entity),
+    Match.when(false, (_) =>
+      DbErr.err(
+        "Incorrect Password",
+        HttpStatusCode.UNAUTHORIZED,
+      )), //!! throw
+    Match.exhaustive,
+  );
 }
