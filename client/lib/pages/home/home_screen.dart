@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/pages/home/components/group_list.dart';
@@ -33,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             SizedBox(height: 24),
+            PrimaryButton(text: "Logout", onPressed: authController.logout),
           ],
         ),
       ),
