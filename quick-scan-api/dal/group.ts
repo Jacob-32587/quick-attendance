@@ -7,6 +7,7 @@ import AccountEntity, {
   AccountOwnerGroupData,
 } from "../entities/account_entity.ts";
 import HttpStatusCode from "../http_status_code.ts";
+import { get_account } from "./account.ts";
 
 export async function create_group(owner_id: Uuid, req: GroupPostReq) {
   const entity = {
@@ -17,11 +18,7 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
     unique_id_settings: req.unique_id_settings,
   } as GroupEntity;
 
-  const account_entity = DbErr.err_on_empty_val(
-    await kv.get<AccountEntity>(["account", owner_id]),
-    () => "Account data does not exist",
-    HttpStatusCode.NOT_FOUND,
-  );
+  const account_entity = await get_account(owner_id);
 
   account_entity.fk_owned_group_ids = Match.value(
     account_entity.fk_owned_group_ids,
@@ -41,11 +38,23 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
       ),
     );
 
-  kv
-    .atomic()
-    .set(["group", entity.group_id], entity)
-    .set(["account", owner_id], account_entity)
-    .commit();
+  await DbErr.err_on_commit_async(
+    kv
+      .atomic()
+      .set(["group", entity.group_id], entity)
+      .set(["account", owner_id], account_entity)
+      .commit(),
+    "Unable to perform mutation",
+  ); //!! throw
 
   return entity;
+}
+
+export async function get_groups_for_account(user_id: Uuid) {
+  const account_entity = await get_account(user_id); //!! throw
+  let group_promises: Promise<GroupEntity>[] =
+    kv.getMany(
+      account_entity.fk_owned_group_ids?.entries().map((x) => ["group", x[0]])
+        .toArray(),
+    ) ?? [];
 }

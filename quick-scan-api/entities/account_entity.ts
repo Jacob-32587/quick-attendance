@@ -11,7 +11,7 @@ export default interface AccountEntity {
   fk_owned_group_ids: Map<Uuid, AccountOwnerGroupData> | null;
   fk_managed_group_ids: Map<Uuid, AccountManagerGroupData> | null;
   fk_member_group_ids: Map<Uuid, AccountMemberGroupData> | null;
-  versionstamp?: string;
+  readonly versionstamp?: string;
 }
 
 export interface AccountOwnerGroupData {

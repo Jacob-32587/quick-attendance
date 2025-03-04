@@ -75,6 +75,27 @@ export class DbErr {
   ) {
     return DbErr.err_on_empty_val(await maybe_kv, reason, status_code);
   }
+
+  public static async err_on_commit_async(
+    commit_res: Promise<Deno.KvCommitResult | Deno.KvCommitError>,
+    reason: string | null,
+    status_code: ContentfulStatusCode = HttpStatusCode.INTERNAL_SERVER_ERROR,
+  ) {
+    return this.err_on_commit(await commit_res, reason, status_code);
+  }
+}
+
+export class KvHelper {
+  public static remove_kv_maybes<T, R, N>(
+    iter: IterableIterator<T, Deno.KvEntryMaybe<T>, Deno.KvEntryMaybe<>>,
+  ) {
+    let v;
+    while ((v = iter.next())) {
+    }
+  }
+
+  public static remove_kv_maybes_async<T, R, N>(iter: AsyncIterable<T, R, N>) {
+  }
 }
 
 export default await Deno.openKv("./db.sqlite");

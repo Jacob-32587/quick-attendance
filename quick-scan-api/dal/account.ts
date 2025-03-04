@@ -101,26 +101,27 @@ export async function create_account(account: AccountPostReq) {
   );
 }
 
-export async function get_account(user_id: Uuid) {
-  const entity = await kv.get<AccountEntity>(["account", user_id]);
-  return Match.value(entity.value).pipe(
-    Match.when(Match.null, () =>
-      DbErr.err(
-        "User with the given id not found",
-        HttpStatusCode.NOT_FOUND,
-      )), //!! throw
-    Match.orElse((entity) => ({
-      username: entity.username,
-      email: entity.email,
-      first_name: entity.first_name,
-      last_name: entity.last_name,
-      user_id: entity.user_id,
-      fk_owned_group_ids: entity.fk_owned_group_ids,
-      fk_managed_group_ids: entity.fk_managed_group_ids,
-      fk_member_group_ids: entity.fk_member_group_ids,
-      versionstamp: entity.versionstamp,
-    } as AccountGetModel)),
-  );
+export function get_account(user_id: Uuid) {
+  return DbErr.err_on_empty_val_async(
+    kv.get<AccountEntity>(["account", user_id]),
+    () => "Unable to find account",
+    HttpStatusCode.NOT_FOUND,
+  ); //!! throw
+}
+
+export async function get_account_model(user_id: Uuid) {
+  const entity = await get_account(user_id);
+  return {
+    username: entity.username,
+    email: entity.email,
+    first_name: entity.first_name,
+    last_name: entity.last_name,
+    user_id: entity.user_id,
+    fk_owned_group_ids: entity.fk_owned_group_ids,
+    fk_managed_group_ids: entity.fk_managed_group_ids,
+    fk_member_group_ids: entity.fk_member_group_ids,
+    versionstamp: entity.versionstamp,
+  } as AccountGetModel;
 }
 
 // Get the user account and check if the given password is valid
