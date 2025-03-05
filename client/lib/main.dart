@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/attenda_scan_api.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/home_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
@@ -13,6 +14,7 @@ void main() {
   Get.put(AuthController());
   Get.put(ProfileController());
   Get.put(HomeController());
+  Get.put(AttendaScanApi());
   runApp(const MyApp());
 }
 
