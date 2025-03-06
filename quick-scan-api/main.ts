@@ -3,10 +3,22 @@ import { jwt } from "npm:hono/jwt";
 import HttpStatusCode from "./http_status_code.ts";
 import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
+import { Uuid } from "./uuid.ts";
 
 const app = new Hono().basePath("/quick-scan-api");
 
 export { app };
+
+export interface QuickScanJwtPayload {
+  [key: string]: unknown;
+  iss: string;
+  sub: string;
+  aud: string;
+  user_id: Uuid;
+  exp: number;
+  nbf: number;
+  iat: number;
+}
 
 app.use(
   "/auth/*",
@@ -15,6 +27,10 @@ app.use(
     alg: jwt_alg,
   }),
 );
+
+export function get_jwt_payload(ctx: Context) {
+  return ctx.get("jwtPayload") as QuickScanJwtPayload;
+}
 
 app.onError((err, ctx) => {
   // Allow explicit HTTPExceptions to propagate through, otherwise return a generic

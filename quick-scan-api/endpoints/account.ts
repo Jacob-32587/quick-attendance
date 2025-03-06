@@ -8,6 +8,7 @@ import {
 import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
 import { zValidator } from "npm:@hono/zod-validator";
 import * as dal from "../dal/account.ts";
+import { get_jwt_payload, QuickScanJwtPayload } from "../main.ts";
 
 export const jwt_secret: string =
   "ca882e5c-dfd5-45fc-bc04-0a2fb7326305--86d452ef-778d-4443-812d-b19398b4e67f";
@@ -29,8 +30,7 @@ account.post(
 );
 
 account.get(auth_account_base_path, async (ctx) => {
-  const jwt = ctx.get("jwtPayload") as { user_id: Uuid };
-  return ctx.json(await dal.get_account(jwt.user_id));
+  return ctx.json(await dal.get_account(get_jwt_payload(ctx).user_id));
 });
 
 account.post(
@@ -41,14 +41,18 @@ account.post(
     const req = ctx.req.valid("json");
     const entity = await dal.login_account(req);
 
+    const iat = Math.round(Date.now() / 1000);
+    const exp = iat + 86400 * 7;
     // Create a JWT token that will last a week
     const payload = {
       iss: "quick-scan-api",
       sub: "user-auth",
       aud: "quick-scan-client",
       user_id: entity.user_id,
-      exp: Math.round(((Date.now()) / 1000) + 86400 * 7),
-    };
+      exp: exp,
+      nbf: iat,
+      iat: iat,
+    } as QuickScanJwtPayload;
     const token = await sign(payload, jwt_secret, jwt_alg);
 
     return ctx.json({ jwt: token } as AccountLoginPostRes);
