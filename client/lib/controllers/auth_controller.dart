@@ -1,8 +1,10 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/attenda_scan_api.dart';
 
 class AuthController extends GetxController {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  late final QuickScanApi api = Get.find();
   var jwt = Rxn<String>();
   var isLoggedIn = false.obs;
 
@@ -30,15 +32,20 @@ class AuthController extends GetxController {
     Get.toNamed("/login");
   }
 
-  bool signUp(
+  Future<Response> signUp(
     String email,
     String username,
     String firstName,
     String lastName,
     String password,
-  ) {
-    login();
-    return true;
+  ) async {
+    return api.signup(
+      email: email,
+      username: username,
+      firstName: firstName,
+      lastName: lastName,
+      password: password,
+    );
   }
 
   @override

@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/quick_scan_api.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 
@@ -24,18 +27,18 @@ class _SignupFormState extends State<SignupForm> {
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-  void signup() {
+  void signup() async {
     if (_formKey.currentState!.validate()) {
-      bool response = authController.signUp(
+      Response response = await authController.signUp(
         _emailController.text.trim(),
         _usernameController.text.trim(),
         _firstNameController.text.trim(),
         _lastNameController.text.trim(),
         _passwordController.text.trim(),
       );
-      if (response) {
-        Get.snackbar("Awesome!", "You joined a new group!");
-      }
+      if (response.statusCode == 200) {
+        Get.snackbar("Awesome!", "You made an account!");
+      } else {}
     }
   }
 

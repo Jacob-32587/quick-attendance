@@ -14,7 +14,7 @@ void main() {
   Get.put(AuthController());
   Get.put(ProfileController());
   Get.put(HomeController());
-  Get.put(AttendaScanApi());
+  Get.put(QuickScanApi());
   runApp(const MyApp());
 }
 
