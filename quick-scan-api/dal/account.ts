@@ -101,12 +101,20 @@ export async function create_account(account: AccountPostReq) {
   );
 }
 
-export function get_account(user_id: Uuid) {
-  return DbErr.err_on_empty_val_async(
+export async function get_account(user_id: Uuid) {
+  return (await DbErr.err_on_empty_val_async(
     kv.get<AccountEntity>(["account", user_id]),
     () => "Unable to find account",
     HttpStatusCode.NOT_FOUND,
-  ); //!! throw
+  )).value; //!! throw
+}
+
+export async function get_accounts(user_ids: Uuid[]) {
+  return DbErr.err_on_any_empty_vals(
+    await kv.getMany<AccountEntity[]>(user_ids.map((x) => ["account", x])),
+    () => "Account not found",
+    HttpStatusCode.NOT_FOUND,
+  );
 }
 
 export async function get_account_model(user_id: Uuid) {

@@ -110,11 +110,12 @@ export class DbErr {
   }
 
   /**
-   * @description Throws an {@link HTTPException} if any {@link Deno.KvEntryMaybe} has a null value.
+   * @description Throws an {@link HTTPException} if any {@link Deno.KvEntryMaybe} has a null version time stamp.
    * @template T - The type of the value in the potential key value pair
    * @param maybe_kvs - List of potential key value pairs
    * @param reason - Error message throw if any version time stamp is null
-   * @param status_code - {@link HttpStatusCode} thrown if any version time stamp is null
+   * @param status_code - {@link HttpStatusCode} thrown if any version time stamp is null or
+   * any promise fails to resolve
    * @throw{@link HTTPException}
    * @returns Promise that will resolve to a list of {@link Deno.KvEntry} objects
    */
@@ -178,6 +179,44 @@ export class KvHelper {
     maybe_vals: Promise<Deno.KvEntryMaybe<T>[]>,
   ) {
     return this.remove_kv_nones<T>(await maybe_vals);
+  }
+
+  /**
+   * @description This is a thin wrapper around the {@link Deno.Kv.getMany()} function, with the exception
+   * that the list of keys can be null or undefined. If the list is null or undefined an empty array will be returned.
+   * @template T extends readonly unknown[] - The type of the value in the potential key value pair
+   * @param kv - Deno key value pair api instance
+   * @param keys - List of keys that could be null or undefined
+   * @returns List of {@link Deno.KvEntryMaybe} associated with the given keys
+   */
+  public static async get_many_return_empty<T extends readonly unknown[]>(
+    kv: Deno.Kv,
+    keys?: readonly [...{ [K in keyof T]: Deno.KvKey }] | null,
+  ): Promise<{ [K in keyof T]: Deno.KvEntryMaybe<T[K]> }> {
+    if (keys === null || keys === undefined) {
+      return [] as { [K in keyof T]: Deno.KvEntryMaybe<T[K]> };
+    }
+    return await kv.getMany<T>(keys);
+  }
+
+  /**
+   * @description Converts a map into a list of @{link Deno.KvKey} objects. This is done by
+   * using the given key_name as the first value for all keys and the maps key as the second value
+   * for each key.
+   * @template K - Type of the key value in the map
+   * @template V - Type of the value in the map
+   * @param key_name - Name of the key in the database
+   * @param val - Map value that will be transmuted into a list of {@link Deno.KvKey} objects
+   * @returns List of {@link Deno.KvKey} objects
+   */
+  public static map_to_kvs<K, V>(
+    key_name: string,
+    val?: Map<K, V> | null,
+  ) {
+    return val?.entries().map((
+      x,
+    ) => [key_name, x[0]] as Deno.KvKey)
+      .toArray();
   }
 }
 
