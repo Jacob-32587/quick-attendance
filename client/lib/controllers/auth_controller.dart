@@ -1,10 +1,26 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/quick_scan_api.dart';
 
 class AuthController extends GetxController {
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  late final QuickScanApi api = Get.find();
+  var jwt = Rxn<String>();
   var isLoggedIn = false.obs;
+
+  Future<void> _tryGetJwt() async {
+    jwt.value = await _storage.read(key: "jwt_token");
+  }
+
+  Future<void> _saveJwt(String token) async {
+    await _storage.write(key: "jwt_token", value: token);
+  }
 
   void login() {
     isLoggedIn.value = true;
+
+    // TODO: Set the JWT from the returned promise
+
     // This is NOT base flutter functionality.
     // This requires use of the "get" package.
     // refer to main.dart for existing routes.
@@ -16,14 +32,25 @@ class AuthController extends GetxController {
     Get.toNamed("/login");
   }
 
-  bool signUp(
+  Future<Response> signUp(
     String email,
     String username,
     String firstName,
     String lastName,
     String password,
-  ) {
-    login();
-    return true;
+  ) async {
+    return api.signup(
+      email: email,
+      username: username,
+      firstName: firstName,
+      lastName: lastName,
+      password: password,
+    );
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    _tryGetJwt();
   }
 }
