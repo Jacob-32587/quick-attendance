@@ -1,6 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/api/attenda_scan_api.dart';
+import 'package:quick_attendance/api/quick_scan_api.dart';
 
 class AuthController extends GetxController {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
