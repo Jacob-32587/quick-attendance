@@ -8,7 +8,15 @@ import AccountEntity, {
 } from "../entities/account_entity.ts";
 import HttpStatusCode from "../http_status_code.ts";
 import { get_account } from "./account.ts";
+import { DecodeException } from "effect/Encoding";
+import { HTTPException } from "@hono/hono/http-exception";
 
+/**
+ * @param owner_id - Id of the user who will own the created group
+ * @param req -
+ * @returns The id of the created
+ * @throws @link{@ npm:Hono/}
+ */
 export async function create_group(owner_id: Uuid, req: GroupPostReq) {
   const entity = {
     group_id: newUuid(),
@@ -52,9 +60,8 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
 
 export async function get_groups_for_account(user_id: Uuid) {
   const account_entity = await get_account(user_id); //!! throw
-  let group_promises: Promise<GroupEntity>[] =
-    kv.getMany(
-      account_entity.fk_owned_group_ids?.entries().map((x) => ["group", x[0]])
-        .toArray(),
-    ) ?? [];
+  let group_promises: Promise<GroupEntity>[] = kv.getMany(
+    account_entity.fk_owned_group_ids?.entries().map((x) => ["group", x[0]])
+      .toArray(),
+  ) ?? [];
 }

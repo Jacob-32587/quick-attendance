@@ -23,3 +23,12 @@ group.post(
     await dal.create_group(newUuid(), req);
   },
 );
+
+group.get(
+  `${auth_group_base_path}/list`,
+  zValidator("json", group_post_req),
+  async (ctx) => {
+    const req = ctx.req.valid("json");
+    await dal.(newUuid(), req);
+  },
+);
