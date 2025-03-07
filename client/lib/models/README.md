@@ -1,0 +1,1 @@
+This folder holds Flutter model classes which are just used for representing and strongly typing data.
