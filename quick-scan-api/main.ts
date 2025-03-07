@@ -4,6 +4,7 @@ import HttpStatusCode from "./http_status_code.ts";
 import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { Uuid } from "./uuid.ts";
+import { group } from "./endpoints/group.ts";
 
 const app = new Hono().basePath("/quick-scan-api");
 
@@ -49,4 +50,5 @@ app.get("/", (ctx: Context) => {
   return ctx.json({ utc_time: (new Date()).toUTCString() }, HttpStatusCode.OK);
 });
 app.route("", account);
+app.route("", group);
 Deno.serve({ port: 8080 }, app.fetch);
