@@ -1,12 +1,17 @@
 import kv, { DbErr } from "./db.ts";
 import AccountEntity from "../entities/account_entity.ts";
-import { newUuid, Uuid } from "../uuid.ts";
+import { new_uuid, Uuid } from "../uuid.ts";
 import { AccountPostReq } from "../models/account/account_post_req.ts";
 import { AccountLoginPostReq } from "../models/account/account_login_post_req.ts";
 import { Match } from "effect";
 import HttpStatusCode from "../http_status_code.ts";
 import { data_views_are_equal } from "../util/array_buffer.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
+import { GroupInviteJwtPayload } from "../models/group/group_invite_jwt_payload.ts";
+import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
+import { decode, sign } from "npm:hono/jwt";
+import { jwt_secret } from "../endpoints/account.ts";
+import { HTTPException } from "@hono/hono/http-exception";
 
 function merge_password_and_salt(password: string, salt: Uint8Array) {
   // Put the UTF-8 char code points into an array
@@ -73,10 +78,11 @@ export async function create_account(account: AccountPostReq) {
     first_name: account.first_name,
     last_name: account.last_name,
     salt: salt,
-    user_id: newUuid(),
+    user_id: new_uuid(),
     fk_owned_group_ids: null,
     fk_managed_group_ids: null,
     fk_member_group_ids: null,
+    fk_pending_group_invites: null,
   };
 
   const pk = ["account", entity.user_id];
@@ -181,4 +187,47 @@ export async function login_account(account: AccountLoginPostReq) {
       )), //!! throw
     Match.exhaustive,
   );
+}
+
+/**
+ * @description Invite the list of users to the specified group. If any of
+ * these users have a pending invite to the specified group the function will throw.
+ * @param tran - Deno transaction the invite is occuring in
+ * @param group_id - Id of the group users are being invited to
+ * @param invitees_accounts - Account entities with associated invite JWTs
+ * @throw {@link HTTPException}
+ * If any user has already been invited, this function fails fast.
+ */
+export async function invite_accounts_to_group(
+  tran: Deno.AtomicOperation,
+  group_id: Uuid,
+  owner_id: Uuid,
+  invitees_accounts: AccountEntity[],
+) {
+  for (let i = 0; i < invitees_accounts.length; i++) {
+    invitees_accounts[i].fk_pending_group_invites = add_to_maybe_map(
+      invitees_accounts[i].fk_pending_group_invites,
+      [[
+        group_id,
+        await sign({
+          iss: "quick-scan-api",
+          sub: "group-invite",
+          aud: "quick-scan-client",
+          username: invitees_accounts[i].username,
+          user_id: invitees_accounts[i].user_id,
+          owner_id: owner_id,
+          group_id: group_id,
+        } as GroupInviteJwtPayload, jwt_secret),
+      ]],
+      HttpStatusCode.CONFLICT,
+      (_, v) =>
+        `User ${(decode(v).payload?.username ??
+          "unknown")} already invited to this group`,
+    ); //!! throw
+    tran.set(
+      ["account", invitees_accounts[i].user_id],
+      invitees_accounts[i],
+    );
+  }
+  return tran;
 }

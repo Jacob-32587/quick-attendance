@@ -19,23 +19,17 @@ export function add_to_maybe_map<K, V>(
   m: Map<K, V> | null | undefined,
   kvs: [K, V][],
   err_status_code?: ContentfulStatusCode,
-  err_reason?: string,
+  err_reason?: (k: K, v: V) => string,
 ) {
   if (m === null || m === undefined) {
-    const map_ret = new Map(kvs);
-
-    if (
-      err_status_code !== undefined &&
-      map_ret.entries().toArray().length != kvs.length
-    ) {
-      throw new HTTPException(err_status_code, { message: err_reason });
-    }
-    return map_ret;
+    m = new Map(kvs);
   }
 
   for (let i = 0; i < kvs.length; i++) {
     if (err_status_code !== undefined && m.has(kvs[i][0])) {
-      throw new HTTPException(err_status_code, { message: err_reason });
+      throw new HTTPException(err_status_code, {
+        message: (err_reason ?? (() => ""))(kvs[i][0], kvs[i][1]),
+      });
     }
     m.set(kvs[i][0], kvs[i][1]);
   }
@@ -59,23 +53,17 @@ export function add_to_maybe_set<K>(
   s: Set<K> | null | undefined,
   ks: K[],
   err_status_code?: ContentfulStatusCode,
-  err_reason?: string,
+  err_reason?: (key: K) => string,
 ) {
   if (s === null || s === undefined) {
-    const set_ret = new Set(ks);
-
-    if (
-      err_status_code !== undefined &&
-      set_ret.entries().toArray().length != ks.length
-    ) {
-      throw new HTTPException(err_status_code, { message: err_reason });
-    }
-    return set_ret;
+    s = new Set(ks);
   }
 
   for (let i = 0; i < ks.length; i++) {
     if (err_status_code !== undefined && s.has(ks[i])) {
-      throw new HTTPException(err_status_code, { message: err_reason });
+      throw new HTTPException(err_status_code, {
+        message: (err_reason ?? (() => ""))(ks[i]),
+      });
     }
     s.add(ks[i]);
   }

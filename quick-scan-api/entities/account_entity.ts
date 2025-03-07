@@ -1,3 +1,4 @@
+import { GroupInviteJwtPayload } from "../models/group/group_invite_jwt_payload.ts";
 import { Uuid } from "../uuid.ts";
 
 export default interface AccountEntity {
@@ -11,6 +12,7 @@ export default interface AccountEntity {
   fk_owned_group_ids: Map<Uuid, AccountOwnerGroupData> | null;
   fk_managed_group_ids: Map<Uuid, AccountManagerGroupData> | null;
   fk_member_group_ids: Map<Uuid, AccountMemberGroupData> | null;
+  fk_pending_group_invites: Map<Uuid, string> | null;
   readonly versionstamp?: string;
 }
 

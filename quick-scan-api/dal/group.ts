@@ -4,7 +4,7 @@ import { GroupPostReq } from "../models/group/group_post_req.ts";
 import { GroupListGetRes } from "../models/group/group_list_res.ts";
 import { GroupSparseGetModel } from "../models/group/group_sparse_get_model.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
-import { newUuid, Uuid } from "../uuid.ts";
+import { new_uuid, Uuid } from "../uuid.ts";
 import AccountEntity, {
   AccountOwnerGroupData,
 } from "../entities/account_entity.ts";
@@ -15,7 +15,7 @@ import {
 } from "./account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import HttpStatusCode from "../http_status_code.ts";
-import { add_to_maybe_map } from "../util/map.ts";
+import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
 
 /**
  * @param owner_id - Id of the user who will own the created group
@@ -25,7 +25,7 @@ import { add_to_maybe_map } from "../util/map.ts";
  */
 export async function create_group(owner_id: Uuid, req: GroupPostReq) {
   const entity = {
-    group_id: newUuid(),
+    group_id: new_uuid(),
     owner_id: owner_id,
     group_description: req.group_description,
     group_name: req.group_name,
@@ -38,7 +38,7 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
     account_entity.fk_owned_group_ids,
     [[entity.group_id, {} as AccountOwnerGroupData]],
     HttpStatusCode.INTERNAL_SERVER_ERROR,
-    "bad generated id",
+    () => "bad generated id",
   );
 
   await DbErr.err_on_commit_async(
@@ -141,19 +141,31 @@ export function group_is_owned_by_account(
   );
 }
 
-export async function invite_by_usernames(
+export async function accounts_for_group_invite(
+  tran: Deno.AtomicOperation,
   owner_id: Uuid,
   group_id: Uuid,
   invitees_usernames: string[],
 ) {
-  // Ensure the specified user owns this account
-  let owner_entity = await get_account(owner_id);
+  // Ensure the specified users owns this account
+  const owner_entity = await get_account(owner_id);
   group_is_owned_by_account(owner_entity, group_id);
 
-  const promise_ret = await Promise.all([
-    get_accounts_by_usernames(invitees_usernames),
-    get_group(group_id),
-  ]);
+  const [account_entities, group_entity] = await Promise.all(
+    [get_accounts_by_usernames(invitees_usernames), get_group(group_id)],
+  );
 
-  const account_entities = promise_ret[0];
+  group_entity.value.pending_memeber_ids = add_to_maybe_set(
+    group_entity.value.pending_memeber_ids,
+    account_entities.map((x) => x.value.user_id),
+    HttpStatusCode.CONFLICT,
+    (k) =>
+      `Attempted to invite user '${
+        account_entities.find((x) => x.value.user_id === k) ?? "N/A"
+      }'`,
+  );
+
+  kv.set(["group", group_id], group_entity.value);
+
+  return { owner_entity, account_entities };
 }

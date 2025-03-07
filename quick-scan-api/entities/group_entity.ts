@@ -5,6 +5,7 @@ export interface GroupEntity {
   owner_id: Uuid;
   manager_ids: Set<Uuid> | null;
   member_ids: Set<Uuid> | null;
+  pending_memeber_ids: Set<Uuid> | null;
   group_name: string;
   group_description: string | null;
   current_attendance_id: Uuid | null;

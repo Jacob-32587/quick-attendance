@@ -5,6 +5,7 @@ import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { Uuid } from "./uuid.ts";
 import { group } from "./endpoints/group.ts";
+import { parseArgs } from "jsr:@std/cli/parse-args";
 
 const app = new Hono().basePath("/quick-scan-api");
 
@@ -19,6 +20,12 @@ export interface QuickScanJwtPayload {
   exp: number;
   nbf: number;
   iat: number;
+}
+
+export interface AuthJwtPayload extends QuickScanJwtPayload {
+  iss: "quick-scan-api";
+  sub: "user-auth";
+  aud: "quick-scan-client";
 }
 
 app.use(
@@ -51,4 +58,5 @@ app.get("/", (ctx: Context) => {
 });
 app.route("", account);
 app.route("", group);
-Deno.serve({ port: 8080 }, app.fetch);
+
+export const server = Deno.serve({ port: 8080 }, app.fetch);
