@@ -5,10 +5,17 @@ import { GroupListGetRes } from "../models/group/group_list_res.ts";
 import { GroupSparseGetModel } from "../models/group/group_sparse_get_model.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
 import { newUuid, Uuid } from "../uuid.ts";
-import { AccountOwnerGroupData } from "../entities/account_entity.ts";
-import { get_account, get_accounts } from "./account.ts";
+import AccountEntity, {
+  AccountOwnerGroupData,
+} from "../entities/account_entity.ts";
+import {
+  get_account,
+  get_accounts,
+  get_accounts_by_usernames,
+} from "./account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import HttpStatusCode from "../http_status_code.ts";
+import { add_to_maybe_map } from "../util/map.ts";
 
 /**
  * @param owner_id - Id of the user who will own the created group
@@ -27,23 +34,12 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
 
   const account_entity = await get_account(owner_id);
 
-  account_entity.fk_owned_group_ids = Match.value(
+  account_entity.fk_owned_group_ids = add_to_maybe_map(
     account_entity.fk_owned_group_ids,
-  )
-    .pipe(
-      Match.when(
-        Match.null,
-        (_) => new Map([[entity.group_id, {} as AccountOwnerGroupData]]),
-      ),
-      Match.orElse((m) =>
-        Match.value(m.has(entity.group_id)).pipe(
-          Match.when(true, (_) => DbErr.err("bad generated id")),
-          Match.when(false, (_) =>
-            m.set(entity.group_id, {} as AccountOwnerGroupData)),
-          Match.exhaustive,
-        )
-      ),
-    );
+    [[entity.group_id, {} as AccountOwnerGroupData]],
+    HttpStatusCode.INTERNAL_SERVER_ERROR,
+    "bad generated id",
+  );
 
   await DbErr.err_on_commit_async(
     kv
@@ -122,4 +118,42 @@ export async function get_groups_for_account(user_id: Uuid) {
     managed_groups: to_sparse_model(groups[1]),
     memeber_groups: to_sparse_model(groups[2]),
   } as GroupListGetRes;
+}
+
+export async function get_group(group_id: Uuid) {
+  return await DbErr.err_on_empty_val_async(
+    kv.get<GroupEntity>(["group", group_id]),
+    () => "Group does not exist",
+    HttpStatusCode.NOT_FOUND,
+  );
+}
+
+export function group_is_owned_by_account(
+  account_entity: AccountEntity,
+  group_id: Uuid,
+) {
+  Match.value(account_entity.fk_owned_group_ids?.has(group_id) ?? false).pipe(
+    Match.when(true, () => true),
+    Match.when(
+      false,
+      () => DbErr.err("User does not own the group", HttpStatusCode.FORBIDDEN),
+    ),
+  );
+}
+
+export async function invite_by_usernames(
+  owner_id: Uuid,
+  group_id: Uuid,
+  invitees_usernames: string[],
+) {
+  // Ensure the specified user owns this account
+  let owner_entity = await get_account(owner_id);
+  group_is_owned_by_account(owner_entity, group_id);
+
+  const promise_ret = await Promise.all([
+    get_accounts_by_usernames(invitees_usernames),
+    get_group(group_id),
+  ]);
+
+  const account_entities = promise_ret[0];
 }

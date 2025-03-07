@@ -117,6 +117,17 @@ export async function get_accounts(user_ids: Uuid[]) {
   );
 }
 
+export async function get_accounts_by_usernames(user_names: string[]) {
+  const account_keys = DbErr.err_on_any_empty_vals(
+    await kv.getMany<[string, Uuid][]>(
+      user_names.map((x) => ["account_by_username", x]),
+    ),
+    () => "A username was invalid",
+    HttpStatusCode.NOT_FOUND,
+  );
+  return get_accounts(account_keys.map((x) => x.value[1]));
+}
+
 export async function get_account_model(user_id: Uuid) {
   const entity = await get_account(user_id);
   return {
