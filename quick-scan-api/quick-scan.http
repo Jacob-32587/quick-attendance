@@ -33,3 +33,25 @@ Content-Type: application/json
     local body = vim.json.decode(response.body)
     client.global.set("auth_token", body.jwt);
 %}
+
+###
+# @name=CreateGroup1
+POST {{base}}/auth/group HTTP/1.1
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+    "group_name": "FooBarGroup",
+    "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+    "unique_id_settings": {
+        "prompt_message": "You must enter you unique foo or bar identification. Rember this will be exactly 8 characters, if you are a manager this is not required.",
+        "min_length": 8,
+        "max_length": 8,
+        "required_for_managers": false
+    }
+}
+
+###
+# @name=ListGroups
+GET {{base}}/auth/group/list HTTP/1.1
+Authorization: Bearer {{auth_token}}

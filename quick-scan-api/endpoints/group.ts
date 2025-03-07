@@ -1,12 +1,11 @@
 import { Hono } from "npm:hono";
-import { newUuid, Uuid } from "../uuid.ts";
 import { zValidator } from "npm:@hono/zod-validator";
 import * as dal from "../dal/group.ts";
 import { group_post_req } from "../models/group/group_post_req.ts";
 import { get_jwt_payload } from "../main.ts";
 import HttpStatusCode from "../http_status_code.ts";
 
-const group_base_path = "/account";
+const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
 
 const group = new Hono();
