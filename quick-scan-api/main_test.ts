@@ -213,42 +213,61 @@ async function create_and_login_test_users(test_num: number) {
   await Promise.all(login_user_promises);
 
   return [
-    user_jwts.get(user_rocco_mason.email),
-    user_jwts.get(user_maeve_berg.email),
-    user_jwts.get(user_henrik_wright.email),
-    user_jwts.get(user_indie_conway.email),
+    user_jwts.get(user_rocco_mason.email) ?? assertFalse(true),
+    user_jwts.get(user_maeve_berg.email) ?? assertFalse(true),
+    user_jwts.get(user_henrik_wright.email) ?? assertFalse(true),
+    user_jwts.get(user_indie_conway.email) ?? assertFalse(true),
   ];
 }
 
+const init_test_step = async (test_num: number, t: Deno.TestContext) => {
+  let sp: Deno.ChildProcess | null = null;
+  await t.step("init", async () => {
+    sp = await init_test(test_num);
+  });
+  // It seems that typescript gets really confused here as of deno 2.2.3
+  // sp is typed as only `null`. This is obvisouly not the case
+  return (sp as Deno.ChildProcess | null);
+};
+
+const cleanup_test_step = async (
+  test_num: number,
+  t: Deno.TestContext,
+  server_process: Deno.ChildProcess | null,
+) => {
+  await t.step("cleanup", async () => {
+    await cleanup_test(test_num, server_process);
+  });
+};
+
+Deno.test(
+  async function get_user_information(t: Deno.TestContext) {
+    const test_num = 1;
+    const sp = await init_test_step(test_num, t);
+
+    await t.step("test", async (_) => {
+      const logged_in_users_jwts = await create_and_login_test_users(test_num);
+      for (const user of logged_in_users_jwts) {
+      }
+    });
+
+    await cleanup_test_step(test_num, t, sp);
+  },
+);
+
 // Deno.test(
-//   async function get_user_information(t: Deno.TestContext) {
+//   async function invite_users_to_groups(t: Deno.TestContext) {
 //     let sp: Deno.ChildProcess | null = null;
-//     const test_num = 1;
+//     const test_num = 2;
 //     await t.step("init", async () => {
 //       sp = await init_test(test_num);
 //     });
 //
 //     await t.step("test", async (_) => {
-//       await create_and_login_test_users(test_num);
+//       const [owner_jwt, maeve_jwt, henrik_jwt] =
+//         await create_and_login_test_users(test_num);
 //     });
 //
 //     await t.step("cleanup", async () => await cleanup_test(test_num, sp));
 //   },
 // );
-
-Deno.test(
-  async function invite_users_to_groups(t: Deno.TestContext) {
-    let sp: Deno.ChildProcess | null = null;
-    const test_num = 1;
-    await t.step("init", async () => {
-      sp = await init_test(test_num);
-    });
-
-    await t.step("test", async (_) => {
-      const [owner_jwt, maeve_jwt, henrik_jwt] =
-        await create_and_login_test_users(test_num);
-    });
-
-    await t.step("cleanup", async () => await cleanup_test(test_num, sp));
-  },
-);
