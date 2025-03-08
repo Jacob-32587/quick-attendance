@@ -69,7 +69,7 @@ async function init_test(test_num: number) {
   const c_p = cmd.spawn();
 
   // Wait for the server to start
-  await sleep(5000);
+  await sleep(2000);
 
   // Attempt to get a response from the server, if the server takes more than 5 seconds
   // to respond something is wrong.
@@ -81,6 +81,7 @@ async function init_test(test_num: number) {
     console.log(`Failed to launch server process for test ${test_num}`);
     assertFalse(true);
   }
+  res.body?.cancel();
   console.log(`Failed to launch server process for test ${test_num}`);
   return c_p;
 }
@@ -100,7 +101,7 @@ async function cleanup_test(
   // If there is a server process kill it and wait for it to end
   if (server_process != null) {
     server_process.kill();
-    await sleep(5000);
+    await sleep(2000);
   }
 }
 
@@ -154,7 +155,7 @@ async function test_fetch(
 
 async function create_and_login_test_users(test_num: number) {
   // Create test user accounts
-  let latest_res = await test_fetch(ACCOUNT_URL(test_num), {
+  await test_fetch(ACCOUNT_URL(test_num), {
     headers: {
       "content-type": "application/json",
     },
@@ -162,7 +163,7 @@ async function create_and_login_test_users(test_num: number) {
     body: JSON.stringify(user_rocco_mason),
   });
 
-  latest_res = await test_fetch(ACCOUNT_URL(test_num), {
+  await test_fetch(ACCOUNT_URL(test_num), {
     headers: {
       "content-type": "application/json",
     },
@@ -170,7 +171,7 @@ async function create_and_login_test_users(test_num: number) {
     body: JSON.stringify(user_maeve_berg),
   });
 
-  latest_res = await test_fetch(ACCOUNT_URL(test_num), {
+  await test_fetch(ACCOUNT_URL(test_num), {
     headers: {
       "content-type": "application/json",
     },
@@ -178,7 +179,7 @@ async function create_and_login_test_users(test_num: number) {
     body: JSON.stringify(user_henrik_wright),
   });
 
-  latest_res = await test_fetch(ACCOUNT_URL(test_num), {
+  await test_fetch(ACCOUNT_URL(test_num), {
     headers: {
       "content-type": "application/json",
     },
@@ -188,7 +189,7 @@ async function create_and_login_test_users(test_num: number) {
 
   // Login users
   let rocco_jwt;
-  latest_res = await test_fetch(ACCOUNT_URL(test_num) + "/login", {
+  await test_fetch(ACCOUNT_URL(test_num) + "/login", {
     headers: {
       "content-type": "application/json",
     },
@@ -205,7 +206,7 @@ async function create_and_login_test_users(test_num: number) {
   });
 
   let maeve_jwt;
-  latest_res = await test_fetch(ACCOUNT_URL(test_num) + "/login", {
+  await test_fetch(ACCOUNT_URL(test_num) + "/login", {
     headers: {
       "content-type": "application/json",
     },
@@ -222,7 +223,7 @@ async function create_and_login_test_users(test_num: number) {
   });
 
   let henrik_jwt;
-  latest_res = await test_fetch(ACCOUNT_URL(test_num) + "/login", {
+  await test_fetch(ACCOUNT_URL(test_num) + "/login", {
     headers: {
       "content-type": "application/json",
     },
@@ -239,7 +240,7 @@ async function create_and_login_test_users(test_num: number) {
   });
 
   let indie_jwt;
-  latest_res = await test_fetch(ACCOUNT_URL(test_num) + "/login", {
+  await test_fetch(ACCOUNT_URL(test_num) + "/login", {
     headers: {
       "content-type": "application/json",
     },
