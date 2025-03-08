@@ -4,7 +4,9 @@ import { AccountLoginPostRes } from "./models/account/account_login_post_res.ts"
 import { AccountLoginPostReq } from "./models/account/account_login_post_req.ts";
 import { server } from "./main.ts";
 
-const URL = "0.0.0.0:8080";
+const URL = "http://0.0.0.0:8080/quick-scan-api";
+const ACCOUNT_URL = ``
+const ACCOUNT_AUTH_URL = 
 
 const user_rocco_mason = {
   "username": "Rocco Mason",
@@ -36,6 +38,29 @@ const user_indie_conway = {
   "last_name": "Conway",
   "password": "conway_indie_2001",
 } as AccountPostReq;
+
+function init_test() {
+  Deno.mkdir("./test");
+  const cmd = new Deno.Command(Deno.execPath(), {
+    args: [
+      "run",
+      "--watch",
+      "--allow-net",
+      "--unstable-kv",
+      "--allow-read",
+      "--allow-write",
+      "--test",
+      "main.ts",
+    ],
+  });
+
+  return cmd.spawn();
+}
+
+function cleanup_test(server_process: Deno.ChildProcess) {
+  Deno.remove("./test", { recursive: true });
+  server_process.kill();
+}
 
 async function create_and_login_test_users() {
   // Create test user accounts
@@ -123,7 +148,10 @@ async function create_and_login_test_users() {
   return { rocco_jwt, maeve_jwt, henrik_jwt, indie_jwt };
 }
 
-Deno.test(async function inviteUserToGroup() {
+Deno.test(async function invite_users_to_groups() {
+  const server_process = init_test();
+
   const { rocco_jwt: owner_jwt, maeve_jwt, henrik_jwt } =
     await create_and_login_test_users();
+  cleanup_test(server_process);
 });
