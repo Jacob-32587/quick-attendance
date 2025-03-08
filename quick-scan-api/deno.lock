@@ -8,7 +8,10 @@
     "jsr:@std/cli@*": "1.0.14",
     "jsr:@std/cli@^1.0.14": "1.0.14",
     "jsr:@std/crypto@^1.0.3": "1.0.4",
+    "jsr:@std/fs@*": "1.0.14",
+    "jsr:@std/fs@^1.0.14": "1.0.14",
     "jsr:@std/internal@^1.0.5": "1.0.5",
+    "jsr:@std/path@^1.0.8": "1.0.8",
     "jsr:@std/uuid@^1.0.4": "1.0.4",
     "npm:@hono/swagger-ui@*": "0.5.0_hono@4.7.2",
     "npm:@hono/zod-validator@*": "0.4.3_hono@4.7.2_zod@3.24.2",
@@ -39,8 +42,17 @@
     "@std/crypto@1.0.4": {
       "integrity": "cee245c453bd5366207f4d8aa25ea3e9c86cecad2be3fefcaa6cb17203d79340"
     },
+    "@std/fs@1.0.14": {
+      "integrity": "1e84bf0b95fe08f41f1f4aea9717bbf29f45408a56ce073b0114474ce1c9fccf",
+      "dependencies": [
+        "jsr:@std/path"
+      ]
+    },
     "@std/internal@1.0.5": {
       "integrity": "54a546004f769c1ac9e025abd15a76b6671ddc9687e2313b67376125650dc7ba"
+    },
+    "@std/path@1.0.8": {
+      "integrity": "548fa456bb6a04d3c1a1e7477986b6cffbce95102d0bb447c67c4ee70e0364be"
     },
     "@std/uuid@1.0.4": {
       "integrity": "f4233149cc8b4753cc3763fd83a7c4101699491f55c7be78dc7b30281946d7a0",
@@ -96,6 +108,7 @@
       "jsr:@hono/hono@^4.7.2",
       "jsr:@std/assert@1",
       "jsr:@std/cli@^1.0.14",
+      "jsr:@std/fs@^1.0.14",
       "jsr:@std/uuid@^1.0.4",
       "npm:effect@^3.13.4",
       "npm:zod@^3.24.2"

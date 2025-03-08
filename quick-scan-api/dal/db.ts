@@ -2,11 +2,7 @@ import { ContentfulStatusCode } from "@hono/hono/utils/http-status";
 import HttpStatusCode from "../http_status_code.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { Match } from "effect";
-import { parseArgs } from "jsr:@std/cli/parse-args";
-
-const flags = parseArgs(Deno.args, {
-  boolean: ["test"],
-});
+import { cli_flags } from "./../cli_parse.ts";
 
 // Then wrapper for errors specific to the database
 export class DbErr {
@@ -218,11 +214,9 @@ export class KvHelper {
       .toArray();
   }
 }
-
 export default await Deno.openKv(
-  Match.value(flags.test).pipe(
-    Match.when(true, () => "./test/db.sqlite"),
-    Match.when(false, () => "./db.sqlite"),
-    Match.exhaustive,
+  Match.value(parseInt(cli_flags["test-number"])).pipe(
+    Match.when(0, () => "./db.sqlite"),
+    Match.orElse((n) => `./test-${n}/db.sqlite`),
   ),
 );

@@ -5,6 +5,7 @@ import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { Uuid } from "./uuid.ts";
 import { group } from "./endpoints/group.ts";
+import { cli_flags } from "./cli_parse.ts";
 
 const app = new Hono().basePath("/quick-scan-api");
 
@@ -58,4 +59,9 @@ app.get("/", (ctx: Context) => {
 app.route("", account);
 app.route("", group);
 
-export const server = Deno.serve({ port: 8080 }, app.fetch);
+console.log(cli_flags["test-number"]);
+console.log(parseInt(cli_flags["test-number"]));
+
+export const server = Deno.serve({
+  port: parseInt(cli_flags["test-number"]) + 8080,
+}, app.fetch);

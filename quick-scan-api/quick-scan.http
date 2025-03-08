@@ -9,7 +9,6 @@ Content-Type: application/json
     "username": "FooBar",
     "email": "foo@bar.com",
     "first_name": "Zab",
-    "last_name": "Baz",
     "password": "FooBarZaa"
 }
 

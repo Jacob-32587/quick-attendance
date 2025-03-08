@@ -1,12 +1,16 @@
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertEquals, assertFalse } from "@std/assert";
 import { AccountPostReq } from "./models/account/account_post_req.ts";
 import { AccountLoginPostRes } from "./models/account/account_login_post_res.ts";
 import { AccountLoginPostReq } from "./models/account/account_login_post_req.ts";
+import { exists } from "jsr:@std/fs/exists";
 import { server } from "./main.ts";
+import { sleep } from "./util/sleep.ts";
 
-const URL = "http://0.0.0.0:8080/quick-scan-api";
-const ACCOUNT_URL = ``
-const ACCOUNT_AUTH_URL = 
+const URL = (n: number) => `http://0.0.0.0:${8080 + n}/quick-scan-api`;
+const ACCOUNT_URL = (n: number) => `${URL(n)}/account`;
+const ACCOUNT_AUTH_URL = (n: number) => `${URL(n)}/auth/account`;
+const GROUP_URL = (n: number) => `${URL(n)}/group`;
+const GROUP_AUTH_URL = (n: number) => `${URL(n)}/auth/group`;
 
 const user_rocco_mason = {
   "username": "Rocco Mason",
@@ -39,119 +43,234 @@ const user_indie_conway = {
   "password": "conway_indie_2001",
 } as AccountPostReq;
 
-function init_test() {
-  Deno.mkdir("./test");
+/**
+ * @description This will spawn and instance of a self contained server with it's own database.
+ * If the server fails to start this function will throw. You must ensure that test numbers are
+ * unique between individuals tests.
+ * @param test_num - The unique test number
+ * @returns Handle to the child process (self contained server instance)
+ */
+async function init_test(test_num: number) {
+  // Create directory for deno-kv SQL lite files and spawn a server instance
+  Deno.mkdir(`./test-${test_num}`);
   const cmd = new Deno.Command(Deno.execPath(), {
     args: [
       "run",
-      "--watch",
       "--allow-net",
       "--unstable-kv",
       "--allow-read",
       "--allow-write",
-      "--test",
       "main.ts",
+      "--test-number",
+      test_num.toString(),
     ],
   });
 
-  return cmd.spawn();
+  const c_p = cmd.spawn();
+
+  // Wait for the server to start
+  await sleep(5000);
+
+  // Attempt to get a response from the server, if the server takes more than 5 seconds
+  // to respond something is wrong.
+  const res = await fetch(URL(test_num), { signal: AbortSignal.timeout(5000) });
+
+  const ok_health_check = res.ok;
+
+  if (!ok_health_check) {
+    console.log(`Failed to launch server process for test ${test_num}`);
+    assertFalse(true);
+  }
+  console.log(`Failed to launch server process for test ${test_num}`);
+  return c_p;
 }
 
-function cleanup_test(server_process: Deno.ChildProcess) {
-  Deno.remove("./test", { recursive: true });
-  server_process.kill();
+/**
+ * @description Cleanup that must be called before the program finishes execution. This
+ * ensures all ephemeral data is deleted and the server instance is killed.
+ * @param test_num - The test number to be cleaned up
+ * @param server_process - Handle to the child process (self contained server instance)
+ */
+async function cleanup_test(
+  test_num: number,
+  server_process: Deno.ChildProcess | null,
+) {
+  Deno.remove(`./test-${test_num}`, { recursive: true });
+
+  // If there is a server process kill it and wait for it to end
+  if (server_process != null) {
+    server_process.kill();
+    await sleep(5000);
+  }
 }
 
-async function create_and_login_test_users() {
+/**
+ * @description Thin wrapper around the {@link fetch} function, if you would like to
+ * know more about other parameters check there. This function encapsulates receptive
+ * steps done after each fetch call, such as ensuring an OK response.
+ * @param maybe_check_fn - Optional check function that allows for additional logic to be checked by {@link assert}.
+ * @param consume_body - Specify if the body should be consumed by the function on successful requests. Note that on
+ * failing requests the body will always be consumed. This will default not true if a check function is not specified,
+ * if one is then false. It is assumed that that check function will need to read the body, if
+ * this is not the case this parameter can be set to true manually.
+ */
+async function test_fetch(
+  input: RequestInfo | URL,
+  init?: RequestInit & { client?: Deno.HttpClient },
+  maybe_check_fn?: (res: Response) => Promise<boolean>,
+  consume_body?: boolean,
+): Promise<Response> {
+  if (consume_body === undefined && maybe_check_fn === undefined) {
+    consume_body = true;
+  } else {
+    consume_body = false;
+  }
+  const ret = await fetch(input, init);
+  const check_fn = await (maybe_check_fn ?? (() => true))(ret);
+
+  if (!ret.ok || !check_fn) {
+    console.log("Request", init);
+    console.log(ret);
+    try {
+      console.log(await ret.json());
+    } catch {
+      console.log(ret.text());
+    }
+  }
+
+  try {
+    assert(ret.ok);
+    assert(check_fn);
+  } finally {
+    // Body is not being handled by the user or internally, cancel
+    // any streaming that may be occuring
+    if (consume_body && ret.ok && check_fn) {
+      await ret.body?.cancel();
+    }
+  }
+
+  return ret;
+}
+
+async function create_and_login_test_users(test_num: number) {
   // Create test user accounts
-  let latest_res = await fetch(URL, {
+  let latest_res = await test_fetch(ACCOUNT_URL(test_num), {
     headers: {
       "content-type": "application/json",
     },
+    method: "POST",
     body: JSON.stringify(user_rocco_mason),
   });
-  assert(latest_res.ok);
 
-  latest_res = await fetch(URL, {
+  latest_res = await test_fetch(ACCOUNT_URL(test_num), {
     headers: {
       "content-type": "application/json",
     },
+    method: "POST",
     body: JSON.stringify(user_maeve_berg),
   });
-  assert(latest_res.ok);
 
-  latest_res = await fetch(URL, {
+  latest_res = await test_fetch(ACCOUNT_URL(test_num), {
     headers: {
       "content-type": "application/json",
     },
+    method: "POST",
     body: JSON.stringify(user_henrik_wright),
   });
-  assert(latest_res.ok);
 
-  latest_res = await fetch(URL, {
+  latest_res = await test_fetch(ACCOUNT_URL(test_num), {
     headers: {
       "content-type": "application/json",
     },
+    method: "POST",
     body: JSON.stringify(user_indie_conway),
   });
-  assert(latest_res.ok);
 
   // Login users
-  latest_res = await fetch(URL, {
+  let rocco_jwt;
+  latest_res = await test_fetch(ACCOUNT_URL(test_num) + "/login", {
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
     body: JSON.stringify(
       {
         email: user_rocco_mason.email,
         password: user_rocco_mason.password,
       } as AccountLoginPostReq,
     ),
+  }, async (res) => {
+    rocco_jwt = ((await res.json()) as AccountLoginPostRes).jwt;
+    return (rocco_jwt !== null || rocco_jwt !== undefined);
   });
-  assert(latest_res.ok);
-  const rocco_jwt = ((await latest_res.json()) as AccountLoginPostRes).jwt;
-  assert(rocco_jwt !== null || rocco_jwt !== undefined);
 
-  latest_res = await fetch(URL, {
+  let maeve_jwt;
+  latest_res = await test_fetch(ACCOUNT_URL(test_num) + "/login", {
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
     body: JSON.stringify(
       {
         email: user_maeve_berg.email,
         password: user_maeve_berg.password,
       } as AccountLoginPostReq,
     ),
+  }, async (res) => {
+    maeve_jwt = ((await res.json()) as AccountLoginPostRes).jwt;
+    return (maeve_jwt !== null || maeve_jwt !== undefined);
   });
-  assert(latest_res.ok);
-  const maeve_jwt = ((await latest_res.json()) as AccountLoginPostRes).jwt;
-  assert(maeve_jwt !== null || maeve_jwt !== undefined);
 
-  latest_res = await fetch(URL, {
+  let henrik_jwt;
+  latest_res = await test_fetch(ACCOUNT_URL(test_num) + "/login", {
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
     body: JSON.stringify(
       {
         email: user_henrik_wright.email,
         password: user_henrik_wright.password,
       } as AccountLoginPostReq,
     ),
+  }, async (res) => {
+    const henrik_jwt = ((await res.json()) as AccountLoginPostRes).jwt;
+    return (henrik_jwt !== null || henrik_jwt !== undefined);
   });
-  assert(latest_res.ok);
-  const henrik_jwt = ((await latest_res.json()) as AccountLoginPostRes).jwt;
-  assert(henrik_jwt !== null || henrik_jwt !== undefined);
 
-  latest_res = await fetch(URL, {
+  let indie_jwt;
+  latest_res = await test_fetch(ACCOUNT_URL(test_num) + "/login", {
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
     body: JSON.stringify(
       {
         email: user_indie_conway.email,
         password: user_indie_conway.password,
       } as AccountLoginPostReq,
     ),
+  }, async (res) => {
+    const indie_jwt = ((await res.json()) as AccountLoginPostRes).jwt;
+    return (indie_jwt !== null || indie_jwt !== undefined);
   });
-  assert(latest_res.ok);
-  const indie_jwt = ((await latest_res.json()) as AccountLoginPostRes).jwt;
-  assert(indie_jwt !== null || indie_jwt !== undefined);
 
   return { rocco_jwt, maeve_jwt, henrik_jwt, indie_jwt };
 }
 
-Deno.test(async function invite_users_to_groups() {
-  const server_process = init_test();
+Deno.test(
+  async function invite_users_to_groups(t: Deno.TestContext) {
+    let sp: Deno.ChildProcess | null = null;
+    const test_num = 1;
+    await t.step("init", async () => {
+      sp = await init_test(test_num);
+    });
 
-  const { rocco_jwt: owner_jwt, maeve_jwt, henrik_jwt } =
-    await create_and_login_test_users();
-  cleanup_test(server_process);
-});
+    await t.step("test", async (_) => {
+      const { rocco_jwt: owner_jwt, maeve_jwt, henrik_jwt } =
+        await create_and_login_test_users(test_num);
+    });
+
+    await t.step("cleanup", async () => await cleanup_test(test_num, sp));
+  },
+);

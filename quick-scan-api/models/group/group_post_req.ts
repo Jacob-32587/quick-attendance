@@ -1,7 +1,7 @@
 import { z } from "npm:zod";
 
 export const unique_id_settings = z.object({
-  prompt_message: z.string().max(512).nullable(),
+  prompt_message: z.string().max(512).nullable().default(null),
   min_length: z.number().positive().int().default(1),
   max_length: z.number().positive().int().lte(64).default(64),
   required_for_managers: z.boolean().default(true),
