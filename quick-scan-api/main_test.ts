@@ -43,6 +43,13 @@ const user_indie_conway = {
   "password": "conway_indie_2001",
 } as AccountPostReq;
 
+const user_array = [
+  user_rocco_mason,
+  user_maeve_berg,
+  user_henrik_wright,
+  user_indie_conway,
+];
+
 /**
  * @description This will spawn and instance of a self contained server with it's own database.
  * If the server fails to start this function will throw. You must ensure that test numbers are
@@ -118,7 +125,10 @@ async function cleanup_test(
 async function test_fetch(
   input: RequestInfo | URL,
   init?: RequestInit & { client?: Deno.HttpClient },
-  maybe_check_fn?: (res: Response) => Promise<boolean>,
+  maybe_check_fn?: (
+    res: Response,
+    req?: RequestInit & { client?: Deno.HttpClient },
+  ) => Promise<boolean>,
   consume_body?: boolean,
 ): Promise<Response> {
   if (consume_body === undefined && maybe_check_fn === undefined) {
@@ -127,7 +137,7 @@ async function test_fetch(
     consume_body = false;
   }
   const ret = await fetch(input, init);
-  const check_fn = await (maybe_check_fn ?? (() => true))(ret);
+  const check_fn = await (maybe_check_fn ?? (() => true))(ret, init);
 
   if (!ret.ok || !check_fn) {
     console.log("Request", init);
@@ -154,109 +164,60 @@ async function test_fetch(
 }
 
 async function create_and_login_test_users(test_num: number) {
+  const create_user_promises: Promise<Response>[] = [];
   // Create test user accounts
-  await test_fetch(ACCOUNT_URL(test_num), {
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify(user_rocco_mason),
-  });
+  for (const user of user_array) {
+    create_user_promises.push(
+      test_fetch(ACCOUNT_URL(test_num), {
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify(user),
+      }),
+    );
+  }
 
-  await test_fetch(ACCOUNT_URL(test_num), {
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify(user_maeve_berg),
-  });
-
-  await test_fetch(ACCOUNT_URL(test_num), {
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify(user_henrik_wright),
-  });
-
-  await test_fetch(ACCOUNT_URL(test_num), {
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify(user_indie_conway),
-  });
+  await Promise.all(create_user_promises);
 
   // Login users
-  let rocco_jwt;
-  await test_fetch(ACCOUNT_URL(test_num) + "/login", {
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify(
-      {
-        email: user_rocco_mason.email,
-        password: user_rocco_mason.password,
-      } as AccountLoginPostReq,
-    ),
-  }, async (res) => {
-    rocco_jwt = ((await res.json()) as AccountLoginPostRes).jwt;
-    return (rocco_jwt !== null || rocco_jwt !== undefined);
-  });
+  const login_user_promises: Promise<Response>[] = [];
+  const user_jwts = new Map<string, string>();
+  for (const user of user_array) {
+    login_user_promises.push(
+      test_fetch(ACCOUNT_URL(test_num) + "/login", {
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify(
+          {
+            email: user.email,
+            password: user.password,
+          } as AccountLoginPostReq,
+        ),
+      }, async (res, req) => {
+        const request = JSON.parse(
+          req?.body?.toString() ?? "{}",
+        ) as AccountLoginPostReq;
 
-  let maeve_jwt;
-  await test_fetch(ACCOUNT_URL(test_num) + "/login", {
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify(
-      {
-        email: user_maeve_berg.email,
-        password: user_maeve_berg.password,
-      } as AccountLoginPostReq,
-    ),
-  }, async (res) => {
-    maeve_jwt = ((await res.json()) as AccountLoginPostRes).jwt;
-    return (maeve_jwt !== null || maeve_jwt !== undefined);
-  });
+        const jwt = ((await res.json()) as AccountLoginPostRes).jwt;
 
-  let henrik_jwt;
-  await test_fetch(ACCOUNT_URL(test_num) + "/login", {
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify(
-      {
-        email: user_henrik_wright.email,
-        password: user_henrik_wright.password,
-      } as AccountLoginPostReq,
-    ),
-  }, async (res) => {
-    const henrik_jwt = ((await res.json()) as AccountLoginPostRes).jwt;
-    return (henrik_jwt !== null || henrik_jwt !== undefined);
-  });
+        user_jwts.set(request.email, jwt);
 
-  let indie_jwt;
-  await test_fetch(ACCOUNT_URL(test_num) + "/login", {
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify(
-      {
-        email: user_indie_conway.email,
-        password: user_indie_conway.password,
-      } as AccountLoginPostReq,
-    ),
-  }, async (res) => {
-    const indie_jwt = ((await res.json()) as AccountLoginPostRes).jwt;
-    return (indie_jwt !== null || indie_jwt !== undefined);
-  });
+        return (jwt !== null || jwt !== undefined);
+      }),
+    );
+  }
 
-  return { rocco_jwt, maeve_jwt, henrik_jwt, indie_jwt };
+  await Promise.all(login_user_promises);
+
+  return {
+    rocco_jwt: user_jwts.get(user_rocco_mason.email),
+    maeve_jwt: user_jwts.get(user_maeve_berg.email),
+    henrik_jwt: user_jwts.get(user_henrik_wright.email),
+    indie_jwt: user_jwts.get(user_indie_conway.email),
+  };
 }
 
 Deno.test(
