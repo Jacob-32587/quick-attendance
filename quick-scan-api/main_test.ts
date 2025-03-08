@@ -212,13 +212,29 @@ async function create_and_login_test_users(test_num: number) {
 
   await Promise.all(login_user_promises);
 
-  return {
-    rocco_jwt: user_jwts.get(user_rocco_mason.email),
-    maeve_jwt: user_jwts.get(user_maeve_berg.email),
-    henrik_jwt: user_jwts.get(user_henrik_wright.email),
-    indie_jwt: user_jwts.get(user_indie_conway.email),
-  };
+  return [
+    user_jwts.get(user_rocco_mason.email),
+    user_jwts.get(user_maeve_berg.email),
+    user_jwts.get(user_henrik_wright.email),
+    user_jwts.get(user_indie_conway.email),
+  ];
 }
+
+// Deno.test(
+//   async function get_user_information(t: Deno.TestContext) {
+//     let sp: Deno.ChildProcess | null = null;
+//     const test_num = 1;
+//     await t.step("init", async () => {
+//       sp = await init_test(test_num);
+//     });
+//
+//     await t.step("test", async (_) => {
+//       await create_and_login_test_users(test_num);
+//     });
+//
+//     await t.step("cleanup", async () => await cleanup_test(test_num, sp));
+//   },
+// );
 
 Deno.test(
   async function invite_users_to_groups(t: Deno.TestContext) {
@@ -229,7 +245,7 @@ Deno.test(
     });
 
     await t.step("test", async (_) => {
-      const { rocco_jwt: owner_jwt, maeve_jwt, henrik_jwt } =
+      const [owner_jwt, maeve_jwt, henrik_jwt] =
         await create_and_login_test_users(test_num);
     });
 
