@@ -1,4 +1,4 @@
-import { Uuid } from "../uuid.ts";
+import { Uuid } from "../util/uuid.ts";
 
 export default interface AccountEntity {
   username: string;
@@ -11,7 +11,8 @@ export default interface AccountEntity {
   fk_owned_group_ids: Map<Uuid, AccountOwnerGroupData> | null;
   fk_managed_group_ids: Map<Uuid, AccountManagerGroupData> | null;
   fk_member_group_ids: Map<Uuid, AccountMemberGroupData> | null;
-  versionstamp?: string;
+  fk_pending_group_invites: Map<Uuid, string> | null;
+  readonly versionstamp?: string;
 }
 
 export interface AccountOwnerGroupData {

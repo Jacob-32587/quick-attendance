@@ -15,3 +15,7 @@ This is the API that the quick scan Fluter app uses authenticate user and save u
 the VSCode extension is recommended. The main advantage to VSCode is the support for symbol linking, meaning if you have an LSP drawio components can
 be directly linked to relevant pieces of code.
 
+## Testing
+- You must run the `test.sh` script (or the Deno test command contained within it) and all tests must be passing before merging.
+- If you make an endpoint you should probably create a new test, this is not a requirement though
+

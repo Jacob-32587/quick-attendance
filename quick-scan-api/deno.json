@@ -6,6 +6,8 @@
     "@babia/uuid-v7": "jsr:@babia/uuid-v7@^0.2.0",
     "@hono/hono": "jsr:@hono/hono@^4.7.2",
     "@std/assert": "jsr:@std/assert@1",
+    "@std/cli": "jsr:@std/cli@^1.0.14",
+    "@std/fs": "jsr:@std/fs@^1.0.14",
     "@std/uuid": "jsr:@std/uuid@^1.0.4",
     "effect": "npm:effect@^3.13.4",
     "zod": "npm:zod@^3.24.2"
