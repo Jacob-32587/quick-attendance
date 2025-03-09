@@ -9,13 +9,14 @@ Content-Type: application/json
     "username": "FooBar",
     "email": "foo@bar.com",
     "first_name": "Zab",
+    "last_name": "Baz",
     "password": "FooBarZaa"
 }
 
 ###
 # @name=GetAccount
 GET {{base}}/auth/account HTTP/1.1
-Authorization: Bearer {{auth_token}}
+# Authorization: Bearer {{auth_token}}
 
 ###
 # @name=LoginAccount

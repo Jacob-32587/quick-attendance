@@ -6,7 +6,8 @@ import { HTTPException } from "@hono/hono/http-exception";
 import { Uuid } from "./uuid.ts";
 import { group } from "./endpoints/group.ts";
 import { cli_flags } from "./cli_parse.ts";
-
+import { instanceOfJwtException } from "./util/jwt.ts";
+import { HTTPResponseError } from "@hono/hono/types";
 const app = new Hono().basePath("/quick-scan-api");
 
 export { app };
@@ -45,8 +46,20 @@ app.onError((err, ctx) => {
   // internal server error
   if (err instanceof HTTPException) {
     return ctx.json({ message: err.message, cause: err.cause }, err.status);
+  } else if (instanceOfJwtException(err)) {
+    return ctx.json(
+      { message: err.message, cause: err.cause },
+      HttpStatusCode.UNAUTHORIZED,
+    );
+  } else if ("getResponse" in err) {
+    // If an unauthorized error is being propagated we will allow it
+    if (err.getResponse().status === HttpStatusCode.UNAUTHORIZED) {
+      ctx.res = err.getResponse();
+      return ctx.res;
+    }
   }
-  console.timeLog("Uncaught error: ", err);
+
+  console.log("Uncaught error: ", err);
   return ctx.json(
     "internal server error",
     HttpStatusCode.INTERNAL_SERVER_ERROR,

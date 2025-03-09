@@ -5,6 +5,8 @@ import { AccountLoginPostReq } from "./models/account/account_login_post_req.ts"
 import { exists } from "jsr:@std/fs/exists";
 import { server } from "./main.ts";
 import { sleep } from "./util/sleep.ts";
+import { UnknownException } from "effect/Cause";
+import AccountGetModel from "./models/account/account_get_model.ts";
 
 const URL = (n: number) => `http://0.0.0.0:${8080 + n}/quick-scan-api`;
 const ACCOUNT_URL = (n: number) => `${URL(n)}/account`;
@@ -128,7 +130,7 @@ async function test_fetch(
   maybe_check_fn?: (
     res: Response,
     req?: RequestInit & { client?: Deno.HttpClient },
-  ) => Promise<boolean>,
+  ) => Promise<boolean> | undefined,
   consume_body?: boolean,
 ): Promise<Response> {
   if (consume_body === undefined && maybe_check_fn === undefined) {
@@ -213,10 +215,10 @@ async function create_and_login_test_users(test_num: number) {
   await Promise.all(login_user_promises);
 
   return [
-    user_jwts.get(user_rocco_mason.email) ?? assertFalse(true),
-    user_jwts.get(user_maeve_berg.email) ?? assertFalse(true),
-    user_jwts.get(user_henrik_wright.email) ?? assertFalse(true),
-    user_jwts.get(user_indie_conway.email) ?? assertFalse(true),
+    user_jwts.get(user_rocco_mason.email) ?? assertNever(),
+    user_jwts.get(user_maeve_berg.email) ?? assertNever(),
+    user_jwts.get(user_henrik_wright.email) ?? assertNever(),
+    user_jwts.get(user_indie_conway.email) ?? assertNever(),
   ];
 }
 
@@ -240,34 +242,56 @@ const cleanup_test_step = async (
   });
 };
 
+function assertNever(): never {
+  throw new UnknownException("This should never happen");
+}
+
 Deno.test(
   async function get_user_information(t: Deno.TestContext) {
     const test_num = 1;
     const sp = await init_test_step(test_num, t);
-
     await t.step("test", async (_) => {
+      // Create a login users
       const logged_in_users_jwts = await create_and_login_test_users(test_num);
-      for (const user of logged_in_users_jwts) {
+
+      const get_user_information_promises: Promise<Response>[] = [];
+
+      // Get account information for each user
+      for (const jwt of logged_in_users_jwts) {
+        get_user_information_promises.push(
+          test_fetch(
+            ACCOUNT_AUTH_URL(test_num),
+            {
+              headers: {
+                "Authorization": `Bearer ${jwt}`,
+              },
+              method: "GET",
+            },
+            undefined,
+            false,
+          ),
+        );
+      }
+
+      const user_data_responses = await Promise.all(
+        get_user_information_promises,
+      );
+
+      const zipped_data = user_data_responses.map((x, y) => ({
+        get_data_res: x,
+        user_data: user_array[y],
+      }));
+
+      // Ensure account information is correct
+      for (const { get_data_res, user_data } of zipped_data) {
+        const account = (await get_data_res.json()) as AccountGetModel;
+        assert(account?.email == user_data?.email);
+        assert(account?.username == user_data?.username);
+        assert(account?.first_name == user_data?.first_name);
+        assert(account?.last_name == user_data?.last_name);
       }
     });
 
     await cleanup_test_step(test_num, t, sp);
   },
 );
-
-// Deno.test(
-//   async function invite_users_to_groups(t: Deno.TestContext) {
-//     let sp: Deno.ChildProcess | null = null;
-//     const test_num = 2;
-//     await t.step("init", async () => {
-//       sp = await init_test(test_num);
-//     });
-//
-//     await t.step("test", async (_) => {
-//       const [owner_jwt, maeve_jwt, henrik_jwt] =
-//         await create_and_login_test_users(test_num);
-//     });
-//
-//     await t.step("cleanup", async () => await cleanup_test(test_num, sp));
-//   },
-// );
