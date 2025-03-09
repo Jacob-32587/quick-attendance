@@ -16,7 +16,7 @@ Content-Type: application/json
 ###
 # @name=GetAccount
 GET {{base}}/auth/account HTTP/1.1
-# Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{auth_token}}
 
 ###
 # @name=LoginAccount

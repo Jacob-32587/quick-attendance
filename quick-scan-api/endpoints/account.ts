@@ -9,6 +9,7 @@ import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts
 import { zValidator } from "npm:@hono/zod-validator";
 import * as dal from "../dal/account.ts";
 import { get_jwt_payload, QuickScanJwtPayload } from "../main.ts";
+import AccountGetModel from "../models/account/account_get_model.ts";
 
 export const jwt_secret: string =
   "ca882e5c-dfd5-45fc-bc04-0a2fb7326305--86d452ef-778d-4443-812d-b19398b4e67f";
@@ -30,7 +31,19 @@ account.post(
 );
 
 account.get(auth_account_base_path, async (ctx) => {
-  return ctx.json(await dal.get_account(get_jwt_payload(ctx).user_id));
+  const entity = await dal.get_account(get_jwt_payload(ctx).user_id);
+  return ctx.json({
+    username: entity.user_id,
+    email: entity.email,
+    first_name: entity.first_name,
+    last_name: entity.last_name,
+    user_id: entity.user_id,
+    fk_owned_group_ids: entity.fk_owned_group_ids,
+    fk_managed_group_ids: entity.fk_managed_group_ids,
+    fk_member_group_ids: entity.fk_member_group_ids,
+    fk_pending_group_ids: entity.fk_pending_group_invites,
+    versionstamp: entity.versionstamp,
+  } as AccountGetModel);
 });
 
 account.post(
