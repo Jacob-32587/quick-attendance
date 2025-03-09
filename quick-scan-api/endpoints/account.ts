@@ -33,7 +33,7 @@ account.post(
 account.get(auth_account_base_path, async (ctx) => {
   const entity = await dal.get_account(get_jwt_payload(ctx).user_id);
   return ctx.json({
-    username: entity.user_id,
+    username: entity.username,
     email: entity.email,
     first_name: entity.first_name,
     last_name: entity.last_name,
@@ -63,7 +63,9 @@ account.post(
       aud: "quick-scan-client",
       user_id: entity.user_id,
       exp: exp,
-      nbf: iat,
+      // This is necessary so requests can be made within the same second
+      // the token was issued at.
+      nbf: iat - 1,
       iat: iat,
     } as QuickScanJwtPayload;
     const token = await sign(payload, jwt_secret, jwt_alg);

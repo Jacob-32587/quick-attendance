@@ -78,7 +78,7 @@ async function init_test(test_num: number) {
   const c_p = cmd.spawn();
 
   // Wait for the server to start
-  await sleep(2000);
+  await sleep(4000);
 
   // Attempt to get a response from the server, if the server takes more than 5 seconds
   // to respond something is wrong.
@@ -110,7 +110,7 @@ async function cleanup_test(
   // If there is a server process kill it and wait for it to end
   if (server_process != null) {
     server_process.kill();
-    await sleep(2000);
+    await sleep(4000);
   }
 }
 
@@ -143,12 +143,14 @@ async function test_fetch(
 
   if (!ret.ok || !check_fn) {
     console.log("Request", init);
+    // This could consume the body, in-case it doesn't attempt to anyway
     console.log(ret);
     try {
-      console.log(await ret.json());
-    } catch {
-      console.log(ret.text());
-    }
+      console.log(await ret.text());
+      // We don't care if this errors, just need to make sure resources are
+      // cleaned up
+      // deno-lint-ignore no-empty
+    } catch {}
   }
 
   try {

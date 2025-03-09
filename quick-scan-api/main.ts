@@ -46,14 +46,11 @@ app.onError((err, ctx) => {
   // internal server error
   if (err instanceof HTTPException) {
     return ctx.json({ message: err.message, cause: err.cause }, err.status);
-  } else if (instanceOfJwtException(err)) {
-    return ctx.json(
-      { message: err.message, cause: err.cause },
-      HttpStatusCode.UNAUTHORIZED,
-    );
   } else if ("getResponse" in err) {
     // If an unauthorized error is being propagated we will allow it
     if (err.getResponse().status === HttpStatusCode.UNAUTHORIZED) {
+      console.log(err.getResponse());
+      console.log(err);
       ctx.res = err.getResponse();
       return ctx.res;
     }
