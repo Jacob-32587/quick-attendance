@@ -8,7 +8,7 @@ import {
 import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
 import { zValidator } from "npm:@hono/zod-validator";
 import * as dal from "../dal/account.ts";
-import { get_jwt_payload, QuickScanJwtPayload } from "../main.ts";
+import { get_jwt_payload, QuickAttendanceJwtPayload } from "../main.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
 import { account_put_req_val } from "../models/account/account_put_req.ts";
 
@@ -69,16 +69,16 @@ account.post(
     const exp = iat + 86400 * 7;
     // Create a JWT token that will last a week
     const payload = {
-      iss: "quick-scan-api",
+      iss: "quick-attendance-api",
       sub: "user-auth",
-      aud: "quick-scan-client",
+      aud: "quick-attendance-client",
       user_id: entity.user_id,
       exp: exp,
       // This is necessary so requests can be made within the same second
       // the token was issued at.
       nbf: iat,
       iat: iat,
-    } as QuickScanJwtPayload;
+    } as QuickAttendanceJwtPayload;
     const token = await sign(payload, jwt_secret, jwt_alg);
 
     return ctx.json({ jwt: token } as AccountLoginPostRes);

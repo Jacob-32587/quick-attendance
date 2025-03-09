@@ -211,9 +211,9 @@ export async function invite_accounts_to_group(
       [[
         group_id,
         await sign({
-          iss: "quick-scan-api",
+          iss: "quick-attendance-api",
           sub: "group-invite",
-          aud: "quick-scan-client",
+          aud: "quick-attendance-client",
           username: invitees_accounts[i].username,
           user_id: invitees_accounts[i].user_id,
           owner_id: owner_id,

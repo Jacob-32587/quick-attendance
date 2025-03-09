@@ -3,7 +3,8 @@ import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts
 import { AccountLoginPostReq } from "../models/account/account_login_post_req.ts";
 import { assertNever, test_fetch } from "../util/testing.ts";
 
-export const URL = (n: number) => `http://0.0.0.0:${8080 + n}/quick-scan-api`;
+export const URL = (n: number) =>
+  `http://0.0.0.0:${8080 + n}/quick-attendance-api`;
 export const ACCOUNT_URL = (n: number) => `${URL(n)}/account`;
 export const ACCOUNT_AUTH_URL = (n: number) => `${URL(n)}/auth/account`;
 export const GROUP_URL = (n: number) => `${URL(n)}/group`;

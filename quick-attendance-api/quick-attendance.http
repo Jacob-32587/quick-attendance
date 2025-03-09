@@ -1,4 +1,4 @@
-@base=http://0.0.0.0:8080/quick-scan-api
+@base=http://0.0.0.0:8080/quick-attendance-api
 
 ###
 # @name=CreateAccount

@@ -1,5 +1,5 @@
-# Quick Scan API
-This is the API that the quick scan Fluter app uses authenticate user and save user data.
+# Quick Attendance API
+This is the API that the quick attendance Fluter app uses authenticate user and save user data.
 
 ## Local development
 - Install [Deno](https://deno.com/)
@@ -8,7 +8,7 @@ This is the API that the quick scan Fluter app uses authenticate user and save u
 
 ## Endpoint documentation
 - We are using `.http` files for endpoint documentation following the [IntelliJ](https://www.jetbrains.com/help/idea/exploring-http-syntax.html#) standard.
-- When adding an endpoint you should provide at least 1 working test in the `quick-scan.http` file
+- When adding an endpoint you should provide at least 1 working test in the `quick-attendance.http` file
 
 ## ERD
 - The ERD diagram is contained within the `schema.drawio` file. This file can be viewed/modified with the standalone drawio software, however
