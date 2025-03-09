@@ -1,4 +1,5 @@
 import { Context, Hono } from "npm:hono";
+import { cors } from "npm:hono/cors";
 import { jwt } from "npm:hono/jwt";
 import HttpStatusCode from "./util/http_status_code.ts";
 import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
@@ -38,6 +39,8 @@ app.use(
 export function get_jwt_payload(ctx: Context) {
   return ctx.get("jwtPayload") as QuickScanJwtPayload;
 }
+
+app.use("*", cors());
 
 app.onError((err, ctx) => {
   // Allow explicit HTTPExceptions to propagate through, otherwise return a generic

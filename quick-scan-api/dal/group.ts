@@ -13,7 +13,6 @@ import {
   get_accounts,
   get_accounts_by_usernames,
 } from "./account.ts";
-import { HTTPException } from "@hono/hono/http-exception";
 import HttpStatusCode from "../util/http_status_code.ts";
 import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
 

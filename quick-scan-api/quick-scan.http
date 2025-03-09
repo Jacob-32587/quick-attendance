@@ -78,3 +78,7 @@ Content-Type: application/json
     "usernames": ["FooBarZaa"],
     "group_id": "0195795b-9a9a-74ac-82be-df55ca304a7f"
 }
+
+###
+# @name=CorsTest
+OPTIONS {{base}}/account HTTP/1.1
