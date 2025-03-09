@@ -4,7 +4,7 @@ import { GroupPostReq } from "../models/group/group_post_req.ts";
 import { GroupListGetRes } from "../models/group/group_list_res.ts";
 import { GroupSparseGetModel } from "../models/group/group_sparse_get_model.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
-import { new_uuid, Uuid } from "../uuid.ts";
+import { new_uuid, Uuid } from "../util/uuid.ts";
 import AccountEntity, {
   AccountOwnerGroupData,
 } from "../entities/account_entity.ts";
@@ -14,7 +14,7 @@ import {
   get_accounts_by_usernames,
 } from "./account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
-import HttpStatusCode from "../http_status_code.ts";
+import HttpStatusCode from "../util/http_status_code.ts";
 import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
 
 /**
@@ -165,7 +165,7 @@ export async function accounts_for_group_invite(
       }'`,
   );
 
-  kv.set(["group", group_id], group_entity.value);
+  tran.set(["group", group_id], group_entity.value);
 
   return { owner_entity, account_entities };
 }

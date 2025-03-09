@@ -1,9 +1,7 @@
-import { assert, assertFalse } from "@std/assert";
+import { assert } from "@std/assert";
 import { AccountPostReq } from "./models/account/account_post_req.ts";
 import { AccountLoginPostRes } from "./models/account/account_login_post_res.ts";
 import { AccountLoginPostReq } from "./models/account/account_login_post_req.ts";
-import { sleep } from "./util/sleep.ts";
-import { UnknownException } from "effect/Cause";
 import AccountGetModel from "./models/account/account_get_model.ts";
 import { GroupPostReq } from "./models/group/group_post_req.ts";
 import { GroupInvitePutReq } from "./models/group/group_invite_put_req.ts";
@@ -176,7 +174,7 @@ Deno.test(
       const [rocco_jwt, maeve_jwt, henrik_jwt, indie_jwt] =
         await create_and_login_test_users(test_num);
 
-      const owner = rocco_jwt;
+      const owner_jwt = rocco_jwt;
       const invite_members = [maeve_jwt, henrik_jwt, indie_jwt].map((x, y) => ({
         jwt: x,
         user_data: user_array[y + 1],
@@ -189,7 +187,7 @@ Deno.test(
       ///////////////////////////////////////////////////////////////
       await test_fetch(GROUP_AUTH_URL(test_num), {
         headers: {
-          "Authorization": `Bearer ${rocco_jwt}`,
+          "Authorization": `Bearer ${owner_jwt}`,
           "content-type": "application/json",
         },
         method: "POST",
@@ -200,11 +198,11 @@ Deno.test(
         } as GroupPostReq),
       });
 
-      const rocco_group_list_res = await test_fetch(
-        GROUP_AUTH_URL(test_num),
+      const owner_grou_list_res = await test_fetch(
+        GROUP_AUTH_URL(test_num) + "/list",
         {
           headers: {
-            "Authorization": `Bearer ${rocco_jwt}`,
+            "Authorization": `Bearer ${owner_jwt}`,
           },
           method: "GET",
         },
@@ -212,26 +210,26 @@ Deno.test(
         false,
       );
 
-      const rocco_group_list =
-        (await rocco_group_list_res.json()) as GroupListGetRes;
+      const owner_group_list =
+        (await owner_grou_list_res.json()) as GroupListGetRes;
 
-      assert(rocco_group_list.owned_groups.length === 1);
+      assert(owner_group_list.owned_groups.length === 1);
       assert(
-        rocco_group_list.owned_groups[0].owner_username ===
+        owner_group_list.owned_groups[0].owner_username ===
           user_rocco_mason.username,
       );
-      assert(rocco_group_list.managed_groups.length === 0);
-      assert(rocco_group_list.memeber_groups.length === 0);
+      assert(owner_group_list.managed_groups.length === 0);
+      assert(owner_group_list.memeber_groups.length === 0);
 
       await test_fetch(GROUP_AUTH_URL(test_num) + "/invite", {
         headers: {
-          "Authorization": `Bearer ${rocco_jwt}`,
+          "Authorization": `Bearer ${owner_jwt}`,
           "content-type": "application/json",
         },
         method: "PUT",
         body: JSON.stringify({
           "usernames": invite_members.map((x) => x.user_data.username),
-          "group_id": rocco_group_list.owned_groups[0].group_id,
+          "group_id": owner_group_list.owned_groups[0].group_id,
         } as GroupInvitePutReq),
       });
     });

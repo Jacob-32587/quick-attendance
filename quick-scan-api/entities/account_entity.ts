@@ -1,5 +1,4 @@
-import { GroupInviteJwtPayload } from "../models/group/group_invite_jwt_payload.ts";
-import { Uuid } from "../uuid.ts";
+import { Uuid } from "../util/uuid.ts";
 
 export default interface AccountEntity {
   username: string;

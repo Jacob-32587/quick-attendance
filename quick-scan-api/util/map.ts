@@ -22,7 +22,7 @@ export function add_to_maybe_map<K, V>(
   err_reason?: (k: K, v: V) => string,
 ) {
   if (m === null || m === undefined) {
-    m = new Map(kvs);
+    m = new Map();
   }
 
   for (let i = 0; i < kvs.length; i++) {
@@ -56,7 +56,7 @@ export function add_to_maybe_set<K>(
   err_reason?: (key: K) => string,
 ) {
   if (s === null || s === undefined) {
-    s = new Set(ks);
+    s = new Set();
   }
 
   for (let i = 0; i < ks.length; i++) {

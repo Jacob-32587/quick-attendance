@@ -1,5 +1,5 @@
 import { Hono } from "npm:hono";
-import { Uuid } from "../uuid.ts";
+import { Uuid } from "../util/uuid.ts";
 import { sign } from "npm:hono/jwt";
 import { account_post_req_val } from "../models/account/account_post_req.ts";
 import {

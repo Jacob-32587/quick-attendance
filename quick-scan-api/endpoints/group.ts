@@ -4,7 +4,7 @@ import * as dal from "../dal/group.ts";
 import * as account_dal from "../dal/account.ts";
 import { group_post_req } from "../models/group/group_post_req.ts";
 import { get_jwt_payload } from "../main.ts";
-import HttpStatusCode from "../http_status_code.ts";
+import HttpStatusCode from "../util/http_status_code.ts";
 import { group_invite_put_req } from "../models/group/group_invite_put_req.ts";
 import kv, { DbErr } from "../dal/db.ts";
 

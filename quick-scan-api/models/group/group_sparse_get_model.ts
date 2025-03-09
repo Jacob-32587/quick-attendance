@@ -1,4 +1,4 @@
-import { Uuid } from "../../uuid.ts";
+import { Uuid } from "../../util/uuid.ts";
 
 export interface GroupSparseGetModel {
   group_name: string;

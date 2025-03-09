@@ -1,13 +1,11 @@
 import { Context, Hono } from "npm:hono";
 import { jwt } from "npm:hono/jwt";
-import HttpStatusCode from "./http_status_code.ts";
+import HttpStatusCode from "./util/http_status_code.ts";
 import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
-import { Uuid } from "./uuid.ts";
+import { Uuid } from "./util/uuid.ts";
 import { group } from "./endpoints/group.ts";
-import { cli_flags } from "./cli_parse.ts";
-import { instanceOfJwtException } from "./util/jwt.ts";
-import { HTTPResponseError } from "@hono/hono/types";
+import { cli_flags } from "./util/cli_parse.ts";
 const app = new Hono().basePath("/quick-scan-api");
 
 export { app };
@@ -68,9 +66,6 @@ app.get("/", (ctx: Context) => {
 });
 app.route("", account);
 app.route("", group);
-
-console.log(cli_flags["test-number"]);
-console.log(parseInt(cli_flags["test-number"]));
 
 export const server = Deno.serve({
   port: parseInt(cli_flags["test-number"]) + 8080,

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { val_uuid_zod } from "../../uuid.ts";
+import { val_uuid_zod } from "../../util/uuid.ts";
 
 export const group_invite_put_req = z.object({
   usernames: z.array(z.string().max(32).min(2)).nonempty(),

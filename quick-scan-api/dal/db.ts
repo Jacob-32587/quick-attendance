@@ -1,8 +1,8 @@
 import { ContentfulStatusCode } from "@hono/hono/utils/http-status";
-import HttpStatusCode from "../http_status_code.ts";
+import HttpStatusCode from "../util/http_status_code.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { Match } from "effect";
-import { cli_flags } from "./../cli_parse.ts";
+import { cli_flags } from "./../util/cli_parse.ts";
 
 // Then wrapper for errors specific to the database
 export class DbErr {

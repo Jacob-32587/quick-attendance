@@ -1,5 +1,5 @@
 import { QuickScanJwtPayload } from "../../main.ts";
-import { Uuid } from "../../uuid.ts";
+import { Uuid } from "../../util/uuid.ts";
 
 export interface GroupInviteJwtPayload extends QuickScanJwtPayload {
   iss: "quick-scan-api";
