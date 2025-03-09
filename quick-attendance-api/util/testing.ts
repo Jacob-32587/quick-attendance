@@ -37,10 +37,9 @@ async function init_test(test_num: number, base_url: string) {
 
   if (!ok_health_check) {
     console.log(`Failed to launch server process for test ${test_num}`);
-    assertFalse(true);
+    assertNever();
   }
   res.body?.cancel();
-  console.log(`Failed to launch server process for test ${test_num}`);
   return c_p;
 }
 

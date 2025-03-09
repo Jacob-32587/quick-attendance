@@ -10,6 +10,7 @@ import { zValidator } from "npm:@hono/zod-validator";
 import * as dal from "../dal/account.ts";
 import { get_jwt_payload, QuickScanJwtPayload } from "../main.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
+import { account_put_req_val } from "../models/account/account_put_req.ts";
 
 export const jwt_secret: string =
   "ca882e5c-dfd5-45fc-bc04-0a2fb7326305--86d452ef-778d-4443-812d-b19398b4e67f";
@@ -26,6 +27,16 @@ account.post(
   async (ctx) => {
     const req = ctx.req.valid("json");
     await dal.create_account(req);
+    return ctx.text("ok");
+  },
+);
+
+account.put(
+  auth_account_base_path,
+  zValidator("json", account_put_req_val),
+  async (ctx) => {
+    const req = ctx.req.valid("json");
+    await dal.update_account(get_jwt_payload(ctx).user_id, req);
     return ctx.text("ok");
   },
 );

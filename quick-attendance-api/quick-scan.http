@@ -14,6 +14,19 @@ Content-Type: application/json
 }
 
 ###
+# @name=UpdateAccount
+PUT {{base}}/auth/account HTTP/1.1
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+    "username": "Normal Name",
+    "email": "normal@guy.com",
+    "first_name": "Normal",
+    "last_name": "Man"
+}
+
+###
 # @name=CreateAccount2
 POST {{base}}/account HTTP/1.1
 Content-Type: application/json

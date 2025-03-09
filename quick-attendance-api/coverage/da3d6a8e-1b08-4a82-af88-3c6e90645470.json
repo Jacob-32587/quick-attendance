@@ -1,0 +1,16 @@
+{
+  "scriptId": "349",
+  "url": "file:///home/j32587/Code/Dart/quick-attendance/quick-attendance-api/util/sleep.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 0, "endOffset": 95, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "sleep",
+      "ranges": [{ "startOffset": 7, "endOffset": 94, "count": 0 }],
+      "isBlockCoverage": false
+    }
+  ]
+}

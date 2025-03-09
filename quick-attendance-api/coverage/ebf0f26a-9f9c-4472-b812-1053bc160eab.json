@@ -1,0 +1,71 @@
+{
+  "scriptId": "321",
+  "url": "file:///home/j32587/Code/Dart/quick-attendance/quick-attendance-api/util/testing.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 0, "endOffset": 4232, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "init_test",
+      "ranges": [
+        { "startOffset": 441, "endOffset": 1398, "count": 1 },
+        { "startOffset": 924, "endOffset": 1308, "count": 0 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "cleanup_test",
+      "ranges": [
+        { "startOffset": 1713, "endOffset": 1985, "count": 1 },
+        { "startOffset": 1928, "endOffset": 1983, "count": 0 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "test_fetch",
+      "ranges": [
+        { "startOffset": 2758, "endOffset": 3697, "count": 4 },
+        { "startOffset": 2925, "endOffset": 2962, "count": 0 },
+        { "startOffset": 3002, "endOffset": 3057, "count": 0 },
+        { "startOffset": 3070, "endOffset": 3097, "count": 0 },
+        { "startOffset": 3099, "endOffset": 3696, "count": 0 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 3048, "endOffset": 3056, "count": 0 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "init_test_step",
+      "ranges": [{ "startOffset": 3728, "endOffset": 4016, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        { "startOffset": 3801, "endOffset": 3862, "count": 1 },
+        { "startOffset": 3858, "endOffset": 3861, "count": 0 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "cleanup_test_step",
+      "ranges": [{ "startOffset": 4051, "endOffset": 4185, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 4116, "endOffset": 4181, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "assertNever",
+      "ranges": [{ "startOffset": 4194, "endOffset": 4231, "count": 0 }],
+      "isBlockCoverage": false
+    }
+  ]
+}

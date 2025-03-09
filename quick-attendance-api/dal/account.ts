@@ -12,6 +12,7 @@ import { add_to_maybe_map } from "../util/map.ts";
 import { decode, sign } from "npm:hono/jwt";
 import { jwt_secret } from "../endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
+import { AccountPutReq } from "../models/account/account_put_req.ts";
 
 function merge_password_and_salt(password: string, salt: Uint8Array) {
   // Put the UTF-8 char code points into an array
@@ -229,4 +230,23 @@ export async function invite_accounts_to_group(
       invitees_accounts[i],
     );
   }
+}
+
+export async function update_account(user_id: Uuid, req: AccountPutReq) {
+  const account_entity = await get_account(user_id);
+  const tran = kv.atomic()
+    .delete(["account_by_username", account_entity.username])
+    .delete(["account_by_email", account_entity.email])
+    .set(["account_by_username", req.username], ["account", user_id])
+    .set(["account_by_email", req.email], ["account", user_id]);
+
+  account_entity.username = req.username;
+  account_entity.email = req.email;
+  account_entity.first_name = req.first_name;
+  account_entity.last_name = req.last_name;
+  DbErr.err_on_commit_async(
+    tran.set(["account", user_id], account_entity).commit(),
+    "Unable to update account",
+  );
+  return account_entity;
 }
