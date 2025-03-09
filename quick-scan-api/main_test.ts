@@ -1,12 +1,19 @@
-import { assert, assertEquals, assertFalse } from "@std/assert";
+import { assert, assertFalse } from "@std/assert";
 import { AccountPostReq } from "./models/account/account_post_req.ts";
 import { AccountLoginPostRes } from "./models/account/account_login_post_res.ts";
 import { AccountLoginPostReq } from "./models/account/account_login_post_req.ts";
-import { exists } from "jsr:@std/fs/exists";
-import { server } from "./main.ts";
 import { sleep } from "./util/sleep.ts";
 import { UnknownException } from "effect/Cause";
 import AccountGetModel from "./models/account/account_get_model.ts";
+import { GroupPostReq } from "./models/group/group_post_req.ts";
+import { GroupInvitePutReq } from "./models/group/group_invite_put_req.ts";
+import { GroupListGetRes } from "./models/group/group_list_res.ts";
+import {
+  assertNever,
+  cleanup_test_step,
+  init_test_step,
+  test_fetch,
+} from "./util/testing.ts";
 
 const URL = (n: number) => `http://0.0.0.0:${8080 + n}/quick-scan-api`;
 const ACCOUNT_URL = (n: number) => `${URL(n)}/account`;
@@ -51,121 +58,6 @@ const user_array = [
   user_henrik_wright,
   user_indie_conway,
 ];
-
-/**
- * @description This will spawn and instance of a self contained server with it's own database.
- * If the server fails to start this function will throw. You must ensure that test numbers are
- * unique between individuals tests.
- * @param test_num - The unique test number
- * @returns Handle to the child process (self contained server instance)
- */
-async function init_test(test_num: number) {
-  // Create directory for deno-kv SQL lite files and spawn a server instance
-  Deno.mkdir(`./test-${test_num}`);
-  const cmd = new Deno.Command(Deno.execPath(), {
-    args: [
-      "run",
-      "--allow-net",
-      "--unstable-kv",
-      "--allow-read",
-      "--allow-write",
-      "main.ts",
-      "--test-number",
-      test_num.toString(),
-    ],
-  });
-
-  const c_p = cmd.spawn();
-
-  // Wait for the server to start
-  await sleep(4000);
-
-  // Attempt to get a response from the server, if the server takes more than 5 seconds
-  // to respond something is wrong.
-  const res = await fetch(URL(test_num), { signal: AbortSignal.timeout(5000) });
-
-  const ok_health_check = res.ok;
-
-  if (!ok_health_check) {
-    console.log(`Failed to launch server process for test ${test_num}`);
-    assertFalse(true);
-  }
-  res.body?.cancel();
-  console.log(`Failed to launch server process for test ${test_num}`);
-  return c_p;
-}
-
-/**
- * @description Cleanup that must be called before the program finishes execution. This
- * ensures all ephemeral data is deleted and the server instance is killed.
- * @param test_num - The test number to be cleaned up
- * @param server_process - Handle to the child process (self contained server instance)
- */
-async function cleanup_test(
-  test_num: number,
-  server_process: Deno.ChildProcess | null,
-) {
-  Deno.remove(`./test-${test_num}`, { recursive: true });
-
-  // If there is a server process kill it and wait for it to end
-  if (server_process != null) {
-    server_process.kill();
-    await sleep(4000);
-  }
-}
-
-/**
- * @description Thin wrapper around the {@link fetch} function, if you would like to
- * know more about other parameters check there. This function encapsulates receptive
- * steps done after each fetch call, such as ensuring an OK response.
- * @param maybe_check_fn - Optional check function that allows for additional logic to be checked by {@link assert}.
- * @param consume_body - Specify if the body should be consumed by the function on successful requests. Note that on
- * failing requests the body will always be consumed. This will default not true if a check function is not specified,
- * if one is then false. It is assumed that that check function will need to read the body, if
- * this is not the case this parameter can be set to true manually.
- */
-async function test_fetch(
-  input: RequestInfo | URL,
-  init?: RequestInit & { client?: Deno.HttpClient },
-  maybe_check_fn?: (
-    res: Response,
-    req?: RequestInit & { client?: Deno.HttpClient },
-  ) => Promise<boolean> | undefined,
-  consume_body?: boolean,
-): Promise<Response> {
-  if (consume_body === undefined && maybe_check_fn === undefined) {
-    consume_body = true;
-  } else {
-    consume_body = false;
-  }
-  const ret = await fetch(input, init);
-  const check_fn = await (maybe_check_fn ?? (() => true))(ret, init);
-
-  if (!ret.ok || !check_fn) {
-    console.log("Request", init);
-    // This could consume the body, in-case it doesn't attempt to anyway
-    console.log(ret);
-    try {
-      console.log(await ret.text());
-      // We don't care if this errors, just need to make sure resources are
-      // cleaned up
-      // deno-lint-ignore no-empty
-    } catch {}
-  }
-
-  try {
-    assert(ret.ok);
-    assert(check_fn);
-  } finally {
-    // Body is not being handled by the user or internally, cancel
-    // any streaming that may be occuring
-    if (consume_body && ret.ok && check_fn) {
-      await ret.body?.cancel();
-    }
-  }
-
-  return ret;
-}
 
 async function create_and_login_test_users(test_num: number) {
   const create_user_promises: Promise<Response>[] = [];
@@ -224,34 +116,11 @@ async function create_and_login_test_users(test_num: number) {
   ];
 }
 
-const init_test_step = async (test_num: number, t: Deno.TestContext) => {
-  let sp: Deno.ChildProcess | null = null;
-  await t.step("init", async () => {
-    sp = await init_test(test_num);
-  });
-  // It seems that typescript gets really confused here as of deno 2.2.3
-  // sp is typed as only `null`. This is obvisouly not the case
-  return (sp as Deno.ChildProcess | null);
-};
-
-const cleanup_test_step = async (
-  test_num: number,
-  t: Deno.TestContext,
-  server_process: Deno.ChildProcess | null,
-) => {
-  await t.step("cleanup", async () => {
-    await cleanup_test(test_num, server_process);
-  });
-};
-
-function assertNever(): never {
-  throw new UnknownException("This should never happen");
-}
-
+// Ensure test information can be retrieved as is correct
 Deno.test(
   async function get_user_information(t: Deno.TestContext) {
     const test_num = 1;
-    const sp = await init_test_step(test_num, t);
+    const sp = await init_test_step(test_num, t, URL(test_num));
     await t.step("test", async (_) => {
       // Create a login users
       const logged_in_users_jwts = await create_and_login_test_users(test_num);
@@ -294,6 +163,78 @@ Deno.test(
       }
     });
 
+    await cleanup_test_step(test_num, t, sp);
+  },
+);
+
+Deno.test(
+  async function invite_to_group_and_accept(t: Deno.TestContext) {
+    const test_num = 2;
+    const sp = await init_test_step(test_num, t, URL(test_num));
+    await t.step("test", async (_) => {
+      // Create a login users
+      const [rocco_jwt, maeve_jwt, henrik_jwt, indie_jwt] =
+        await create_and_login_test_users(test_num);
+
+      const owner = rocco_jwt;
+      const invite_members = [maeve_jwt, henrik_jwt, indie_jwt].map((x, y) => ({
+        jwt: x,
+        user_data: user_array[y + 1],
+      }));
+      const accept_members = [maeve_jwt, henrik_jwt];
+      const deny_member = indie_jwt;
+
+      /////////////////////////////////////////////////////////////////
+      // Rocco creates a group and invites Maeve, Henrik, and Indie //
+      ///////////////////////////////////////////////////////////////
+      await test_fetch(GROUP_AUTH_URL(test_num), {
+        headers: {
+          "Authorization": `Bearer ${rocco_jwt}`,
+          "content-type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({
+          "group_name": "Rocco's group of friends",
+          "group_description":
+            "Rocco's close group of friends, I want to track when I'm with my friends.",
+        } as GroupPostReq),
+      });
+
+      const rocco_group_list_res = await test_fetch(
+        GROUP_AUTH_URL(test_num),
+        {
+          headers: {
+            "Authorization": `Bearer ${rocco_jwt}`,
+          },
+          method: "GET",
+        },
+        undefined,
+        false,
+      );
+
+      const rocco_group_list =
+        (await rocco_group_list_res.json()) as GroupListGetRes;
+
+      assert(rocco_group_list.owned_groups.length === 1);
+      assert(
+        rocco_group_list.owned_groups[0].owner_username ===
+          user_rocco_mason.username,
+      );
+      assert(rocco_group_list.managed_groups.length === 0);
+      assert(rocco_group_list.memeber_groups.length === 0);
+
+      await test_fetch(GROUP_AUTH_URL(test_num) + "/invite", {
+        headers: {
+          "Authorization": `Bearer ${rocco_jwt}`,
+          "content-type": "application/json",
+        },
+        method: "PUT",
+        body: JSON.stringify({
+          "usernames": invite_members.map((x) => x.user_data.username),
+          "group_id": rocco_group_list.owned_groups[0].group_id,
+        } as GroupInvitePutReq),
+      });
+    });
     await cleanup_test_step(test_num, t, sp);
   },
 );

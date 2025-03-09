@@ -11,8 +11,8 @@ export const unique_id_settings = z.object({
 
 export const group_post_req = z.object({
   group_name: z.string().min(4).max(64),
-  group_description: z.string().max(4096).nullable(),
-  unique_id_settings: unique_id_settings.nullable(),
+  group_description: z.string().max(4096).nullable().default(null),
+  unique_id_settings: unique_id_settings.nullable().default(null),
 });
 
 export type UniqueIdSettings = z.infer<typeof unique_id_settings>;

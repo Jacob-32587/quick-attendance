@@ -54,7 +54,7 @@ account.post(
     const req = ctx.req.valid("json");
     const entity = await dal.login_account(req);
 
-    const iat = Math.round(Date.now() / 1000);
+    const iat = Math.round(Date.now() / 1000) - 1;
     const exp = iat + 86400 * 7;
     // Create a JWT token that will last a week
     const payload = {
@@ -65,7 +65,7 @@ account.post(
       exp: exp,
       // This is necessary so requests can be made within the same second
       // the token was issued at.
-      nbf: iat - 1,
+      nbf: iat,
       iat: iat,
     } as QuickScanJwtPayload;
     const token = await sign(payload, jwt_secret, jwt_alg);
