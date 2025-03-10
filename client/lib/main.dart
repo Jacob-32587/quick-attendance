@@ -9,6 +9,7 @@ import 'package:quick_attendance/pages/auth/auth_gate.dart';
 import 'package:quick_attendance/pages/auth/login.dart';
 import 'package:quick_attendance/pages/auth/signup.dart';
 import 'package:quick_attendance/pages/home/home.dart';
+import 'package:quick_attendance/pages/qr_page.dart';
 
 // Every flutter app starts with the main function.
 void main() {
@@ -51,8 +52,9 @@ class MyApp extends StatelessWidget {
         GetPage(name: "/signup", page: () => Signup()),
         GetPage(name: "/login", page: () => Login()),
         GetPage(name: "/group/:groupId", page: () => GroupPage()),
+        GetPage(name: "/group/:groupId/qr", page: () => GroupPage()),
       ],
-      home: AuthGate(),
+      home: HomePage(),
     );
   }
 }
