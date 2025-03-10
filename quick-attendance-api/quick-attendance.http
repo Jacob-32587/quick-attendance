@@ -60,6 +60,22 @@ Content-Type: application/json
 %}
 
 ###
+# @name=LoginAccount2
+POST {{base}}/account/login HTTP/1.1
+Content-Type: application/json
+
+{
+    "email": "foo@barzaa.com",
+    "password": "ZabBar123"
+}
+
+# @lang=lua
+> {%
+    local body = vim.json.decode(response.body)
+    client.global.set("auth_token", body.jwt);
+%}
+
+###
 # @name=CreateGroup1
 POST {{base}}/auth/group HTTP/1.1
 Authorization: Bearer {{auth_token}}
@@ -69,7 +85,7 @@ Content-Type: application/json
     "group_name": "FooBarGroup",
     "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
     "unique_id_settings": {
-        "prompt_message": "You must enter you unique foo or bar identification. Remember this will be exactly 8 characters, if you are a manager this is not required.",
+        "prompt_message": "You must enter your unique foo or bar identification. Remember this will be exactly 8 characters, if you are a manager this is not required.",
         "min_length": 8,
         "max_length": 8,
         "required_for_managers": false
