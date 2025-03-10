@@ -5,11 +5,9 @@ import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/home_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/pages/attendance_group/group_page.dart';
-import 'package:quick_attendance/pages/auth/auth_gate.dart';
 import 'package:quick_attendance/pages/auth/login.dart';
 import 'package:quick_attendance/pages/auth/signup.dart';
 import 'package:quick_attendance/pages/home/home.dart';
-import 'package:quick_attendance/pages/qr_page.dart';
 
 // Every flutter app starts with the main function.
 void main() {
