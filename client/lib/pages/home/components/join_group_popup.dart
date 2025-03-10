@@ -5,7 +5,7 @@ import 'package:quick_attendance/controllers/profile_controller.dart';
 /// Based on the width of the screen, shows a modal or popover
 /// which contains a form to join a group
 void showJoinGroupPopup(BuildContext context) {
-  final isDesktop = MediaQuery.of(context).size.width > 600;
+  final isDesktop = GetPlatform.isDesktop;
   if (isDesktop) {
     // Show modal for desktop
     showDialog(

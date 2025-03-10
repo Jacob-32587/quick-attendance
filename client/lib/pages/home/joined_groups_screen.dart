@@ -7,9 +7,11 @@ import 'package:quick_attendance/pages/home/components/group_list.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 import 'package:quick_attendance/pages/home/components/join_group_popup.dart';
 
-class JoinedGroupsScreen extends StatefulWidget
+class JoinedGroupsScreen extends StatelessWidget
     implements HasFloatingActionButton {
-  const JoinedGroupsScreen({super.key});
+  final ProfileController profileController = Get.find();
+
+  JoinedGroupsScreen({super.key});
 
   @override
   Widget buildFAB(BuildContext context) {
@@ -22,12 +24,10 @@ class JoinedGroupsScreen extends StatefulWidget
     );
   }
 
-  @override
-  State<StatefulWidget> createState() => _JoinedGroupsScreenState();
-}
+  void navigateToGroup(String groupId) {
+    Get.toNamed("/group/$groupId");
+  }
 
-class _JoinedGroupsScreenState extends State<JoinedGroupsScreen> {
-  final ProfileController profileController = Get.find();
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -60,15 +60,14 @@ class _JoinedGroupsScreenState extends State<JoinedGroupsScreen> {
                 Obx(
                   () => IconButton(
                     icon: Icon(
-                      profileController.prefersListView.value
+                      profileController.prefersListView
                           ? Icons.grid_view
                           : Icons.list,
                       color: Colors.lightBlue,
                     ),
                     onPressed: () {
-                      profileController.setListViewPreference(
-                        !profileController.prefersListView.value,
-                      );
+                      profileController.prefersListView =
+                          !profileController.prefersListView;
                     },
                   ),
                 ),
@@ -79,7 +78,7 @@ class _JoinedGroupsScreenState extends State<JoinedGroupsScreen> {
             Obx(
               () => GroupList(
                 groups: profileController.joinedGroups,
-                isListView: profileController.prefersListView.value,
+                isListView: profileController.prefersListView,
               ),
             ),
             SizedBox(height: 24),
