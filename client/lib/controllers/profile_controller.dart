@@ -1,37 +1,54 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
-import 'package:get/get_state_manager/get_state_manager.dart';
+import 'package:quick_attendance/controllers/auth_controller.dart';
+import 'package:quick_attendance/models/account_model.dart';
+import 'package:quick_attendance/models/account_settings_model.dart';
+import 'package:quick_attendance/models/group_model.dart';
 
 class ProfileController extends GetxController {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  late final AuthController authController = Get.find();
   var jwt = Rxn<String>();
-  var userId = "".obs;
-  var email = "dwalbolt@gmail.com".obs;
-  var firstName = "Daniel".obs;
-  var lastName = "Walbolt".obs;
-  var joinedGroups =
-      ["Group A", "Group B", "Group C", "Group D", "Group E", "Group F"].obs;
-  var ownedGroups =
-      ["Group G", "Group H", "Group I", "Group J", "Group K", "Group L"].obs;
+  var user = Rx<AccountModel>(AccountModel());
+  var userSettings = Rx<AccountSettingsModel>(AccountSettingsModel());
+  var joinedGroups = RxList<GroupModel>([]);
+  var managedGroups = RxList<GroupModel>([]);
+  RxBool creatingGroup = false.obs;
 
-  var prefersListView = true.obs;
+  /// Getter for the user's list view preference
+  bool get prefersListView => userSettings.value.prefersListView.value;
+  // Setter for the user's list view preference
+  set prefersListView(bool value) =>
+      userSettings.value.prefersListView.value = value;
 
-  Future<void> _tryGetJwt() async {
-    jwt.value = await _storage.read(key: "jwt_token");
-  }
-
-  Future<void> _saveJwt(String token) async {
-    await _storage.write(key: "jwt_token", value: token);
-  }
+  String get firstName => user.value.firstName.value;
+  String get lastName => user.value.lastName.value;
 
   @override
   void onInit() {
     super.onInit();
-    _tryGetJwt();
+
+    // Create a listener to the auth controller's logged in status
+    ever(authController.isLoggedIn, (loggedIn) {
+      if (loggedIn) {
+        _fetchProfileData();
+      } else {
+        _clearProfileData();
+      }
+    });
   }
 
-  void setListViewPreference(bool prefersListView) {
-    this.prefersListView.value = prefersListView;
+  void _fetchProfileData() {
+    // TODO: Fetch account model
+    // TODO: Fetch account settings
+  }
+
+  void _clearProfileData() {}
+
+  void fetchJoinedGroups() {
+    // TODO: Fetch joined groups
+  }
+
+  void fetchManagedGroups() {
+    // TODO: Fetch managed groups
   }
 
   void leaveJoinedGroup(String groupId) {
@@ -43,7 +60,15 @@ class ProfileController extends GetxController {
   }
 
   void createGroup() {
+    creatingGroup.value = true;
     // TODO: Connect to backend
+    managedGroups.add(
+      GroupModel(name: "Default", description: "Default description"),
+    );
+    // TODO: Figure out how to notify the user group creation failed
+    // I don't think we need a success notification, it should automatically
+    // navigate to the new group's page.
+    creatingGroup.value = false;
   }
 
   void joinGroup(String groupCode) {
