@@ -38,6 +38,7 @@ dependencies:
   easy_date_timeline: ^2.0.6
   flutter_secure_storage: ^9.2.4
   socket_io_client: ^3.0.2
+  jwt_decode: ^0.3.1
 
 dev_dependencies:
   flutter_test:
