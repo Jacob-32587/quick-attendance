@@ -1,30 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/pages/home/components/group_list.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 
-class ManagedGroupsScreen extends StatefulWidget
+class ManagedGroupsScreen extends StatelessWidget
     implements HasFloatingActionButton {
-  const ManagedGroupsScreen({super.key});
+  final ProfileController profileController = Get.find();
+
+  ManagedGroupsScreen({super.key});
 
   @override
   Widget buildFAB(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
-        // Todo add managed group
+        profileController.createGroup();
       },
       child: const Icon(Icons.add),
     );
   }
 
-  @override
-  State<StatefulWidget> createState() => _ManagedGroupsScreenState();
-}
-
-class _ManagedGroupsScreenState extends State<ManagedGroupsScreen> {
-  final ProfileController profileController = Get.find();
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -44,11 +39,11 @@ class _ManagedGroupsScreenState extends State<ManagedGroupsScreen> {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             SizedBox(height: 24),
-            // Display the groups the user is in
+            // Display the groups the user manages
             Obx(
               () => GroupList(
-                groups: profileController.joinedGroups,
-                isListView: profileController.prefersListView.value,
+                groups: profileController.managedGroups,
+                isListView: profileController.prefersListView,
               ),
             ),
             SizedBox(height: 24),
