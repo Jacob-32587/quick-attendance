@@ -1,10 +1,9 @@
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
-import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/models/group_model.dart';
 
 /// The client for sending requests to the Attenda Scan API
-class QuickScanApi {
+class QuickAttendanceApi {
   final apiClient = BaseApiClient("http://localhost:8080/quick-scan-api");
 
   /// Example

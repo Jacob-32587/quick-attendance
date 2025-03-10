@@ -1,8 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/api/quick_scan_api.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 

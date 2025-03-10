@@ -1,11 +1,11 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:jwt_decode/jwt_decode.dart';
-import 'package:quick_attendance/api/quick_scan_api.dart';
+import 'package:quick_attendance/api/quick_attendance_api.dart';
 
 class AuthController extends GetxController {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  late final QuickScanApi api = Get.find();
+  late final QuickAttendanceApi api = Get.find();
   var jwt = Rxn<String>();
 
   /// The user ID that is stored in the JWT
