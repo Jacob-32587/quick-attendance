@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
-class GroupAttendees extends StatelessWidget {
+class GroupAttendeesScreen extends StatelessWidget {
   final RxBool isLoading;
-  const GroupAttendees({super.key, required this.isLoading});
+  const GroupAttendeesScreen({super.key, required this.isLoading});
 
   @override
   Widget build(BuildContext context) {

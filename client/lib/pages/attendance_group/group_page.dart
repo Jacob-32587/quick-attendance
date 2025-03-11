@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/models/group_model.dart';
-import 'package:quick_attendance/pages/attendance_group/group_attendees_page.dart';
-import 'package:quick_attendance/pages/attendance_group/group_home_page.dart';
+import 'package:quick_attendance/pages/attendance_group/attendance_session_screen.dart';
+import 'package:quick_attendance/pages/attendance_group/attendees_screen.dart';
+import 'package:quick_attendance/pages/attendance_group/group_home_screen.dart';
 
 /// Handles the logic for retrieving group information
 class GroupController extends GetxController {
@@ -72,8 +73,9 @@ class GroupPage extends StatelessWidget {
   }
 
   late final List<Widget> _pages = [
-    GroupAttendees(isLoading: isLoading),
-    GroupHomePage(group: _controller.group, isLoading: isLoading),
+    GroupAttendeesScreen(isLoading: isLoading),
+    GroupHomeScreen(group: _controller.group, isLoading: isLoading),
+    GroupAttendanceSessionScreen(group: _controller.group),
   ];
 
   @override

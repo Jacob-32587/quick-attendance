@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/models/group_model.dart';
 
-class GroupHomePage extends StatelessWidget {
+class GroupHomeScreen extends StatelessWidget {
   final Rxn<GroupModel> group;
   final Rx<bool> isLoading;
 
-  const GroupHomePage({
+  const GroupHomeScreen({
     super.key,
     required this.group,
     required this.isLoading,
