@@ -23,10 +23,13 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Greeting to the user
-            Text(
-              "Hello, ${profileController.firstName}",
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            Obx(
+              () =>
+              // Greeting to the user
+              Text(
+                "Hello, ${profileController.firstName}",
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ),
             ),
             SizedBox(height: 8),
             Text(
