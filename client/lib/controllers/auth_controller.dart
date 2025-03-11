@@ -20,8 +20,13 @@ class AuthController extends GetxController {
     await _storage.write(key: "jwt_token", value: token);
   }
 
-  void login() {
+  void login({required String email, required String password}) async {
     isLoggedIn.value = true;
+
+    var response = await api.login(email: email, password: password);
+
+    if (response.statusCode == 200) {
+    } else {}
 
     // TODO: Set the JWT from the returned promise
 
