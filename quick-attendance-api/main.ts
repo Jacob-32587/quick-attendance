@@ -49,8 +49,6 @@ export function get_jwt_payload(ctx: Context) {
   return ctx.get("jwtPayload") as QuickScanJwtPayload;
 }
 
-app.use("*", cors());
-
 app.onError((err, ctx) => {
   // Allow explicit HTTPExceptions to propagate through, otherwise return a generic
   // internal server error
