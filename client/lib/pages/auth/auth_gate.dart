@@ -6,6 +6,8 @@ import 'package:quick_attendance/pages/home/home.dart';
 
 class AuthGate extends StatelessWidget {
   final AuthController authController = Get.find();
+
+  const AuthGate({super.key});
   @override
   Widget build(BuildContext context) {
     return Obx(() {

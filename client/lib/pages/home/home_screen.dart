@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
-import 'package:quick_attendance/pages/home/components/group_list.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
