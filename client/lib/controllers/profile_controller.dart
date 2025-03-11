@@ -1,10 +1,12 @@
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/models/account_model.dart';
 import 'package:quick_attendance/models/account_settings_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
 
 class ProfileController extends GetxController {
+  late final QuickAttendanceApi _api = Get.find();
   late final AuthController authController = Get.find();
   var jwt = Rxn<String>();
   var user = Rx<AccountModel>(AccountModel());
@@ -36,12 +38,19 @@ class ProfileController extends GetxController {
     });
   }
 
-  void _fetchProfileData() {
-    // TODO: Fetch account model
-    // TODO: Fetch account settings
+  void _fetchProfileData() async {
+    Response response = await _api.getAccount();
+    if (response.statusCode == 200) {
+      user.value = AccountModel.fromJson(response.body);
+    } else {
+      // TODO: Handle failure getting account information
+    }
   }
 
-  void _clearProfileData() {}
+  void _clearProfileData() {
+    // Reset user data to empty model
+    user.value = AccountModel();
+  }
 
   void fetchJoinedGroups() {
     // TODO: Fetch joined groups
