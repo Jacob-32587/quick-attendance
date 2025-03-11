@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 
@@ -10,21 +11,40 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   final _formKey = GlobalKey<FormState>();
+  final QuickAttendanceApi _api = Get.find();
   final AuthController authController = Get.find();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _isPasswordVisible = false; // toggle password visibility
+  final RxBool _isPasswordVisible = false.obs; // toggle password visibility
+  // Displays an error message underneath the email input
+  final RxnString _emailError = RxnString();
+  // Displays an error message underneath the password input
+  final RxnString _passwordError = RxnString();
 
-  void _login() {
-    if (_formKey.currentState!.validate()) {
-      // Perform login action
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Login Successful")));
-      authController.login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+  void _login() async {
+    if (_formKey.currentState!.validate() == false) {
+      return;
+    }
+    // Perform login action
+    Response response = await _api.login(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    _emailError.value = null;
+    _passwordError.value = null;
+    if (response.statusCode == 200) {
+      String jwt = response.body["jwt"];
+      authController.jwt.value = jwt;
+      Get.toNamed("/home");
+      // TODO: Display login successful to the user?
+      return;
+    } else if (response.statusCode == 404) {
+      // The email was not found
+      _emailError.value = "Email not found";
+    } else if (response.statusCode == 400 || response.statusCode == 401) {
+      // The password entered was not correct
+      _passwordError.value = "Password is incorrect";
     }
   }
 
@@ -44,56 +64,63 @@ class _LoginState extends State<Login> {
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 20),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: "Email",
-                    border: OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.email),
+                Obx(
+                  () => TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: "Email",
+                      border: OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.email),
+                      errorText: _emailError.value,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please enter your email";
+                      }
+                      if (!RegExp(
+                        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+                      ).hasMatch(value)) {
+                        return 'Enter a valid email';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Please enter your email";
-                    }
-                    if (!RegExp(
-                      r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-                    ).hasMatch(value)) {
-                      return 'Enter a valid email';
-                    }
-                    return null;
-                  },
                 ),
                 SizedBox(height: 15),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: !_isPasswordVisible,
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    border: OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                Obx(
+                  () => TextFormField(
+                    controller: _passwordController,
+                    obscureText: !_isPasswordVisible.value,
+                    decoration: InputDecoration(
+                      labelText: "Password",
+                      border: OutlineInputBorder(),
+                      errorText: _passwordError.value,
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible.value
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible.value =
+                                !_isPasswordVisible.value;
+                          });
+                        },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please enter your password";
+                      }
+                      if (value.length < 8) {
+                        return "Password must be at least 8 characters";
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Please enter your password";
-                    }
-                    if (value.length < 6) {
-                      return "Password must be at least 6 characters";
-                    }
-                    return null;
-                  },
                 ),
                 SizedBox(height: 20),
                 PrimaryButton(text: "Login", onPressed: _login),
