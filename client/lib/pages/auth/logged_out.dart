@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:quick_attendance/pages/auth/login.dart';
 
 class LoggedOut extends StatelessWidget {
+  const LoggedOut({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

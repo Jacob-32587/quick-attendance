@@ -7,9 +7,4 @@ const int initialHomePageIndex = 2;
 class HomeController extends GetxController {
   // Start the user on the home page
   var currentIndex = initialHomePageIndex.obs;
-
-  @override
-  void onClose() {
-    super.onClose();
-  }
 }

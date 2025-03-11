@@ -2,6 +2,8 @@ import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
 
 class HistoryScreen extends StatefulWidget {
+  const HistoryScreen({super.key});
+
   @override
   State<StatefulWidget> createState() => _HistoryScreenState();
 }

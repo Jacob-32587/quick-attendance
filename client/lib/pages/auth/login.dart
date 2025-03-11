@@ -5,6 +5,8 @@ import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 
 class Login extends StatefulWidget {
+  const Login({super.key});
+
   @override
   State<StatefulWidget> createState() => _LoginState();
 }

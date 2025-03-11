@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
+import 'package:quick_attendance/models/group_model.dart';
+import 'package:quick_attendance/pages/attendance_group/components/qr-code-view.dart';
 
-class QRPage extends StatelessWidget {
+class GroupAttendanceSessionScreen extends StatelessWidget {
   late final ProfileController profileController = Get.find();
-  final String? groupId;
-  QRPage({super.key, required this.groupId});
+  final Rxn<GroupModel> group;
+  GroupAttendanceSessionScreen({super.key, required this.group});
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +16,10 @@ class QRPage extends StatelessWidget {
       appBar: AppBar(automaticallyImplyLeading: true),
       body: Obx(() {
         String? activeAccountId = profileController.user.value.userId;
+        // TODO: Change this display to handle when the group
+        // does not have an active attendance session
+        // And if it does have an active session, get a generated ID
+        // to store in the code
         if (activeAccountId == null) {
           // User is not logged in
           return Center(
@@ -39,13 +44,7 @@ class QRPage extends StatelessWidget {
               mainAxisSize: MainAxisSize.max,
               children: [
                 Text("SCAN ME", style: TextStyle(fontSize: 36)),
-                QrImageView(
-                  data: activeAccountId,
-                  version: QrVersions.auto,
-                  backgroundColor: Colors.white,
-                  size: MediaQuery.of(context).size.width * 0.9,
-                  errorCorrectionLevel: QrErrorCorrectLevel.L, // minimum
-                ),
+                QrCodeView(code: activeAccountId),
               ],
             ),
           );
