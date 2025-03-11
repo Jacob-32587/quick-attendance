@@ -4,21 +4,18 @@ import 'package:quick_attendance/models/base_api_model.dart';
 final class GroupModel extends BaseApiModel<GroupModel> {
   final String? groupId;
 
-  late final RxString _name;
-  RxString get name => _name;
-
-  late final RxString _description;
-  RxString get description => _description;
+  late final RxString name;
+  late final RxString description;
 
   GroupModel({this.groupId, String name = "", String description = ""}) {
-    _name = name.obs;
-    _description = description.obs;
+    this.name = name.obs;
+    this.description = description.obs;
   }
 
   // Factory method to convert JSON to a Group object
   factory GroupModel.fromJson(Map<String, dynamic> json) {
     return GroupModel(
-      groupId: json["groupId"],
+      groupId: json["group_id"],
       name: json["name"],
       description: json["description"],
     );
@@ -27,7 +24,7 @@ final class GroupModel extends BaseApiModel<GroupModel> {
   @override
   Map<String, dynamic> toJson() {
     return {
-      "groupId": groupId,
+      "group_id": groupId,
       "name": name.value,
       "description": description.value,
     };
