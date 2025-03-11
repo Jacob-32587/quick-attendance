@@ -14,7 +14,7 @@ class QRPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(automaticallyImplyLeading: true),
       body: Obx(() {
-        String? activeAccountId = profileController.user.value.accountId;
+        String? activeAccountId = profileController.user.value.userId;
         if (activeAccountId == null) {
           // User is not logged in
           return Center(

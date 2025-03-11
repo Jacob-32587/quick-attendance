@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/api/quick_scan_api.dart';
+import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/pages/attendance_group/group_attendees_page.dart';
 import 'package:quick_attendance/pages/attendance_group/group_home_page.dart';
 
 /// Handles the logic for retrieving group information
 class GroupController extends GetxController {
-  late final QuickScanApi _api = Get.find();
+  late final QuickAttendanceApi _api = Get.find();
   String? get groupId => group.value?.groupId;
 
   /// The active group being accessed

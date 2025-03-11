@@ -29,6 +29,15 @@ export interface AuthJwtPayload extends QuickScanJwtPayload {
 }
 
 app.use(
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Authorization", "Content-Type"],
+    credentials: true
+  })
+);
+
+app.use(
   "/auth/*",
   jwt({
     secret: jwt_secret,
@@ -39,8 +48,6 @@ app.use(
 export function get_jwt_payload(ctx: Context) {
   return ctx.get("jwtPayload") as QuickScanJwtPayload;
 }
-
-app.use("*", cors());
 
 app.onError((err, ctx) => {
   // Allow explicit HTTPExceptions to propagate through, otherwise return a generic
