@@ -4,7 +4,7 @@ import 'package:quick_attendance/models/group_model.dart';
 
 /// The client for sending requests to the Attenda Scan API
 class QuickAttendanceApi {
-  final apiClient = BaseApiClient("http://localhost:8080/quick-attendance-api");
+  final apiClient = BaseApiClient("http://localhost:8080/quick-scan-api");
 
   /// Example
   Future<Response> getData({required String groupCode}) async {
@@ -32,6 +32,10 @@ class QuickAttendanceApi {
       "email": email,
       "password": password,
     });
+  }
+
+  Future<Response> getAccount() {
+    return apiClient.get("/auth/account");
   }
 
   Future<GroupModel?> getGroup({required String groupId}) async {
