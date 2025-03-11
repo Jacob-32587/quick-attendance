@@ -5,14 +5,10 @@ class BaseApiClient extends GetConnect {
   late final AuthController _authController = Get.find();
   BaseApiClient(String baseUrl) {
     this.baseUrl = baseUrl;
-  }
+    defaultContentType = "application/json";
 
-  @override
-  void onInit() {
-    httpClient.defaultContentType = "application/json";
-    // Add interceptor
     httpClient.addRequestModifier<dynamic>((request) {
-      request.headers["Authorization"] = "Bearer ${_authController}";
+      request.headers["Authorization"] = "Bearer ${_authController.jwt.value}";
       return request;
     });
 
@@ -20,7 +16,5 @@ class BaseApiClient extends GetConnect {
       // TODO: Handle unauthorized (401) status codes navigating to login page.
       return response;
     });
-
-    super.onInit();
   }
 }
