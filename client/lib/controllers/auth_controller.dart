@@ -6,38 +6,27 @@ import 'package:quick_attendance/api/quick_attendance_api.dart';
 class AuthController extends GetxController {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   late final QuickAttendanceApi api = Get.find();
+
+  /// The JWT providing request Authorization and the logged in status
   var jwt = Rxn<String>();
 
-  /// The user ID that is stored in the JWT
-  var userId = Rxn<String>();
-  var isLoggedIn = false.obs;
+  /// The user ID that is stored in the JWT.
+  final RxnString userId = RxnString();
+
+  /// The logged in status of the user. DO NOT MODIFY OUTSIDE OF AUTH CONTROLLER
+  final RxBool isLoggedIn = false.obs;
 
   Future<void> _tryGetJwt() async {
     jwt.value = await _storage.read(key: "jwt_token");
   }
 
-  Future<void> _saveJwt(String token) async {
+  Future<void> _saveJwt(String? token) async {
     await _storage.write(key: "jwt_token", value: token);
-  }
-
-  void login({required String email, required String password}) async {
-    isLoggedIn.value = true;
-
-    var response = await api.login(email: email, password: password);
-
-    if (response.statusCode == 200) {
-    } else {}
-
-    // TODO: Set the JWT from the returned promise
-
-    // This is NOT base flutter functionality.
-    // This requires use of the "get" package.
-    // refer to main.dart for existing routes.
-    Get.toNamed("/home");
   }
 
   void logout() {
     isLoggedIn.value = false;
+    _saveJwt(null);
     Get.toNamed("/login");
   }
 
@@ -61,13 +50,17 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     ever(jwt, (newJwt) {
+      _saveJwt(newJwt);
       if (newJwt == null || newJwt.isEmpty) {
         userId.value = null;
+        isLoggedIn.value = false;
+        // TODO: Redirect user to login screen and notify them about the problem
         return;
       }
       try {
         var decodedJwt = Jwt.parseJwt(newJwt);
         userId.value = decodedJwt["user_id"];
+        isLoggedIn.value = true;
       } catch (e) {
         Get.log("Failed to decode JWT: '$newJwt' : $e");
         userId.value = null;
