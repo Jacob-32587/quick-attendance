@@ -42,11 +42,6 @@ class GroupController extends GetxController {
     // Listen for changes to the group ID URL parameter
     ever(Get.parameters.obs, (_) => _fetchActiveGroup());
   }
-
-  @override
-  void onClose() {
-    super.onClose();
-  }
 }
 
 /// The parent page for attendance group pages which
@@ -114,6 +109,10 @@ class GroupPage extends StatelessWidget {
                     BottomNavigationBarItem(
                       icon: const Icon(Icons.home),
                       label: "Home",
+                    ),
+                    BottomNavigationBarItem(
+                      icon: const Icon(Icons.calendar_today),
+                      label: "Attend",
                     ),
                   ],
                 ),
