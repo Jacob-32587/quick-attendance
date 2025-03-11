@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/group_model.dart';
@@ -17,6 +16,10 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
       appBar: AppBar(automaticallyImplyLeading: true),
       body: Obx(() {
         String? activeAccountId = profileController.user.value.userId;
+        // TODO: Change this display to handle when the group
+        // does not have an active attendance session
+        // And if it does have an active session, get a generated ID
+        // to store in the code
         if (activeAccountId == null) {
           // User is not logged in
           return Center(
