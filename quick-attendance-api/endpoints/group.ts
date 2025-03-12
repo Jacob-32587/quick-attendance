@@ -7,6 +7,10 @@ import { get_jwt_payload } from "../main.ts";
 import HttpStatusCode from "../util/http_status_code.ts";
 import { group_invite_put_req } from "../models/group/group_invite_put_req.ts";
 import kv, { DbErr } from "../dal/db.ts";
+import { jwt_alg, jwt_secret } from "./account.ts";
+import { verify } from "npm:hono/jwt";
+import { group_unique_id_settings_get_req } from "../models/group/group_unique_id_settings_get_req.ts";
+import { group_invite_jwt_payload } from "../models/group_invite_jwt_payload.ts";
 
 const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
@@ -38,11 +42,13 @@ group.put(
         req.group_id,
         req.usernames,
       );
+    const group_entity = await dal.get_group(req.group_id);
 
     // Set account pending invites for the transaction
     await account_dal.invite_accounts_to_group(
       tran,
       req.group_id,
+      group_entity.value.group_name,
       owner_entity.user_id,
       account_entities.map((x) => x.value),
     );
@@ -50,6 +56,24 @@ group.put(
     DbErr.err_on_commit_async(tran.commit(), "Unable to invite users");
 
     return ctx.text("", HttpStatusCode.OK);
+  },
+);
+
+group.put(
+  `${auth_group_base_path}/unique-id-settings`,
+  zValidator("json", group_unique_id_settings_get_req),
+  async (ctx) => {
+    // Parse request and send to dal
+    const req = ctx.req.valid("json");
+    const jwt_payload = await verify(
+      req.account_invite_jwt,
+      jwt_secret,
+      jwt_alg,
+    );
+    const jwt = await group_invite_jwt_payload.parseAsync(jwt_payload);
+    const group_entity = (await dal.get_group(jwt.group_id)).value;
+
+    return ctx.json(group_entity.unique_id_settings);
   },
 );
 

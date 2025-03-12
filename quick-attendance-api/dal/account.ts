@@ -7,13 +7,19 @@ import { Match } from "effect";
 import HttpStatusCode from "../util/http_status_code.ts";
 import { data_views_are_equal } from "../util/array_buffer.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
-import { GroupInviteJwtPayload } from "../models/group/group_invite_jwt_payload.ts";
+import { GroupInviteJwtPayload } from "../models/group_invite_jwt_payload.ts";
 import { add_to_maybe_map } from "../util/map.ts";
 import { decode, sign } from "npm:hono/jwt";
 import { jwt_secret } from "../endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { AccountPutReq } from "../models/account/account_put_req.ts";
+import { GroupEntity } from "../entities/group_entity.ts";
 
+/**
+ * @param password - The string password to merge with the salt value
+ * @param salt - Array of 8 bit integers to act as the salt for the password
+ * @returns Password combined with the given salt, as an array of 8 bit integers
+ */
 function merge_password_and_salt(password: string, salt: Uint8Array) {
   // Put the UTF-8 char code points into an array
   const txt = new TextEncoder();
@@ -25,6 +31,11 @@ function merge_password_and_salt(password: string, salt: Uint8Array) {
   return password_salt;
 }
 
+/**
+ * @param password - Password string that needs to be hashed
+ * @param salt - Salt to add onto the password
+ * @returns SHA512 hashed and salted password as an 8 bit integer array buffer
+ */
 function hash_password(password: string, salt: Uint8Array) {
   return crypto.subtle.digest(
     "SHA-512",
@@ -32,6 +43,11 @@ function hash_password(password: string, salt: Uint8Array) {
   );
 }
 
+/**
+ * @description Create an account entity with the given information, this route will
+ * ensure that the user name or email is not already in use.
+ * @param account - Information that will be used for entity insertion
+ */
 export async function create_account(account: AccountPostReq) {
   // Ensure the username is not already in use
   const maybe_account = await kv.getMany<[[string, Uuid], [string, Uuid]]>([[
@@ -108,6 +124,12 @@ export async function create_account(account: AccountPostReq) {
   );
 }
 
+/**
+ * @description Retrieves a user for the database by id
+ * @param user_id - Id of the user
+ * @returns Account entity
+ * @throws {@link HTTPException} if no user with the given id could found
+ */
 export async function get_account(user_id: Uuid) {
   return (await DbErr.err_on_empty_val_async(
     kv.get<AccountEntity>(["account", user_id]),
@@ -116,6 +138,12 @@ export async function get_account(user_id: Uuid) {
   )).value; //!! throw
 }
 
+/**
+ * @description Retrieves multiple users from the database by id
+ * @param user_ids - List of user ids
+ * @returns Account entities
+ * @throws {@link HTTPException} if any user with the given ids could not be found
+ */
 export async function get_accounts(user_ids: Uuid[]) {
   return DbErr.err_on_any_empty_vals(
     await kv.getMany<AccountEntity[]>(user_ids.map((x) => ["account", x])),
@@ -124,6 +152,12 @@ export async function get_accounts(user_ids: Uuid[]) {
   );
 }
 
+/**
+ * @description Retrieves multiple users from the database by username
+ * @param user_ids - List of usernames
+ * @returns Account entities
+ * @throws {@link HTTPException} if any user with the give usernames could not be found
+ */
 export async function get_accounts_by_usernames(user_names: string[]) {
   const account_keys = DbErr.err_on_any_empty_vals(
     await kv.getMany<[string, Uuid][]>(
@@ -152,6 +186,13 @@ export async function get_account_model(user_id: Uuid) {
 
 // Get the user account and check if the given password is valid
 // If the user exists and the password is valid then an Ok value will be returned
+
+/**
+ * @description Verify the login information matches what was set by the user initially.
+ * @param account - Information needed to login the user
+ * @returns Account entity associated with the given credentials
+ * @throws {@link HTTPException}
+ */
 export async function login_account(account: AccountLoginPostReq) {
   // Lookup the user by the secondary key, error if no record is found
   const account_email_key = (await kv.get<[string, Uuid]>([
@@ -202,7 +243,9 @@ export async function login_account(account: AccountLoginPostReq) {
 export async function invite_accounts_to_group(
   tran: Deno.AtomicOperation,
   group_id: Uuid,
+  group_name: string,
   owner_id: Uuid,
+  is_manager_invite: boolean,
   invitees_accounts: AccountEntity[],
 ) {
   for (let i = 0; i < invitees_accounts.length; i++) {
@@ -215,9 +258,11 @@ export async function invite_accounts_to_group(
           sub: "group-invite",
           aud: "quick-attendance-client",
           username: invitees_accounts[i].username,
+          group_name,
           user_id: invitees_accounts[i].user_id,
-          owner_id: owner_id,
-          group_id: group_id,
+          owner_id,
+          group_id,
+          is_manager_invite,
         } as GroupInviteJwtPayload, jwt_secret),
       ]],
       HttpStatusCode.CONFLICT,
@@ -249,4 +294,24 @@ export async function update_account(user_id: Uuid, req: AccountPutReq) {
     "Unable to update account",
   );
   return account_entity;
+}
+
+export async function delete_group_invite(
+  tran: Deno.AtomicOperation,
+  user_id: Uuid,
+  group_id: Uuid,
+) {
+  const entity = await DbErr.err_on_empty_val_async<AccountEntity>(
+    kv.get(["account", user_id]),
+    () => "Unable to find user account",
+    HttpStatusCode.NOT_FOUND,
+  );
+
+  if (!entity.value.fk_pending_group_invites?.delete(group_id)) {
+    DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
+  }
+
+  tran
+    .delete(["account", user_id])
+    .set(["account", user_id], entity.value);
 }

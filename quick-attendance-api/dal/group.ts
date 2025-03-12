@@ -168,3 +168,55 @@ export async function accounts_for_group_invite(
 
   return { owner_entity, account_entities };
 }
+
+export async function respond_to_group_invite(
+  tran: Deno.AtomicOperation,
+  accept: boolean,
+  group_id: Uuid,
+  user_id: Uuid,
+  unique_id: string | null = null,
+) {
+  const group_entity = (await get_group(group_id)).value;
+  if (group_entity.unique_id_settings !== null) {
+    // Get message suffix based on the group settings
+    let bad_unique_id_setting_message: string;
+    if (
+      group_entity.unique_id_settings.max_length ===
+        group_entity.unique_id_settings.min_length
+    ) {
+      bad_unique_id_setting_message =
+        `of exactly ${group_entity.unique_id_settings.max_length} character(s)`;
+    } else {
+      bad_unique_id_setting_message =
+        `between ${group_entity.unique_id_settings.min_length} and ${group_entity.unique_id_settings.max_length} character(s)`;
+    }
+
+    if (
+      unique_id === null ||
+      unique_id.length < group_entity.unique_id_settings.min_length ||
+      unique_id.length > group_entity.unique_id_settings.max_length
+    ) {
+      DbErr.err(
+        `This group requires a unique id ${bad_unique_id_setting_message}`,
+        HttpStatusCode.BAD_REQUEST,
+      );
+    }
+
+    if (!group_entity.pending_memeber_ids?.delete(user_id)) {
+      DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
+    }
+
+    if (accept) {
+      group_entity.member_ids = add_to_maybe_set(
+        group_entity.pending_memeber_ids,
+        [user_id],
+        HttpStatusCode.CONFLICT,
+        () => "User is already a memeber",
+      );
+    }
+
+    tran
+      .delete(["group", group_id])
+      .set(["group", group_id], group_entity);
+  }
+}

@@ -1,16 +1,25 @@
 import { Hono } from "npm:hono";
 import { Uuid } from "../util/uuid.ts";
-import { sign } from "npm:hono/jwt";
+import { sign, verify } from "npm:hono/jwt";
 import { account_post_req_val } from "../models/account/account_post_req.ts";
 import {
   account_login_post_req,
 } from "../models/account/account_login_post_req.ts";
+import {
+  group_invite_jwt_payload,
+} from "../models/group_invite_jwt_payload.ts";
 import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
 import { zValidator } from "npm:@hono/zod-validator";
 import * as dal from "../dal/account.ts";
 import { get_jwt_payload, QuickAttendanceJwtPayload } from "../main.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
 import { account_put_req_val } from "../models/account/account_put_req.ts";
+import { account_invite_accept_put_req } from "../models/account/account_invite_accept_put_req.ts";
+import { HTTPException } from "@hono/hono/http-exception";
+import HttpStatusCode from "../util/http_status_code.ts";
+import * as group_dal from "../dal/group.ts";
+import { Match } from "effect";
+import kv, { DbErr } from "../dal/db.ts";
 
 export const jwt_secret: string =
   "ca882e5c-dfd5-45fc-bc04-0a2fb7326305--86d452ef-778d-4443-812d-b19398b4e67f";
@@ -41,6 +50,7 @@ account.put(
   },
 );
 
+// Get account information
 account.get(auth_account_base_path, async (ctx) => {
   const entity = await dal.get_account(get_jwt_payload(ctx).user_id);
   return ctx.json({
@@ -57,6 +67,7 @@ account.get(auth_account_base_path, async (ctx) => {
   } as AccountGetModel);
 });
 
+// Login an account, returns a JWT that can be used for authenticated request
 account.post(
   `${account_base_path}/login`,
   zValidator("json", account_login_post_req),
@@ -82,6 +93,40 @@ account.post(
     const token = await sign(payload, jwt_secret, jwt_alg);
 
     return ctx.json({ jwt: token } as AccountLoginPostRes);
+  },
+);
+
+// Accept or deny a group invitation
+account.put(
+  `${account_base_path}/invite`,
+  zValidator("json", account_invite_accept_put_req),
+  async (ctx) => {
+    // Parse request and send to dal
+    const req = ctx.req.valid("json");
+    const jwt_payload = await verify(
+      req.account_invite_jwt,
+      jwt_secret,
+      jwt_alg,
+    );
+
+    const user_jwt = get_jwt_payload(ctx);
+    const invite_jwt = await group_invite_jwt_payload.parseAsync(
+      jwt_payload,
+    );
+    const tran = kv.atomic();
+
+    dal.delete_group_invite(tran, user_jwt.user_id, invite_jwt.group_id);
+    group_dal.respond_to_group_invite(
+      tran,
+      req.accept,
+      user_jwt.user_id,
+      invite_jwt.group_id,
+      req.unique_id,
+    );
+
+    tran.commit();
+
+    return ctx.text("");
   },
 );
 
