@@ -15,11 +15,8 @@ import { get_jwt_payload, QuickAttendanceJwtPayload } from "../main.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
 import { account_put_req_val } from "../models/account/account_put_req.ts";
 import { account_invite_accept_put_req } from "../models/account/account_invite_accept_put_req.ts";
-import { HTTPException } from "@hono/hono/http-exception";
-import HttpStatusCode from "../util/http_status_code.ts";
 import * as group_dal from "../dal/group.ts";
-import { Match } from "effect";
-import kv, { DbErr } from "../dal/db.ts";
+import kv from "../dal/db.ts";
 
 export const jwt_secret: string =
   "ca882e5c-dfd5-45fc-bc04-0a2fb7326305--86d452ef-778d-4443-812d-b19398b4e67f";
@@ -30,6 +27,25 @@ const auth_account_base_path = `/auth${account_base_path}`;
 
 const account = new Hono();
 
+//#region Query
+
+// Get account information
+account.get(auth_account_base_path, async (ctx) => {
+  const entity = await dal.get_account(get_jwt_payload(ctx).user_id);
+  return ctx.json({
+    username: entity.username,
+    email: entity.email,
+    first_name: entity.first_name,
+    last_name: entity.last_name,
+    user_id: entity.user_id,
+    fk_pending_group_ids: entity.fk_pending_group_invites,
+    versionstamp: entity.versionstamp,
+  } as AccountGetModel);
+});
+
+//#endregion
+
+//#region Mutation
 account.post(
   account_base_path,
   zValidator("json", account_post_req_val),
@@ -49,23 +65,6 @@ account.put(
     return ctx.text("ok");
   },
 );
-
-// Get account information
-account.get(auth_account_base_path, async (ctx) => {
-  const entity = await dal.get_account(get_jwt_payload(ctx).user_id);
-  return ctx.json({
-    username: entity.username,
-    email: entity.email,
-    first_name: entity.first_name,
-    last_name: entity.last_name,
-    user_id: entity.user_id,
-    fk_owned_group_ids: entity.fk_owned_group_ids,
-    fk_managed_group_ids: entity.fk_managed_group_ids,
-    fk_member_group_ids: entity.fk_member_group_ids,
-    fk_pending_group_ids: entity.fk_pending_group_invites,
-    versionstamp: entity.versionstamp,
-  } as AccountGetModel);
-});
 
 // Login an account, returns a JWT that can be used for authenticated request
 account.post(
@@ -115,12 +114,23 @@ account.put(
     );
     const tran = kv.atomic();
 
-    dal.delete_group_invite(tran, user_jwt.user_id, invite_jwt.group_id);
-    group_dal.respond_to_group_invite(
+    // Accept or deny the group invitation, update the account information appropriately
+    dal.respond_to_group_invite(
       tran,
-      req.accept,
       user_jwt.user_id,
       invite_jwt.group_id,
+      req.accept,
+      invite_jwt.is_manager_invite,
+      req.unique_id,
+    );
+    // Accept or deny the group invitation, update the group information appropriately
+    // This will also verify that the unique id sent follows the group specifications
+    group_dal.respond_to_group_invite(
+      tran,
+      user_jwt.user_id,
+      invite_jwt.group_id,
+      req.accept,
+      invite_jwt.is_manager_invite,
       req.unique_id,
     );
 
@@ -129,5 +139,7 @@ account.put(
     return ctx.text("");
   },
 );
+
+//#endregion
 
 export { account };

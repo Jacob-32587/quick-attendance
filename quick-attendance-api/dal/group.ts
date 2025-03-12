@@ -171,9 +171,10 @@ export async function accounts_for_group_invite(
 
 export async function respond_to_group_invite(
   tran: Deno.AtomicOperation,
-  accept: boolean,
   group_id: Uuid,
   user_id: Uuid,
+  accept: boolean,
+  is_manager_invite: boolean,
   unique_id: string | null = null,
 ) {
   const group_entity = (await get_group(group_id)).value;
@@ -206,9 +207,16 @@ export async function respond_to_group_invite(
       DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
     }
 
-    if (accept) {
+    if (accept && is_manager_invite) {
+      group_entity.manager_ids = add_to_maybe_set(
+        group_entity.manager_ids,
+        [user_id],
+        HttpStatusCode.CONFLICT,
+        () => "User is already a manager",
+      );
+    } else if (accept) {
       group_entity.member_ids = add_to_maybe_set(
-        group_entity.pending_memeber_ids,
+        group_entity.member_ids,
         [user_id],
         HttpStatusCode.CONFLICT,
         () => "User is already a memeber",

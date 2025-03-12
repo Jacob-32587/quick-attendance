@@ -17,6 +17,28 @@ const auth_group_base_path = `/auth${group_base_path}`;
 
 const group = new Hono();
 
+//#region Query
+
+group.get(
+  `${auth_group_base_path}`,
+  zValidator("json", group_unique_id_settings_get_req),
+  async (ctx) => {
+    const res = await dal.get_group(get_jwt_payload(ctx).user_id);
+    return ctx.json(res, HttpStatusCode.OK);
+  },
+);
+
+group.get(
+  `${auth_group_base_path}/list`,
+  async (ctx) => {
+    const res = await dal.get_groups_for_account(get_jwt_payload(ctx).user_id);
+    return ctx.json(res, HttpStatusCode.OK);
+  },
+);
+
+//#endregion
+
+//#region Mutation
 group.post(
   auth_group_base_path,
   zValidator("json", group_post_req),
@@ -50,6 +72,7 @@ group.put(
       req.group_id,
       group_entity.value.group_name,
       owner_entity.user_id,
+      req.is_manager_invite,
       account_entities.map((x) => x.value),
     );
 
@@ -77,12 +100,6 @@ group.put(
   },
 );
 
-group.get(
-  `${auth_group_base_path}/list`,
-  async (ctx) => {
-    const res = await dal.get_groups_for_account(get_jwt_payload(ctx).user_id);
-    return ctx.json(res, HttpStatusCode.OK);
-  },
-);
+//#endregion
 
 export { group };

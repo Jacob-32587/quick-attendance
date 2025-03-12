@@ -1,5 +1,7 @@
 import kv, { DbErr } from "./db.ts";
-import AccountEntity from "../entities/account_entity.ts";
+import AccountEntity, {
+  AccountManagerGroupData,
+} from "../entities/account_entity.ts";
 import { new_uuid, Uuid } from "../util/uuid.ts";
 import { AccountPostReq } from "../models/account/account_post_req.ts";
 import { AccountLoginPostReq } from "../models/account/account_login_post_req.ts";
@@ -8,7 +10,7 @@ import HttpStatusCode from "../util/http_status_code.ts";
 import { data_views_are_equal } from "../util/array_buffer.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
 import { GroupInviteJwtPayload } from "../models/group_invite_jwt_payload.ts";
-import { add_to_maybe_map } from "../util/map.ts";
+import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
 import { decode, sign } from "npm:hono/jwt";
 import { jwt_secret } from "../endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
@@ -296,22 +298,37 @@ export async function update_account(user_id: Uuid, req: AccountPutReq) {
   return account_entity;
 }
 
-export async function delete_group_invite(
+export async function respond_to_group_invite(
   tran: Deno.AtomicOperation,
   user_id: Uuid,
   group_id: Uuid,
+  accept: boolean,
+  is_manager_invite: boolean,
+  unique_id: string | null,
 ) {
-  const entity = await DbErr.err_on_empty_val_async<AccountEntity>(
-    kv.get(["account", user_id]),
-    () => "Unable to find user account",
-    HttpStatusCode.NOT_FOUND,
-  );
+  const entity = await get_account(user_id);
 
-  if (!entity.value.fk_pending_group_invites?.delete(group_id)) {
+  if (!entity.fk_pending_group_invites?.delete(group_id)) {
     DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
+  }
+
+  if (accept && is_manager_invite) {
+    entity.fk_managed_group_ids = add_to_maybe_map(
+      entity.fk_managed_group_ids,
+      [[group_id, { unique_id: unique_id } as AccountManagerGroupData]],
+      HttpStatusCode.CONFLICT,
+      () => "User is already a manager for this group",
+    );
+  } else if (accept) {
+    entity.fk_member_group_ids = add_to_maybe_map(
+      entity.fk_member_group_ids,
+      [[group_id, { unique_id: unique_id } as AccountManagerGroupData]],
+      HttpStatusCode.CONFLICT,
+      () => "User is already a member for this group",
+    );
   }
 
   tran
     .delete(["account", user_id])
-    .set(["account", user_id], entity.value);
+    .set(["account", user_id], entity);
 }
