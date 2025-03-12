@@ -16,42 +16,7 @@ import {
 import HttpStatusCode from "../util/http_status_code.ts";
 import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
 
-/**
- * @param owner_id - Id of the user who will own the created group
- * @param req -
- * @returns The id of the created
- * @throws @link{@ npm:Hono/}
- */
-export async function create_group(owner_id: Uuid, req: GroupPostReq) {
-  const entity = {
-    group_id: new_uuid(),
-    owner_id: owner_id,
-    group_description: req.group_description,
-    group_name: req.group_name,
-    unique_id_settings: req.unique_id_settings,
-  } as GroupEntity;
-
-  const account_entity = await get_account(owner_id);
-
-  account_entity.fk_owned_group_ids = add_to_maybe_map(
-    account_entity.fk_owned_group_ids,
-    [[entity.group_id, {} as AccountOwnerGroupData]],
-    HttpStatusCode.INTERNAL_SERVER_ERROR,
-    () => "bad generated id",
-  );
-
-  await DbErr.err_on_commit_async(
-    kv
-      .atomic()
-      .set(["group", entity.group_id], entity)
-      .set(["account", owner_id], account_entity)
-      .commit(),
-    "Unable to perform mutation",
-  ); //!! throw
-
-  return entity;
-}
-
+//#region Query
 export async function get_groups_for_account(user_id: Uuid) {
   const account_entity = await get_account(user_id); //!! throw
 
@@ -139,7 +104,55 @@ export function group_is_owned_by_account(
     ),
   );
 }
+//#endregion
 
+//#region Mutation
+/**
+ * @param owner_id - Id of the user who will own the created group
+ * @param req -
+ * @returns The id of the created
+ * @throws @link{@ HTTPException}
+ */
+export async function create_group(owner_id: Uuid, req: GroupPostReq) {
+  const entity = {
+    group_id: new_uuid(),
+    owner_id: owner_id,
+    group_description: req.group_description,
+    group_name: req.group_name,
+    unique_id_settings: req.unique_id_settings,
+  } as GroupEntity;
+
+  const account_entity = await get_account(owner_id);
+
+  account_entity.fk_owned_group_ids = add_to_maybe_map(
+    account_entity.fk_owned_group_ids,
+    [[entity.group_id, {} as AccountOwnerGroupData]],
+    HttpStatusCode.INTERNAL_SERVER_ERROR,
+    () => "bad generated id",
+  );
+
+  await DbErr.err_on_commit_async(
+    kv
+      .atomic()
+      .set(["group", entity.group_id], entity)
+      .set(["account", owner_id], account_entity)
+      .commit(),
+    "Unable to perform mutation",
+  ); //!! throw
+
+  return entity;
+}
+
+/**
+ * @description Verifies the specified owner id owns the group and that the
+ * given user names exist. If checks are passed the group is updated with the
+ * pending member ids.
+ * @param tran - Transaction the group invite is being executed in
+ * @param owner_id - The account id for the owner of the group
+ * @param group_id - The group id users are being invited to
+ * @param invitees_usernames - List of usernames to invite to the group
+ * @returns Owner entity and account entities that are being invited
+ */
 export async function accounts_for_group_invite(
   tran: Deno.AtomicOperation,
   owner_id: Uuid,
@@ -169,6 +182,17 @@ export async function accounts_for_group_invite(
   return { owner_entity, account_entities };
 }
 
+/**
+ * @description Verifies that the provided unique id matches the requirements
+ * specified by the group. If all checks are passed the user is either added to
+ * the group of removed from the pending list, depending on the users action.
+ * @param tran - Transaction the group invite respond is being executed in
+ * @param group_id - The group id the user is being invited to
+ * @param user_id - The id of the user taking action on the group invite
+ * @param accept - If the user accepts the group invite
+ * @param is_manager_invite - If the invite should add the user as a manager
+ * @param unique_id - The unique id of the user, if one is needed
+ */
 export async function respond_to_group_invite(
   tran: Deno.AtomicOperation,
   group_id: Uuid,

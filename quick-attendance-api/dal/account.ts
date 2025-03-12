@@ -45,6 +45,100 @@ function hash_password(password: string, salt: Uint8Array) {
   );
 }
 
+//#region Query
+
+/**
+ * @description Retrieves a user for the database by id
+ * @param user_id - Id of the user
+ * @returns Account entity
+ * @throws {@link HTTPException} if no user with the given id could found
+ */
+export async function get_account(user_id: Uuid) {
+  return (await DbErr.err_on_empty_val_async(
+    kv.get<AccountEntity>(["account", user_id]),
+    () => "Unable to find account",
+    HttpStatusCode.NOT_FOUND,
+  )).value; //!! throw
+}
+
+/**
+ * @description Retrieves multiple users from the database by id
+ * @param user_ids - List of user ids
+ * @returns Account entities
+ * @throws {@link HTTPException} if any user with the given ids could not be found
+ */
+export async function get_accounts(user_ids: Uuid[]) {
+  return DbErr.err_on_any_empty_vals(
+    await kv.getMany<AccountEntity[]>(user_ids.map((x) => ["account", x])),
+    () => "Account not found",
+    HttpStatusCode.NOT_FOUND,
+  );
+}
+
+/**
+ * @description Retrieves multiple users from the database by username
+ * @param user_ids - List of usernames
+ * @returns Account entities
+ * @throws {@link HTTPException} if any user with the give usernames could not be found
+ */
+export async function get_accounts_by_usernames(user_names: string[]) {
+  const account_keys = DbErr.err_on_any_empty_vals(
+    await kv.getMany<[string, Uuid][]>(
+      user_names.map((x) => ["account_by_username", x]),
+    ),
+    () => "A username was invalid",
+    HttpStatusCode.NOT_FOUND,
+  );
+  return get_accounts(account_keys.map((x) => x.value[1]));
+}
+
+/**
+ * @description Verify the login information matches what was set by the user initially.
+ * @param account - Information needed to login the user
+ * @returns Account entity associated with the given credentials
+ * @throws {@link HTTPException}
+ */
+export async function login_account(account: AccountLoginPostReq) {
+  // Lookup the user by the secondary key, error if no record is found
+  const account_email_key = (await kv.get<[string, Uuid]>([
+    "account_by_email",
+    account.email,
+  ])).value;
+
+  if (account_email_key == null) {
+    DbErr.err("User does not exist", HttpStatusCode.NOT_FOUND); //!! throw
+  }
+
+  // Lookup by the primary key, this should never error but still
+  // handle the case if this data does not exist
+  const entity = (await kv.get<AccountEntity>(account_email_key)).value;
+
+  if (entity == null) {
+    DbErr.err("Account deleted"); //!! throw
+  }
+
+  // Hash the given password and compare to the password in the database
+  // return Ok if the records match
+  const password_hash = await hash_password(account.password, entity.salt);
+  return Match.value(
+    data_views_are_equal(
+      new DataView(password_hash),
+      new DataView(entity.password),
+    ),
+  ).pipe(
+    Match.when(true, (_) => entity),
+    Match.when(false, (_) =>
+      DbErr.err(
+        "Incorrect Password",
+        HttpStatusCode.UNAUTHORIZED,
+      )), //!! throw
+    Match.exhaustive,
+  );
+}
+
+//#endregion
+
+//#region Mutation
 /**
  * @description Create an account entity with the given information, this route will
  * ensure that the user name or email is not already in use.
@@ -123,113 +217,6 @@ export async function create_account(account: AccountPostReq) {
       )
       .commit(),
     "Unable to insert user",
-  );
-}
-
-/**
- * @description Retrieves a user for the database by id
- * @param user_id - Id of the user
- * @returns Account entity
- * @throws {@link HTTPException} if no user with the given id could found
- */
-export async function get_account(user_id: Uuid) {
-  return (await DbErr.err_on_empty_val_async(
-    kv.get<AccountEntity>(["account", user_id]),
-    () => "Unable to find account",
-    HttpStatusCode.NOT_FOUND,
-  )).value; //!! throw
-}
-
-/**
- * @description Retrieves multiple users from the database by id
- * @param user_ids - List of user ids
- * @returns Account entities
- * @throws {@link HTTPException} if any user with the given ids could not be found
- */
-export async function get_accounts(user_ids: Uuid[]) {
-  return DbErr.err_on_any_empty_vals(
-    await kv.getMany<AccountEntity[]>(user_ids.map((x) => ["account", x])),
-    () => "Account not found",
-    HttpStatusCode.NOT_FOUND,
-  );
-}
-
-/**
- * @description Retrieves multiple users from the database by username
- * @param user_ids - List of usernames
- * @returns Account entities
- * @throws {@link HTTPException} if any user with the give usernames could not be found
- */
-export async function get_accounts_by_usernames(user_names: string[]) {
-  const account_keys = DbErr.err_on_any_empty_vals(
-    await kv.getMany<[string, Uuid][]>(
-      user_names.map((x) => ["account_by_username", x]),
-    ),
-    () => "A username was invalid",
-    HttpStatusCode.NOT_FOUND,
-  );
-  return get_accounts(account_keys.map((x) => x.value[1]));
-}
-
-export async function get_account_model(user_id: Uuid) {
-  const entity = await get_account(user_id);
-  return {
-    username: entity.username,
-    email: entity.email,
-    first_name: entity.first_name,
-    last_name: entity.last_name,
-    user_id: entity.user_id,
-    fk_owned_group_ids: entity.fk_owned_group_ids,
-    fk_managed_group_ids: entity.fk_managed_group_ids,
-    fk_member_group_ids: entity.fk_member_group_ids,
-    versionstamp: entity.versionstamp,
-  } as AccountGetModel;
-}
-
-// Get the user account and check if the given password is valid
-// If the user exists and the password is valid then an Ok value will be returned
-
-/**
- * @description Verify the login information matches what was set by the user initially.
- * @param account - Information needed to login the user
- * @returns Account entity associated with the given credentials
- * @throws {@link HTTPException}
- */
-export async function login_account(account: AccountLoginPostReq) {
-  // Lookup the user by the secondary key, error if no record is found
-  const account_email_key = (await kv.get<[string, Uuid]>([
-    "account_by_email",
-    account.email,
-  ])).value;
-
-  if (account_email_key == null) {
-    DbErr.err("User does not exist", HttpStatusCode.NOT_FOUND); //!! throw
-  }
-
-  // Lookup by the primary key, this should never error but still
-  // handle the case if this data does not exist
-  const entity = (await kv.get<AccountEntity>(account_email_key)).value;
-
-  if (entity == null) {
-    DbErr.err("Account deleted"); //!! throw
-  }
-
-  // Hash the given password and compare to the password in the database
-  // return Ok if the records match
-  const password_hash = await hash_password(account.password, entity.salt);
-  return Match.value(
-    data_views_are_equal(
-      new DataView(password_hash),
-      new DataView(entity.password),
-    ),
-  ).pipe(
-    Match.when(true, (_) => entity),
-    Match.when(false, (_) =>
-      DbErr.err(
-        "Incorrect Password",
-        HttpStatusCode.UNAUTHORIZED,
-      )), //!! throw
-    Match.exhaustive,
   );
 }
 
@@ -332,3 +319,5 @@ export async function respond_to_group_invite(
     .delete(["account", user_id])
     .set(["account", user_id], entity);
 }
+
+//#endregion
