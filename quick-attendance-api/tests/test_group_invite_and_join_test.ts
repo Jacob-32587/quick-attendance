@@ -81,6 +81,7 @@ Deno.test(
         body: JSON.stringify({
           "usernames": invite_members.map((x) => x.user_data.username),
           "group_id": owner_group_list.owned_groups[0].group_id,
+          "is_manager_invite": false,
         } as GroupInvitePutReq),
       });
     });

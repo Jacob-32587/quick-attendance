@@ -15,8 +15,15 @@ import {
 } from "./account.ts";
 import HttpStatusCode from "../util/http_status_code.ts";
 import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
+import { UserType } from "../models/user_type.ts";
 
 //#region Query
+
+/**
+ * @description Gets a list of groups that the user owns, manages, and is a member of.
+ * @param user_id - User id to retrieve groups for
+ * @returns List of owned groups, managed groups, and member groups
+ */
 export async function get_groups_for_account(user_id: Uuid) {
   const account_entity = await get_account(user_id); //!! throw
 
@@ -47,6 +54,8 @@ export async function get_groups_for_account(user_id: Uuid) {
     memeber_groups_promise,
   ]);
 
+  // Collect the unique owner id's here, this is to prevent the extra
+  // cost associated with grabbing duplicate data
   const unique_user_ids = new Set<Uuid>();
 
   for (let i = 0; i < groups.length; i++) {
@@ -64,6 +73,7 @@ export async function get_groups_for_account(user_id: Uuid) {
     )).map((x) => [x.value.user_id, x.value.username]),
   );
 
+  // Convert all the retrieve data to an API model
   const to_sparse_model = (e: Deno.KvEntry<GroupEntity>[]) => {
     return e.map((x) => (
       {
@@ -84,12 +94,46 @@ export async function get_groups_for_account(user_id: Uuid) {
   } as GroupListGetRes;
 }
 
+/**
+ * @description Get a group entity for the database with the given key
+ * @param group_id - Group id to retrieve
+ * @returns Group entity associated with the given id
+ * @throw {@link HttpStatusCode} if the group was not found
+ */
 export async function get_group(group_id: Uuid) {
   return await DbErr.err_on_empty_val_async(
     kv.get<GroupEntity>(["group", group_id]),
     () => "Group does not exist",
     HttpStatusCode.NOT_FOUND,
   );
+}
+
+/**
+ * @description Verify the type of a user and get the associated group for that user
+ * @param group_id - The id of the group to retrieve
+ * @param user_id - The user id to check with
+ * @param user_type_claim - The type of user the caller is claiming for the given group
+ * @throw {@link HTTPException} If the user claim does not agree with the what is stored in the DB
+ */
+export async function get_group_and_verify_user_type(
+  group_id: Uuid,
+  user_id: Uuid,
+  user_type_claim: UserType,
+): Promise<GroupEntity | never> {
+  const group = (await get_group(group_id)).value;
+  const matchesUserClaim = Match.value(user_type_claim).pipe(
+    Match.when(UserType.Owner, (_) => group.owner_id === user_id),
+    Match.when(
+      UserType.Manager,
+      (_) => group.manager_ids?.has(user_id) ?? false,
+    ),
+    Match.when(UserType.Member, (_) => group.member_ids?.has(user_id) ?? false),
+    Match.exhaustive,
+  );
+  if (matchesUserClaim) {
+    return group;
+  }
+  DbErr.err("Invalid user type claim for group", HttpStatusCode.FORBIDDEN); //!!throw
 }
 
 export function group_is_owned_by_account(

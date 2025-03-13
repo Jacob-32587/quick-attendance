@@ -15,6 +15,7 @@ import { jwt_secret } from "../endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { AccountPutReq } from "../models/account/account_put_req.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
+import { UserType } from "../models/user_type.ts";
 
 /**
  * @param password - The string password to merge with the salt value
@@ -80,13 +81,35 @@ export async function get_accounts(user_ids: Uuid[]) {
  * @returns Account entities
  * @throws {@link HTTPException} if any user with the given ids could not be found
  */
-export async function get_public_account_models(user_ids: Uuid[]) {
+export async function get_public_account_models(
+  user_ids: Uuid[],
+  group_id?: Uuid,
+  user_type?: UserType,
+) {
+  const maybe_unique_id = (entity: AccountEntity) => {
+    if (group_id === undefined || user_type === undefined) {
+      return null;
+    }
+    return Match.value(user_type).pipe(
+      Match.when(UserType.Owner, () => null),
+      Match.when(
+        UserType.Manager,
+        () => entity.fk_managed_group_ids?.get(group_id)?.unique_id ?? null,
+      ),
+      Match.when(
+        UserType.Member,
+        () => entity.fk_member_group_ids?.get(group_id)?.unique_id ?? null,
+      ),
+      Match.exhaustive,
+    );
+  };
   return (await get_accounts(user_ids)).map(
     (x) => ({
       username: x.value.username,
       first_name: x.value.first_name,
       last_name: x.value.last_name,
       user_id: x.value.user_id,
+      unique_id: maybe_unique_id(x.value),
     } as PublicAccountGetModel),
   );
 }

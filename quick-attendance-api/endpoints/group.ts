@@ -13,6 +13,10 @@ import { group_unique_id_settings_get_req } from "../models/group/group_unique_i
 import { group_invite_jwt_payload } from "../models/group_invite_jwt_payload.ts";
 import { GroupPostRes } from "../models/group/group_post_res.ts";
 import { group_get_req } from "../models/group/group_get_req.ts";
+import { Match } from "effect";
+import { is_privileged_user_type, UserType } from "../models/user_type.ts";
+import { GroupGetRes } from "../models/group/group_get_res.ts";
+import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
 
 const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
@@ -26,10 +30,62 @@ group.get(
   `${auth_group_base_path}`,
   zValidator("json", group_get_req),
   async (ctx) => {
-    const group = (await dal.get_group(get_jwt_payload(ctx).user_id)).value;
-    // Match.
-    // account_dal.get_public_account_models(group.member_ids);
-    return ctx.json(res, HttpStatusCode.OK);
+    const req = ctx.req.valid("json");
+    const user_id = get_jwt_payload(ctx).user_id;
+    const group = await dal.get_group_and_verify_user_type(
+      req.group_id,
+      user_id,
+      req.user_type,
+    );
+
+    const get_group_res = {
+      group_id: group.group_id,
+      group_name: group.group_name,
+      group_description: group.group_description,
+      current_attendance_id: group.current_attendance_id,
+      event_count: group.event_count,
+    } as GroupGetRes;
+
+    // There are no members or managers in this group, skip
+    if (
+      (group.member_ids?.size != 0) || (group.manager_ids?.size != 0)
+    ) {
+      return get_group_res;
+    }
+
+    const memeber_get_promise = account_dal.get_public_account_models(
+      group.member_ids.entries().map((x) => x[0]).toArray(),
+    );
+    const manager_get_promise = account_dal.get_public_account_models(
+      group.manager_ids.entries().map((x) => x[0]).toArray(),
+    );
+    const owner_get_promise = account_dal.get_public_account_models([
+      group.owner_id,
+    ]);
+
+    let pending_accounts = Promise.resolve(
+      null as PublicAccountGetModel[] | null,
+    );
+
+    if (is_privileged_user_type(req.user_type)) {
+      pending_accounts = account_dal.get_public_account_models(
+        group.manager_ids.entries().map((x) => x[0]).toArray(),
+      );
+    }
+
+    const account_promises = await Promise.all([
+      owner_get_promise,
+      memeber_get_promise,
+      manager_get_promise,
+      pending_accounts,
+    ]);
+
+    get_group_res.owner = account_promises[0][0];
+    get_group_res.members = account_promises[1];
+    get_group_res.managers = account_promises[2];
+    get_group_res.pending_memebers = account_promises[3];
+
+    return ctx.json(get_group_res, HttpStatusCode.OK);
   },
 );
 

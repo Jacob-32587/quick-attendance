@@ -43,7 +43,7 @@ export function add_to_maybe_map<K, V>(
  * is provided the function will throw an {@link HTTPException} on duplicate value inserts.
  * @template K - Key type in the set
  * @param s - Set of keys
- * @param ks - Keys to insert into th set
+ * @param ks - Keys to insert into the set
  * @param err_status_code - Status code to be thrown on duplicate key inserts
  * @param err_reason - Reason message to be thrown on duplicate key inserts
  * @returns Set with keys inserted

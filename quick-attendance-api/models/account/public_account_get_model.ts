@@ -5,4 +5,5 @@ export interface PublicAccountGetModel {
   first_name: string;
   last_name: string | null;
   user_id: Uuid;
+  unique_id: string | null;
 }
