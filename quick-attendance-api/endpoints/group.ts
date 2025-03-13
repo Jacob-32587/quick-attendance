@@ -11,6 +11,7 @@ import { jwt_alg, jwt_secret } from "./account.ts";
 import { verify } from "npm:hono/jwt";
 import { group_unique_id_settings_get_req } from "../models/group/group_unique_id_settings_get_req.ts";
 import { group_invite_jwt_payload } from "../models/group_invite_jwt_payload.ts";
+import { GroupPostRes } from "../models/group/group_post_res.ts";
 
 const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
@@ -18,7 +19,6 @@ const auth_group_base_path = `/auth${group_base_path}`;
 const group = new Hono();
 
 //#region Query
-
 group.get(
   `${auth_group_base_path}`,
   zValidator("json", group_unique_id_settings_get_req),
@@ -44,8 +44,14 @@ group.post(
   zValidator("json", group_post_req),
   async (ctx) => {
     const req = ctx.req.valid("json");
-    await dal.create_group(get_jwt_payload(ctx).user_id, req);
-    return ctx.text("", HttpStatusCode.OK);
+    const group_entity = await dal.create_group(
+      get_jwt_payload(ctx).user_id,
+      req,
+    );
+    return ctx.json(
+      { group_id: group_entity.group_id } as GroupPostRes,
+      HttpStatusCode.OK,
+    );
   },
 );
 
