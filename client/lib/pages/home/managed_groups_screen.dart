@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
+import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/pages/home/components/group_list.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 
 class ManagedGroupsScreen extends StatelessWidget
     implements HasFloatingActionButton {
-  final ProfileController profileController = Get.find();
+  final ProfileController _profileController = Get.find();
 
   ManagedGroupsScreen({super.key});
 
@@ -14,7 +16,7 @@ class ManagedGroupsScreen extends StatelessWidget
   Widget buildFAB(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
-        profileController.createGroup();
+        _profileController.createGroup();
       },
       child: const Icon(Icons.add),
     );
@@ -42,8 +44,8 @@ class ManagedGroupsScreen extends StatelessWidget
             // Display the groups the user manages
             Obx(
               () => GroupList(
-                groups: profileController.managedGroups,
-                isListView: profileController.prefersListView,
+                groups: _profileController.managedGroups.value,
+                isListView: _profileController.prefersListView,
               ),
             ),
             SizedBox(height: 24),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get/get_connect/http/src/status/http_status.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 
 class BaseApiClient extends GetConnect {
@@ -27,5 +28,40 @@ class BaseApiClient extends GetConnect {
       }
       return response;
     });
+  }
+}
+
+/// A custom response class model that exposes only the necessary parts of GetxConnect's
+/// response object. This model strongly types possible statusCodes, and was
+/// created to allow for processing on the json body returned from the
+/// api. JSON is not automatically deserialized into the generic type for the body
+/// and fromJson() factory method(s) must be called manually in each apiClient method.
+class ApiResponse<T> {
+  final HttpStatusCode statusCode;
+  final T? body;
+  // This class model will evolve over time as use-cases increase
+
+  ApiResponse({required this.statusCode, this.body});
+
+  bool get isSuccess => statusCode == HttpStatusCode.ok;
+}
+
+enum HttpStatusCode {
+  ok(200),
+  badRequest(400),
+  unauthorized(401),
+  forbidden(403),
+  notFound(404),
+  internalServerError(500),
+  unrecognizedResponseCode(-1);
+
+  final int value;
+  const HttpStatusCode(this.value);
+
+  static HttpStatusCode from(int? code) {
+    return HttpStatusCode.values.firstWhere(
+      (e) => e.value == code,
+      orElse: () => HttpStatusCode.unrecognizedResponseCode,
+    );
   }
 }

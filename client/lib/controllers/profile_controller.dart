@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
+import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/user_model.dart';
 import 'package:quick_attendance/models/account_settings_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
@@ -10,9 +12,13 @@ class ProfileController extends GetxController {
   late final AuthController authController = Get.find();
   var jwt = Rxn<String>();
   var user = Rx<UserModel>(UserModel());
-  var userSettings = Rx<AccountSettingsModel>(AccountSettingsModel());
-  var joinedGroups = RxList<GroupModel>([]);
-  var managedGroups = RxList<GroupModel>([]);
+  final userSettings = Rx<AccountSettingsModel>(AccountSettingsModel());
+  final _groupListResponse = Rxn<GroupListResponseModel>();
+  RxList<GroupModel>? get memberGroups =>
+      _groupListResponse.value?.memberGroups;
+  RxList<GroupModel>? get managedGroups =>
+      _groupListResponse.value?.managedGroups;
+  RxList<GroupModel>? get ownedGroups => _groupListResponse.value?.ownedGroups;
   RxBool creatingGroup = false.obs;
 
   /// Getter for the user's list view preference
@@ -52,6 +58,16 @@ class ProfileController extends GetxController {
     user.value = UserModel();
   }
 
+  /// Get the groups the user owns, manages, or has joined from the server
+  void fetchGroups() async {
+    final response = await _api.getUsersGroups();
+    if (response.statusCode == HttpStatusCode.ok) {
+      _groupListResponse.value = response.body;
+    } else {
+      // TODO: What should we do when this request fails
+    }
+  }
+
   void fetchJoinedGroups() {
     // TODO: Fetch joined groups
   }
@@ -68,16 +84,17 @@ class ProfileController extends GetxController {
     // TODO: Connect to backend
   }
 
-  void createGroup() {
-    creatingGroup.value = true;
-    // TODO: Connect to backend
-    managedGroups.add(
-      GroupModel(name: "Default", description: "Default description"),
-    );
-    // TODO: Figure out how to notify the user group creation failed
-    // I don't think we need a success notification, it should automatically
-    // navigate to the new group's page.
-    creatingGroup.value = false;
+  void createGroup() async {
+    final response = await _api.createGroup(groupName: "Default");
+    // Finally
+    if (response.statusCode == HttpStatusCode.ok) {
+      final String? newGroupId = response.body?.groupId.value;
+      if (newGroupId == null) {
+        // Should we do something in response to a missing group id?
+        return;
+      }
+      Get.toNamed("/group/$newGroupId");
+    }
   }
 
   void joinGroup(String groupCode) {

@@ -76,7 +76,7 @@ class JoinedGroupsScreen extends StatelessWidget
             // Display the groups the user is in
             Obx(
               () => GroupList(
-                groups: profileController.joinedGroups,
+                groups: profileController.memberGroups,
                 isListView: profileController.prefersListView,
               ),
             ),
