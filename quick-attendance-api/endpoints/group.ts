@@ -12,6 +12,7 @@ import { verify } from "npm:hono/jwt";
 import { group_unique_id_settings_get_req } from "../models/group/group_unique_id_settings_get_req.ts";
 import { group_invite_jwt_payload } from "../models/group_invite_jwt_payload.ts";
 import { GroupPostRes } from "../models/group/group_post_res.ts";
+import { group_get_req } from "../models/group/group_get_req.ts";
 
 const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
@@ -19,15 +20,20 @@ const auth_group_base_path = `/auth${group_base_path}`;
 const group = new Hono();
 
 //#region Query
+
+// Get a group for the given user
 group.get(
   `${auth_group_base_path}`,
-  zValidator("json", group_unique_id_settings_get_req),
+  zValidator("json", group_get_req),
   async (ctx) => {
-    const res = await dal.get_group(get_jwt_payload(ctx).user_id);
+    const group = (await dal.get_group(get_jwt_payload(ctx).user_id)).value;
+    // Match.
+    // account_dal.get_public_account_models(group.member_ids);
     return ctx.json(res, HttpStatusCode.OK);
   },
 );
 
+// List all the accounts that a user owners, manages, and is a member of
 group.get(
   `${auth_group_base_path}/list`,
   async (ctx) => {

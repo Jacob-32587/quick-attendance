@@ -14,6 +14,7 @@ import { decode, sign } from "npm:hono/jwt";
 import { jwt_secret } from "../endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { AccountPutReq } from "../models/account/account_put_req.ts";
+import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
 
 /**
  * @param password - The string password to merge with the salt value
@@ -70,6 +71,23 @@ export async function get_accounts(user_ids: Uuid[]) {
     await kv.getMany<AccountEntity[]>(user_ids.map((x) => ["account", x])),
     () => "Account not found",
     HttpStatusCode.NOT_FOUND,
+  );
+}
+
+/**
+ * @description Retrieves multiple users from the database by id
+ * @param user_ids - List of user ids
+ * @returns Account entities
+ * @throws {@link HTTPException} if any user with the given ids could not be found
+ */
+export async function get_public_account_models(user_ids: Uuid[]) {
+  return (await get_accounts(user_ids)).map(
+    (x) => ({
+      username: x.value.username,
+      first_name: x.value.first_name,
+      last_name: x.value.last_name,
+      user_id: x.value.user_id,
+    } as PublicAccountGetModel),
   );
 }
 
