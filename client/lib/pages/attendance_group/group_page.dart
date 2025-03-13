@@ -29,21 +29,6 @@ class GroupController extends GetxController {
     }
   }
 
-  void createGroup() async {
-    final Response<GroupModel> response = await _api.createGroup(
-      groupName: "Default",
-    );
-    // Finally
-    if (response.statusCode == 200) {
-      final String? newGroupId = response.body?.groupId;
-      if (newGroupId == null) {
-        // Should we do something in response to a missing group id?
-        return;
-      }
-      Get.toNamed("/group/$newGroupId");
-    }
-  }
-
   @override
   void onInit() {
     super.onInit();
