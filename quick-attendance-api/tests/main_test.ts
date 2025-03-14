@@ -128,7 +128,14 @@ export async function get_user_accounts(jwts: string[], test_num: number) {
   const responses = await Promise.all(get_user_information_promises);
   const body_promises = [];
   for (const response of responses) {
-    body_promises.push(response.json() as Promise<AccountGetModel>);
+    body_promises.push(
+      response.json() as Promise<AccountGetModel & { jwt: string }>,
+    );
   }
-  return await Promise.all(body_promises);
+
+  const get_rets = await Promise.all(body_promises);
+  for (let i = 0; i < get_rets.length; i++) {
+    get_rets[i].jwt = jwts[i];
+  }
+  return get_rets;
 }

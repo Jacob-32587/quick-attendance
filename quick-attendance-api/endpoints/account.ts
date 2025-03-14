@@ -106,11 +106,18 @@ account.put(
   async (ctx) => {
     // Parse request and send to dal
     const req = ctx.req.valid("json");
-    const jwt_payload = await verify(
-      req.account_invite_jwt,
-      jwt_secret,
-      jwt_alg,
-    );
+    let jwt_payload;
+    try {
+      jwt_payload = await verify(
+        req.account_invite_jwt,
+        jwt_secret,
+        jwt_alg,
+      );
+    } catch {
+      throw new HTTPException(HttpStatusCode.FORBIDDEN, {
+        message: "Invite JWT invalid",
+      });
+    }
 
     const user_jwt = get_jwt_payload(ctx);
     const maybe_invite_jwt = await group_invite_jwt_payload.safeParseAsync(

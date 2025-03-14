@@ -92,27 +92,32 @@ Deno.test(
       // Henrik and Maeve accept, Indiea denys //
       //////////////////////////////////////////
 
-      let member_entities = await get_user_accounts(
+      let accept_member_entities = await get_user_accounts(
         accept_members,
         test_num,
       );
+      let deny_member_entity = (await get_user_accounts(
+        accept_members,
+        test_num,
+      ))[0];
 
       // Ensure that all users have an invite
       assert(
-        member_entities.every((x) =>
+        accept_member_entities.every((x) =>
           (x.fk_pending_group_ids?.length ?? 0) === 1
-        ),
+        ) &&
+          deny_member_entity.fk_pending_group_ids?.length === 1,
       );
 
-      for (const accept_member of accept_members) {
+      for (const entity of accept_member_entities) {
         await test_fetch(ACCOUNT_AUTH_URL(test_num) + "/invite", {
           headers: {
-            "Authorization": `Bearer ${owner_jwt}`,
+            "Authorization": `Bearer ${entity.jwt}`,
             "content-type": "application/json",
           },
           method: "PUT",
           body: JSON.stringify({
-            account_invite_jwt: accept_member,
+            account_invite_jwt: (entity.fk_pending_group_ids ?? [])[0],
             accept: true,
           } as AccountInviteActionPutReq),
         });
@@ -120,25 +125,34 @@ Deno.test(
 
       await test_fetch(ACCOUNT_AUTH_URL(test_num) + "/invite", {
         headers: {
-          "Authorization": `Bearer ${owner_jwt}`,
+          "Authorization": `Bearer ${deny_member_entity.jwt}`,
           "content-type": "application/json",
         },
         method: "PUT",
         body: JSON.stringify({
-          account_invite_jwt: deny_member,
-          accept: true,
+          account_invite_jwt:
+            (deny_member_entity.fk_pending_group_ids ?? [])[0],
+          accept: false,
         } as AccountInviteActionPutReq),
       });
 
       // Ensure that all users invites are gone
-      member_entities = await get_user_accounts(
+      accept_member_entities = await get_user_accounts(
         accept_members,
         test_num,
       );
+      deny_member_entity = (await get_user_accounts(
+        accept_members,
+        test_num,
+      ))[0];
 
       assert(
-        member_entities.every((x) =>
-          (x.fk_pending_group_ids?.length ?? 0) === 1
+        accept_member_entities.every((x) =>
+          (x.fk_pending_group_ids?.length ?? 0) === 0 ||
+          (x.fk_pending_group_ids?.length ?? 0) === null
+        ) && (
+          deny_member_entity.fk_pending_group_ids?.length === 0 ||
+          deny_member_entity.fk_pending_group_ids?.length === null
         ),
       );
     });
