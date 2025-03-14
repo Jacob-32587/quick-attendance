@@ -2,6 +2,8 @@ import { AccountPostReq } from "../models/account/account_post_req.ts";
 import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
 import { AccountLoginPostReq } from "../models/account/account_login_post_req.ts";
 import { assertNever, test_fetch } from "../util/testing.ts";
+import { Uuid } from "../util/uuid.ts";
+import AccountGetModel from "../models/account/account_get_model.ts";
 
 export const URL = (n: number) =>
   `http://0.0.0.0:${8080 + n}/quick-attendance-api`;
@@ -103,4 +105,30 @@ export async function create_and_login_test_users(test_num: number) {
     user_jwts.get(user_henrik_wright.email) ?? assertNever(),
     user_jwts.get(user_indie_conway.email) ?? assertNever(),
   ];
+}
+
+export async function get_user_accounts(jwts: string[], test_num: number) {
+  const get_user_information_promises = [];
+  for (const jwt of jwts) {
+    // Send upate request
+    get_user_information_promises.push(
+      test_fetch(
+        ACCOUNT_AUTH_URL(test_num),
+        {
+          headers: {
+            "Authorization": `Bearer ${jwt}`,
+          },
+          method: "GET",
+        },
+        undefined,
+        false,
+      ),
+    );
+  }
+  const responses = await Promise.all(get_user_information_promises);
+  const body_promises = [];
+  for (const response of responses) {
+    body_promises.push(response.json() as Promise<AccountGetModel>);
+  }
+  return await Promise.all(body_promises);
 }

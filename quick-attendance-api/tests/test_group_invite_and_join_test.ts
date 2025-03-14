@@ -8,12 +8,15 @@ import {
   test_fetch,
 } from "../util/testing.ts";
 import {
+  ACCOUNT_AUTH_URL,
   create_and_login_test_users,
+  get_user_accounts,
   GROUP_AUTH_URL,
   URL,
   user_array,
   user_rocco_mason,
 } from "./main_test.ts";
+import { AccountInviteActionPutReq } from "../models/account/account_invite_accept_put_req.ts";
 
 // Ensure users can be invited to groups and accept invites
 Deno.test(
@@ -49,7 +52,7 @@ Deno.test(
         } as GroupPostReq),
       });
 
-      const owner_grou_list_res = await test_fetch(
+      const owner_group_list_res = await test_fetch(
         GROUP_AUTH_URL(test_num) + "/list",
         {
           headers: {
@@ -62,7 +65,7 @@ Deno.test(
       );
 
       const owner_group_list =
-        (await owner_grou_list_res.json()) as GroupListGetRes;
+        (await owner_group_list_res.json()) as GroupListGetRes;
 
       assert(owner_group_list.owned_groups.length === 1);
       assert(
@@ -84,7 +87,62 @@ Deno.test(
           "is_manager_invite": false,
         } as GroupInvitePutReq),
       });
+
+      ////////////////////////////////////////////
+      // Henrik and Maeve accept, Indiea denys //
+      //////////////////////////////////////////
+
+      let member_entities = await get_user_accounts(
+        accept_members,
+        test_num,
+      );
+
+      // Ensure that all users have an invite
+      assert(
+        member_entities.every((x) =>
+          (x.fk_pending_group_ids?.length ?? 0) === 1
+        ),
+      );
+
+      for (const accept_member of accept_members) {
+        await test_fetch(ACCOUNT_AUTH_URL(test_num) + "/invite", {
+          headers: {
+            "Authorization": `Bearer ${owner_jwt}`,
+            "content-type": "application/json",
+          },
+          method: "PUT",
+          body: JSON.stringify({
+            account_invite_jwt: accept_member,
+            accept: true,
+          } as AccountInviteActionPutReq),
+        });
+      }
+
+      await test_fetch(ACCOUNT_AUTH_URL(test_num) + "/invite", {
+        headers: {
+          "Authorization": `Bearer ${owner_jwt}`,
+          "content-type": "application/json",
+        },
+        method: "PUT",
+        body: JSON.stringify({
+          account_invite_jwt: deny_member,
+          accept: true,
+        } as AccountInviteActionPutReq),
+      });
+
+      // Ensure that all users invites are gone
+      member_entities = await get_user_accounts(
+        accept_members,
+        test_num,
+      );
+
+      assert(
+        member_entities.every((x) =>
+          (x.fk_pending_group_ids?.length ?? 0) === 1
+        ),
+      );
     });
+
     await cleanup_test_step(test_num, t, sp);
   },
 );

@@ -6,6 +6,6 @@ export const account_invite_accept_put_req = z.object({
   accept: z.boolean(),
 });
 
-export type AccountInviteAcceptPutReq = z.infer<
+export type AccountInviteActionPutReq = z.infer<
   typeof account_invite_accept_put_req
 >;

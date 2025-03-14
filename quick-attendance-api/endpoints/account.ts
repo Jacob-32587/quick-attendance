@@ -99,7 +99,7 @@ account.post(
 
 // Accept or deny a group invitation
 account.put(
-  `${account_base_path}/invite`,
+  `${auth_account_base_path}/invite`,
   zValidator("json", account_invite_accept_put_req),
   async (ctx) => {
     // Parse request and send to dal
