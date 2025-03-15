@@ -59,7 +59,7 @@ class ProfileController extends GetxController {
   }
 
   /// Get the groups the user owns, manages, or has joined from the server
-  void fetchGroups() async {
+  Future<void> fetchGroups() async {
     final response = await _api.getUsersGroups();
     if (response.statusCode == HttpStatusCode.ok) {
       _groupListResponse.value = response.body;
@@ -86,8 +86,8 @@ class ProfileController extends GetxController {
 
   void createGroup() async {
     final response = await _api.createGroup(groupName: "Default");
-    // Finally
     if (response.statusCode == HttpStatusCode.ok) {
+      fetchGroups();
       final String? newGroupId = response.body?.groupId.value;
       if (newGroupId == null) {
         // Should we do something in response to a missing group id?
