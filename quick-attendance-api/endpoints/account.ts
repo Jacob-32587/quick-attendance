@@ -16,7 +16,7 @@ import AccountGetModel from "../models/account/account_get_model.ts";
 import { account_put_req_val } from "../models/account/account_put_req.ts";
 import { account_invite_accept_put_req } from "../models/account/account_invite_accept_put_req.ts";
 import * as group_dal from "../dal/group.ts";
-import kv from "../dal/db.ts";
+import kv, { DbErr } from "../dal/db.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import HttpStatusCode from "../util/http_status_code.ts";
 
@@ -113,8 +113,7 @@ account.put(
         jwt_secret,
         jwt_alg,
       );
-    } catch (e) {
-      console.log(e);
+    } catch (_) {
       throw new HTTPException(HttpStatusCode.FORBIDDEN, {
         message: "Invite JWT invalid",
       });
@@ -134,7 +133,7 @@ account.put(
     const tran = kv.atomic();
     console.log(invite_jwt);
     // Accept or deny the group invitation, update the account information appropriately
-    dal.respond_to_group_invite(
+    const account_mut_promise = dal.respond_to_group_invite(
       tran,
       user_jwt.user_id,
       invite_jwt.group_id,
@@ -144,7 +143,7 @@ account.put(
     );
     // Accept or deny the group invitation, update the group information appropriately
     // This will also verify that the unique id sent follows the group specifications
-    group_dal.respond_to_group_invite(
+    await group_dal.respond_to_group_invite(
       tran,
       user_jwt.user_id,
       invite_jwt.group_id,
@@ -152,8 +151,12 @@ account.put(
       invite_jwt.is_manager_invite,
       req.unique_id,
     );
+    await account_mut_promise;
 
-    tran.commit();
+    await DbErr.err_on_commit_async(
+      tran.commit(),
+      "Unable to take invite action",
+    );
 
     return ctx.text("");
   },

@@ -144,7 +144,7 @@ group.put(
       account_entities.map((x) => x.value),
     );
 
-    DbErr.err_on_commit_async(tran.commit(), "Unable to invite users");
+    await DbErr.err_on_commit_async(tran.commit(), "Unable to invite users");
 
     return ctx.text("", HttpStatusCode.OK);
   },

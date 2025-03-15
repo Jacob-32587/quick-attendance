@@ -97,7 +97,7 @@ Deno.test(
         test_num,
       );
       let deny_member_entity = (await get_user_accounts(
-        accept_members,
+        [deny_member],
         test_num,
       ))[0];
 
@@ -142,20 +142,27 @@ Deno.test(
         test_num,
       );
       deny_member_entity = (await get_user_accounts(
-        accept_members,
+        [deny_member],
         test_num,
       ))[0];
+
+      console.log(accept_member_entities);
+      console.log(deny_member_entity);
 
       assert(
         accept_member_entities.every((x) =>
           (x.fk_pending_group_ids?.length ?? 0) === 0 ||
-          (x.fk_pending_group_ids?.length ?? 0) === null
+          (x.fk_pending_group_ids?.length ?? null) === null
         ) && (
-          deny_member_entity.fk_pending_group_ids?.length === 0 ||
-          deny_member_entity.fk_pending_group_ids?.length === null
+          (deny_member_entity.fk_pending_group_ids?.length ?? 0) === 0 ||
+          (deny_member_entity.fk_pending_group_ids?.length ?? null) === null
         ),
       );
     });
+
+    //////////////////////////////////////////////
+    // Rocoo, Henrik, Maeve check their groups //
+    ////////////////////////////////////////////
 
     await cleanup_test_step(test_num, t, sp);
   },
