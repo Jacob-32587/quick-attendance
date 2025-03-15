@@ -76,13 +76,18 @@ async function cleanup_test(
 export async function test_fetch(
   input: RequestInfo | URL,
   init?: RequestInit & { client?: Deno.HttpClient },
-  maybe_check_fn?: (
-    res: Response,
-    req?: RequestInit & { client?: Deno.HttpClient },
-  ) => Promise<boolean> | undefined,
-  consume_body?: boolean,
+  maybe_check_fn?:
+    | ((
+      res: Response,
+      req?: RequestInit & { client?: Deno.HttpClient },
+    ) => Promise<boolean> | undefined)
+    | null,
+  consume_body?: boolean | null,
 ): Promise<Response> {
-  if (consume_body === undefined && maybe_check_fn === undefined) {
+  if (
+    (consume_body === undefined || consume_body === null) &&
+    (maybe_check_fn === undefined || consume_body === null)
+  ) {
     consume_body = true;
   } else {
     consume_body = false;
@@ -130,16 +135,18 @@ export async function test_fetch(
  * this is not the case this parameter can be set to true manually.
  * @returns Promise that will resolve with headers are sent back
  */
-export function test_fetch_json<T>(
+export async function test_fetch_json<T>(
   url: string,
   method: "PUT" | "GET" | "PATCH" | "DELETE" | "POST",
-  jwt?: string,
-  json_body?: T,
-  maybe_check_fn?: (
-    res: Response,
-    req?: RequestInit & { client?: Deno.HttpClient },
-  ) => Promise<boolean> | undefined,
-  consume_body?: boolean,
+  jwt?: string | null,
+  json_body?: T | null,
+  maybe_check_fn?:
+    | ((
+      res: Response,
+      req?: RequestInit & { client?: Deno.HttpClient },
+    ) => Promise<boolean> | undefined)
+    | null,
+  consume_body?: boolean | null,
 ): Promise<Response> {
   const headers = {} as { [key: string]: string };
 
@@ -149,17 +156,15 @@ export function test_fetch_json<T>(
   } as RequestInit;
 
   // Attach JWT if provided
-  if (jwt !== undefined) {
+  if (jwt !== undefined && jwt !== null) {
     headers["Authorization"] = `Bearer ${jwt}`;
   }
-  if (json_body !== undefined) {
+  if (json_body !== undefined && json_body !== null) {
     headers["content-type"] = "application/json";
     req_init.body = JSON.stringify(json_body);
   }
 
-  console.log(req_init);
-
-  return test_fetch(
+  return await test_fetch(
     url,
     req_init,
     maybe_check_fn,
