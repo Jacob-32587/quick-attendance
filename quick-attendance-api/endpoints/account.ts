@@ -2,12 +2,8 @@ import { Hono } from "npm:hono";
 import { Uuid } from "../util/uuid.ts";
 import { sign, verify } from "npm:hono/jwt";
 import { account_post_req_val } from "../models/account/account_post_req.ts";
-import {
-  account_login_post_req,
-} from "../models/account/account_login_post_req.ts";
-import {
-  group_invite_jwt_payload,
-} from "../models/group_invite_jwt_payload.ts";
+import { account_login_post_req } from "../models/account/account_login_post_req.ts";
+import { group_invite_jwt_payload } from "../models/group_invite_jwt_payload.ts";
 import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
 import { zValidator } from "npm:@hono/zod-validator";
 import * as dal from "../dal/account.ts";
@@ -40,9 +36,7 @@ account.get(auth_account_base_path, async (ctx) => {
     first_name: entity.first_name,
     last_name: entity.last_name,
     user_id: entity.user_id,
-    fk_pending_group_ids: entity.fk_pending_group_invites?.entries().map((x) =>
-      x[1]
-    ).toArray(),
+    fk_pending_group_ids: entity.fk_pending_group_invites?.entries().map((x) => x[1]).toArray(),
     versionstamp: entity.versionstamp,
   } as AccountGetModel);
 });
@@ -131,7 +125,6 @@ account.put(
     const invite_jwt = maybe_invite_jwt.data;
 
     const tran = kv.atomic();
-    console.log(invite_jwt);
     // Accept or deny the group invitation, update the account information appropriately
     const account_mut_promise = dal.respond_to_group_invite(
       tran,

@@ -61,18 +61,11 @@ Deno.test(
       assert(owner_group_list.managed_groups.length === 0);
       assert(owner_group_list.memeber_groups.length === 0);
 
-      await test_fetch(GROUP_AUTH_URL(test_num) + "/invite", {
-        headers: {
-          "Authorization": `Bearer ${owner_jwt}`,
-          "content-type": "application/json",
-        },
-        method: "PUT",
-        body: JSON.stringify({
-          "usernames": invite_members.map((x) => x.user_data.username),
-          "group_id": owner_group_list.owned_groups[0].group_id,
-          "is_manager_invite": false,
-        } as GroupInvitePutReq),
-      });
+      await test_fetch_json(GROUP_AUTH_URL(test_num) + "/invite", "PUT", owner_jwt, {
+        "usernames": invite_members.map((x) => x.user_data.username),
+        "group_id": owner_group_list.owned_groups[0].group_id,
+        "is_manager_invite": false,
+      } as GroupInvitePutReq);
 
       ////////////////////////////////////////////
       // Henrik and Maeve accept, Indiea denys //
@@ -94,30 +87,16 @@ Deno.test(
       );
 
       for (const entity of accept_member_entities) {
-        await test_fetch(ACCOUNT_AUTH_URL(test_num) + "/invite", {
-          headers: {
-            "Authorization": `Bearer ${entity.jwt}`,
-            "content-type": "application/json",
-          },
-          method: "PUT",
-          body: JSON.stringify({
-            account_invite_jwt: (entity.fk_pending_group_ids ?? [])[0],
-            accept: true,
-          } as AccountInviteActionPutReq),
-        });
+        await test_fetch_json(ACCOUNT_AUTH_URL(test_num) + "/invite", "PUT", entity.jwt, {
+          account_invite_jwt: (entity.fk_pending_group_ids ?? [])[0],
+          accept: true,
+        } as AccountInviteActionPutReq);
       }
 
-      await test_fetch(ACCOUNT_AUTH_URL(test_num) + "/invite", {
-        headers: {
-          "Authorization": `Bearer ${deny_member_entity.jwt}`,
-          "content-type": "application/json",
-        },
-        method: "PUT",
-        body: JSON.stringify({
-          account_invite_jwt: (deny_member_entity.fk_pending_group_ids ?? [])[0],
-          accept: false,
-        } as AccountInviteActionPutReq),
-      });
+      await test_fetch_json(ACCOUNT_AUTH_URL(test_num) + "/invite", "PUT", deny_member_entity.jwt, {
+        account_invite_jwt: (deny_member_entity.fk_pending_group_ids ?? [])[0],
+        accept: false,
+      } as AccountInviteActionPutReq);
 
       // Ensure that all users invites are gone
       accept_member_entities = await get_user_accounts(
@@ -128,9 +107,6 @@ Deno.test(
         [deny_member],
         test_num,
       ))[0];
-
-      console.log(accept_member_entities);
-      console.log(deny_member_entity);
 
       assert(
         accept_member_entities.every((x) =>

@@ -1,12 +1,11 @@
 import { AccountPostReq } from "../models/account/account_post_req.ts";
 import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
 import { AccountLoginPostReq } from "../models/account/account_login_post_req.ts";
-import { assertNever, test_fetch } from "../util/testing.ts";
+import { assertNever, test_fetch, test_fetch_json } from "../util/testing.ts";
 import { Uuid } from "../util/uuid.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
 
-export const URL = (n: number) =>
-  `http://0.0.0.0:${8080 + n}/quick-attendance-api`;
+export const URL = (n: number) => `http://0.0.0.0:${8080 + n}/quick-attendance-api`;
 export const ACCOUNT_URL = (n: number) => `${URL(n)}/account`;
 export const ACCOUNT_AUTH_URL = (n: number) => `${URL(n)}/auth/account`;
 export const GROUP_URL = (n: number) => `${URL(n)}/group`;
@@ -112,17 +111,7 @@ export async function get_user_accounts(jwts: string[], test_num: number) {
   for (const jwt of jwts) {
     // Send upate request
     get_user_information_promises.push(
-      test_fetch(
-        ACCOUNT_AUTH_URL(test_num),
-        {
-          headers: {
-            "Authorization": `Bearer ${jwt}`,
-          },
-          method: "GET",
-        },
-        undefined,
-        false,
-      ),
+      test_fetch_json(ACCOUNT_AUTH_URL(test_num), "GET", jwt, null, null, false),
     );
   }
   const responses = await Promise.all(get_user_information_promises);

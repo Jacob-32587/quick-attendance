@@ -1,16 +1,8 @@
 import { assert } from "@std/assert";
 import AccountGetModel from "../models/account/account_get_model.ts";
-import {
-  cleanup_test_step,
-  init_test_step,
-  test_fetch,
-} from "../util/testing.ts";
+import { cleanup_test_step, init_test_step, test_fetch, test_fetch_json } from "../util/testing.ts";
 import { AccountPutReq } from "../models/account/account_put_req.ts";
-import {
-  ACCOUNT_AUTH_URL,
-  create_and_login_test_users,
-  URL,
-} from "./main_test.ts";
+import { ACCOUNT_AUTH_URL, create_and_login_test_users, URL } from "./main_test.ts";
 
 // Ensure user information can be updated
 Deno.test(
@@ -56,17 +48,7 @@ Deno.test(
       for (const jwt of logged_in_users_jwts) {
         // Send upate request
         update_user_information_promises.push(
-          test_fetch(
-            ACCOUNT_AUTH_URL(test_num),
-            {
-              headers: {
-                "content-type": "application/json",
-                "Authorization": `Bearer ${jwt}`,
-              },
-              method: "PUT",
-              body: JSON.stringify(random_account_array[i]),
-            },
-          ),
+          test_fetch_json(ACCOUNT_AUTH_URL(test_num), "PUT", jwt, random_account_array[i]),
         );
         i++;
       }
@@ -78,17 +60,7 @@ Deno.test(
       // Get account information for each updated user
       for (const jwt of logged_in_users_jwts) {
         get_updated_user_information_promises.push(
-          test_fetch(
-            ACCOUNT_AUTH_URL(test_num),
-            {
-              headers: {
-                "Authorization": `Bearer ${jwt}`,
-              },
-              method: "GET",
-            },
-            undefined,
-            false,
-          ),
+          test_fetch_json(ACCOUNT_AUTH_URL(test_num), "GET", jwt, null, null, false),
         );
       }
 
