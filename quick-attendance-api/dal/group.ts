@@ -5,14 +5,8 @@ import { GroupListGetRes } from "../models/group/group_list_res.ts";
 import { GroupSparseGetModel } from "../models/group/group_sparse_get_model.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
 import { new_uuid, Uuid } from "../util/uuid.ts";
-import AccountEntity, {
-  AccountOwnerGroupData,
-} from "../entities/account_entity.ts";
-import {
-  get_account,
-  get_accounts,
-  get_accounts_by_usernames,
-} from "./account.ts";
+import AccountEntity, { AccountOwnerGroupData } from "../entities/account_entity.ts";
+import { get_account, get_accounts, get_accounts_by_usernames } from "./account.ts";
 import HttpStatusCode from "../util/http_status_code.ts";
 import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
 import { UserType } from "../models/user_type.ts";
@@ -164,6 +158,11 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
     group_description: req.group_description,
     group_name: req.group_name,
     unique_id_settings: req.unique_id_settings,
+    event_count: 0,
+    manager_ids: null,
+    member_ids: null,
+    pending_memeber_ids: null,
+    current_attendance_id: null,
   } as GroupEntity;
 
   const account_entity = await get_account(owner_id);
@@ -216,9 +215,7 @@ export async function accounts_for_group_invite(
     account_entities.map((x) => x.value.user_id),
     HttpStatusCode.CONFLICT,
     (k) =>
-      `Attempted to invite user '${
-        account_entities.find((x) => x.value.user_id === k) ?? "N/A"
-      }'`,
+      `Attempted to invite user '${account_entities.find((x) => x.value.user_id === k) ?? "N/A"}'`,
   );
 
   tran.set(["group", group_id], group_entity.value);
@@ -246,6 +243,8 @@ export async function respond_to_group_invite(
   unique_id: string | null = null,
 ) {
   const group_entity = (await get_group(group_id)).value;
+
+  // Validate unique id if unique ids are enabled for this group
   if (group_entity.unique_id_settings !== null) {
     // Get message suffix based on the group settings
     let bad_unique_id_setting_message: string;
@@ -270,30 +269,31 @@ export async function respond_to_group_invite(
         HttpStatusCode.BAD_REQUEST,
       );
     }
-
-    if (!group_entity.pending_memeber_ids?.delete(user_id)) {
-      DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
-    }
-
-    if (accept && is_manager_invite) {
-      group_entity.manager_ids = add_to_maybe_set(
-        group_entity.manager_ids,
-        [user_id],
-        HttpStatusCode.CONFLICT,
-        () => "User is already a manager",
-      );
-    } else if (accept) {
-      group_entity.member_ids = add_to_maybe_set(
-        group_entity.member_ids,
-        [user_id],
-        HttpStatusCode.CONFLICT,
-        () => "User is already a memeber",
-      );
-    }
-
-    tran
-      .delete(["group", group_id])
-      .set(["group", group_id], group_entity);
   }
+
+  if (!group_entity.pending_memeber_ids?.delete(user_id)) {
+    DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
+  }
+
+  // Add the user to the group if they are acepting the invite
+  if (accept && is_manager_invite) {
+    group_entity.manager_ids = add_to_maybe_set(
+      group_entity.manager_ids,
+      [user_id],
+      HttpStatusCode.CONFLICT,
+      () => "User is already a manager",
+    );
+  } else if (accept) {
+    group_entity.member_ids = add_to_maybe_set(
+      group_entity.member_ids,
+      [user_id],
+      HttpStatusCode.CONFLICT,
+      () => "User is already a memeber",
+    );
+  }
+
+  tran
+    .delete(["group", group_id])
+    .set(["group", group_id], group_entity);
 }
 //#endregion

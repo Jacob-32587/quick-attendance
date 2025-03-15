@@ -13,7 +13,6 @@ import { group_unique_id_settings_get_req } from "../models/group/group_unique_i
 import { group_invite_jwt_payload } from "../models/group_invite_jwt_payload.ts";
 import { GroupPostRes } from "../models/group/group_post_res.ts";
 import { group_get_req } from "../models/group/group_get_req.ts";
-import { Match } from "effect";
 import { is_privileged_user_type, UserType } from "../models/user_type.ts";
 import { GroupGetRes } from "../models/group/group_get_res.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
@@ -28,9 +27,9 @@ const group = new Hono();
 // Get a group for the given user
 group.get(
   `${auth_group_base_path}`,
-  zValidator("json", group_get_req),
+  zValidator("query", group_get_req),
   async (ctx) => {
-    const req = ctx.req.valid("json");
+    const req = ctx.req.valid("query");
     const user_id = get_jwt_payload(ctx).user_id;
     const group = await dal.get_group_and_verify_user_type(
       req.group_id,
@@ -48,16 +47,16 @@ group.get(
 
     // There are no members or managers in this group, skip
     if (
-      (group.member_ids?.size != 0) || (group.manager_ids?.size != 0)
+      ((group.member_ids?.size ?? 0) === 0) && ((group.manager_ids?.size ?? 0) === 0)
     ) {
       return ctx.json(get_group_res);
     }
 
     const memeber_get_promise = account_dal.get_public_account_models(
-      group.member_ids.entries().map((x) => x[0]).toArray(),
+      group.member_ids?.entries().map((x) => x[0]).toArray() ?? [],
     );
     const manager_get_promise = account_dal.get_public_account_models(
-      group.manager_ids.entries().map((x) => x[0]).toArray(),
+      group.manager_ids?.entries().map((x) => x[0]).toArray() ?? [],
     );
     const owner_get_promise = account_dal.get_public_account_models([
       group.owner_id,
@@ -69,7 +68,7 @@ group.get(
 
     if (is_privileged_user_type(req.user_type)) {
       pending_accounts = account_dal.get_public_account_models(
-        group.manager_ids.entries().map((x) => x[0]).toArray(),
+        group.manager_ids?.entries().map((x) => x[0]).toArray() ?? [],
       );
     }
 

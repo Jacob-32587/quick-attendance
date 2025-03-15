@@ -1,7 +1,5 @@
 import kv, { DbErr } from "./db.ts";
-import AccountEntity, {
-  AccountManagerGroupData,
-} from "../entities/account_entity.ts";
+import AccountEntity, { AccountManagerGroupData } from "../entities/account_entity.ts";
 import { new_uuid, Uuid } from "../util/uuid.ts";
 import { AccountPostReq } from "../models/account/account_post_req.ts";
 import { AccountLoginPostReq } from "../models/account/account_login_post_req.ts";
@@ -82,10 +80,16 @@ export async function get_accounts(user_ids: Uuid[]) {
  * @throws {@link HTTPException} if any user with the given ids could not be found
  */
 export async function get_public_account_models(
-  user_ids: Uuid[],
+  user_ids: Uuid[] | null | undefined,
   group_id?: Uuid,
   user_type?: UserType,
 ) {
+  // Return nothing if given nothing
+  if (user_ids === null || user_ids === undefined || user_ids.length === 0) {
+    return [];
+  }
+
+  // Get the unique if the given user type is privileged
   const maybe_unique_id = (entity: AccountEntity) => {
     if (group_id === undefined || user_type === undefined) {
       return null;

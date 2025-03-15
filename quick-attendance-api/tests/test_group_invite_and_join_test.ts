@@ -13,6 +13,7 @@ import {
   user_rocco_mason,
 } from "./main_test.ts";
 import { AccountInviteActionPutReq } from "../models/account/account_invite_accept_put_req.ts";
+import { GroupGetRes } from "../models/group/group_get_res.ts";
 
 // Ensure users can be invited to groups and accept invites
 Deno.test(
@@ -117,11 +118,25 @@ Deno.test(
           (deny_member_entity.fk_pending_group_ids?.length ?? null) === null
         ),
       );
-    });
 
-    //////////////////////////////////////////////
-    // Rocoo, Henrik, Maeve check their groups //
-    ////////////////////////////////////////////
+      //////////////////////////////////////////////
+      // Rocoo, Henrik, Maeve check their groups //
+      ////////////////////////////////////////////
+      for (const entity of accept_member_entities) {
+        await test_fetch_json(
+          GROUP_AUTH_URL(test_num) +
+            `?group_id=${owner_group_list.owned_groups[0].group_id}&user_type=Member`,
+          "GET",
+          entity.jwt,
+          null,
+          async (res) => {
+            const group = (await res.json()) as GroupGetRes;
+            return group.event_count === 0 && group.group_name === "Rocco's group of friends" &&
+              group.members?.length === 2 && group.members.every((x) => x.unique_id === null);
+          },
+        );
+      }
+    });
 
     await cleanup_test_step(test_num, t, sp);
   },
