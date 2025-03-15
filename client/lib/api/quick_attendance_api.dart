@@ -42,7 +42,7 @@ class QuickAttendanceApi {
 
   Future<GroupModel?> getGroup({required String groupId}) async {
     final Response response = await apiClient.get(
-      "",
+      "/group",
       query: {"groupId": groupId},
     );
     if (response.statusCode == 200) {
@@ -75,7 +75,9 @@ class QuickAttendanceApi {
     required String groupName,
     String? groupDescription,
   }) async {
-    final Response response = await apiClient.post("/auth/group", {});
+    final Response response = await apiClient.post("/auth/group", {
+      "group_name": groupName,
+    });
     final apiResponse = ApiResponse(
       statusCode: HttpStatusCode.from(response.statusCode),
       body: GroupModel.fromJson(response.body),
