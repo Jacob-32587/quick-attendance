@@ -17,6 +17,8 @@ import { account_put_req_val } from "../models/account/account_put_req.ts";
 import { account_invite_accept_put_req } from "../models/account/account_invite_accept_put_req.ts";
 import * as group_dal from "../dal/group.ts";
 import kv from "../dal/db.ts";
+import { HTTPException } from "@hono/hono/http-exception";
+import HttpStatusCode from "../util/http_status_code.ts";
 
 export const jwt_secret: string =
   "ca882e5c-dfd5-45fc-bc04-0a2fb7326305--86d452ef-778d-4443-812d-b19398b4e67f";
@@ -104,16 +106,30 @@ account.put(
   async (ctx) => {
     // Parse request and send to dal
     const req = ctx.req.valid("json");
-    const jwt_payload = await verify(
-      req.account_invite_jwt,
-      jwt_secret,
-      jwt_alg,
-    );
+    let jwt_payload;
+    try {
+      jwt_payload = await verify(
+        req.account_invite_jwt,
+        jwt_secret,
+        jwt_alg,
+      );
+    } catch {
+      throw new HTTPException(HttpStatusCode.FORBIDDEN, {
+        message: "Invite JWT invalid",
+      });
+    }
 
     const user_jwt = get_jwt_payload(ctx);
-    const invite_jwt = await group_invite_jwt_payload.parseAsync(
+    const maybe_invite_jwt = await group_invite_jwt_payload.safeParseAsync(
       jwt_payload,
     );
+
+    if (!maybe_invite_jwt.success) {
+      return ctx.json(maybe_invite_jwt, HttpStatusCode.BAD_REQUEST);
+    }
+
+    const invite_jwt = maybe_invite_jwt.data;
+
     const tran = kv.atomic();
 
     // Accept or deny the group invitation, update the account information appropriately
