@@ -12,6 +12,9 @@
     "effect": "npm:effect@^3.13.4",
     "zod": "npm:zod@^3.24.2"
   },
+  "fmt": {
+    "lineWidth": 100
+  },
   "compilerOptions": {
     "jsx": "precompile",
     "jsxImportSource": "hono/jsx"

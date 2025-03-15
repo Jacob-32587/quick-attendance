@@ -357,7 +357,6 @@ export async function respond_to_group_invite(
       () => "User is already a member for this group",
     );
   }
-  console.log("ENTITY:", entity);
   tran
     .delete(["account", user_id])
     .set(["account", user_id], entity);
