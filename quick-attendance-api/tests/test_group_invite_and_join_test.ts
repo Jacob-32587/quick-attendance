@@ -109,6 +109,7 @@ Deno.test(
         test_num,
       ))[0];
 
+      // Ensure that all users have no more pending invites
       assert(
         accept_member_entities.every((x) =>
           (x.fk_pending_group_ids?.length ?? 0) === 0 ||
@@ -132,10 +133,24 @@ Deno.test(
           async (res) => {
             const group = (await res.json()) as GroupGetRes;
             return group.event_count === 0 && group.group_name === "Rocco's group of friends" &&
-              group.members?.length === 2 && group.members.every((x) => x.unique_id === null);
+              group.members?.length === 2 && group.members.every((x) => x.unique_id === null) &&
+              group.pending_memebers === null;
           },
         );
       }
+
+      await test_fetch_json(
+        GROUP_AUTH_URL(test_num) +
+          `?group_id=${owner_group_list.owned_groups[0].group_id}&user_type=Owner`,
+        "GET",
+        owner_jwt,
+        null,
+        async (res) => {
+          const group = (await res.json()) as GroupGetRes;
+          return group.event_count === 0 && group.group_name === "Rocco's group of friends" &&
+            group.members?.length === 2 && group.members.every((x) => x.unique_id === null);
+        },
+      );
     });
 
     await cleanup_test_step(test_num, t, sp);
