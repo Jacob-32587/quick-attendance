@@ -41,21 +41,7 @@ Deno.test(
         "group_description":
           "Rocco's close group of friends, I want to track when I'm with my friends.",
       } as GroupPostReq);
-      // await test_fetch(GROUP_AUTH_URL(test_num), {
-      //   headers: {
-      //     "Authorization": `Bearer ${owner_jwt}`,
-      //     "content-type": "application/json",
-      //   },
-      //   method: "POST",
-      //   body: JSON.stringify(
-      //     {
-      //       "group_name": "Rocco's group of friends",
-      //       "group_description":
-      //         "Rocco's close group of friends, I want to track when I'm with my friends.",
-      //     } as GroupPostReq,
-      //   ),
-      // });
-      //
+
       const owner_group_list_res = await test_fetch_json(
         GROUP_AUTH_URL(test_num) + "/list",
         "GET",
@@ -64,18 +50,6 @@ Deno.test(
         null,
         true,
       );
-
-      // const owner_group_list_res = await test_fetch(
-      //   GROUP_AUTH_URL(test_num) + "/list",
-      //   {
-      //     headers: {
-      //       "Authorization": `Bearer ${owner_jwt}`,
-      //     },
-      //     method: "GET",
-      //   },
-      //   undefined,
-      //   false,
-      // );
 
       const owner_group_list = (await owner_group_list_res.json()) as GroupListGetRes;
 
