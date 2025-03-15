@@ -50,7 +50,7 @@ group.get(
     if (
       (group.member_ids?.size != 0) || (group.manager_ids?.size != 0)
     ) {
-      return get_group_res;
+      return ctx.json(get_group_res);
     }
 
     const memeber_get_promise = account_dal.get_public_account_models(
