@@ -7,11 +7,11 @@ import { HTTPException } from "@hono/hono/http-exception";
 import { Uuid } from "./util/uuid.ts";
 import { group } from "./endpoints/group.ts";
 import { cli_flags } from "./util/cli_parse.ts";
-const app = new Hono().basePath("/quick-scan-api");
+const app = new Hono().basePath("/quick-attendance-api");
 
 export { app };
 
-export interface QuickScanJwtPayload {
+export interface QuickAttendanceJwtPayload {
   [key: string]: unknown;
   iss: string;
   sub: string;
@@ -22,10 +22,10 @@ export interface QuickScanJwtPayload {
   iat: number;
 }
 
-export interface AuthJwtPayload extends QuickScanJwtPayload {
-  iss: "quick-scan-api";
+export interface AuthJwtPayload extends QuickAttendanceJwtPayload {
+  iss: "quick-attendance-api";
   sub: "user-auth";
-  aud: "quick-scan-client";
+  aud: "quick-attendance-client";
 }
 
 app.use(
@@ -46,7 +46,7 @@ app.use(
 );
 
 export function get_jwt_payload(ctx: Context) {
-  return ctx.get("jwtPayload") as QuickScanJwtPayload;
+  return ctx.get("jwtPayload") as QuickAttendanceJwtPayload;
 }
 
 app.onError((err, ctx) => {

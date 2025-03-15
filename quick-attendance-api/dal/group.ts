@@ -5,53 +5,19 @@ import { GroupListGetRes } from "../models/group/group_list_res.ts";
 import { GroupSparseGetModel } from "../models/group/group_sparse_get_model.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
 import { new_uuid, Uuid } from "../util/uuid.ts";
-import AccountEntity, {
-  AccountOwnerGroupData,
-} from "../entities/account_entity.ts";
-import {
-  get_account,
-  get_accounts,
-  get_accounts_by_usernames,
-} from "./account.ts";
+import AccountEntity, { AccountOwnerGroupData } from "../entities/account_entity.ts";
+import { get_account, get_accounts, get_accounts_by_usernames } from "./account.ts";
 import HttpStatusCode from "../util/http_status_code.ts";
 import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
+import { UserType } from "../models/user_type.ts";
+
+//#region Query
 
 /**
- * @param owner_id - Id of the user who will own the created group
- * @param req -
- * @returns The id of the created
- * @throws @link{@ npm:Hono/}
+ * @description Gets a list of groups that the user owns, manages, and is a member of.
+ * @param user_id - User id to retrieve groups for
+ * @returns List of owned groups, managed groups, and member groups
  */
-export async function create_group(owner_id: Uuid, req: GroupPostReq) {
-  const entity = {
-    group_id: new_uuid(),
-    owner_id: owner_id,
-    group_description: req.group_description,
-    group_name: req.group_name,
-    unique_id_settings: req.unique_id_settings,
-  } as GroupEntity;
-
-  const account_entity = await get_account(owner_id);
-
-  account_entity.fk_owned_group_ids = add_to_maybe_map(
-    account_entity.fk_owned_group_ids,
-    [[entity.group_id, {} as AccountOwnerGroupData]],
-    HttpStatusCode.INTERNAL_SERVER_ERROR,
-    () => "bad generated id",
-  );
-
-  await DbErr.err_on_commit_async(
-    kv
-      .atomic()
-      .set(["group", entity.group_id], entity)
-      .set(["account", owner_id], account_entity)
-      .commit(),
-    "Unable to perform mutation",
-  ); //!! throw
-
-  return entity;
-}
-
 export async function get_groups_for_account(user_id: Uuid) {
   const account_entity = await get_account(user_id); //!! throw
 
@@ -82,6 +48,8 @@ export async function get_groups_for_account(user_id: Uuid) {
     memeber_groups_promise,
   ]);
 
+  // Collect the unique owner id's here, this is to prevent the extra
+  // cost associated with grabbing duplicate data
   const unique_user_ids = new Set<Uuid>();
 
   for (let i = 0; i < groups.length; i++) {
@@ -99,6 +67,7 @@ export async function get_groups_for_account(user_id: Uuid) {
     )).map((x) => [x.value.user_id, x.value.username]),
   );
 
+  // Convert all the retrieve data to an API model
   const to_sparse_model = (e: Deno.KvEntry<GroupEntity>[]) => {
     return e.map((x) => (
       {
@@ -119,12 +88,46 @@ export async function get_groups_for_account(user_id: Uuid) {
   } as GroupListGetRes;
 }
 
+/**
+ * @description Get a group entity for the database with the given key
+ * @param group_id - Group id to retrieve
+ * @returns Group entity associated with the given id
+ * @throw {@link HttpStatusCode} if the group was not found
+ */
 export async function get_group(group_id: Uuid) {
   return await DbErr.err_on_empty_val_async(
     kv.get<GroupEntity>(["group", group_id]),
     () => "Group does not exist",
     HttpStatusCode.NOT_FOUND,
   );
+}
+
+/**
+ * @description Verify the type of a user and get the associated group for that user
+ * @param group_id - The id of the group to retrieve
+ * @param user_id - The user id to check with
+ * @param user_type_claim - The type of user the caller is claiming for the given group
+ * @throw {@link HTTPException} If the user claim does not agree with the what is stored in the DB
+ */
+export async function get_group_and_verify_user_type(
+  group_id: Uuid,
+  user_id: Uuid,
+  user_type_claim: UserType,
+): Promise<GroupEntity | never> {
+  const group = (await get_group(group_id)).value;
+  const matchesUserClaim = Match.value(user_type_claim).pipe(
+    Match.when(UserType.Owner, (_) => group.owner_id === user_id),
+    Match.when(
+      UserType.Manager,
+      (_) => group.manager_ids?.has(user_id) ?? false,
+    ),
+    Match.when(UserType.Member, (_) => group.member_ids?.has(user_id) ?? false),
+    Match.exhaustive,
+  );
+  if (matchesUserClaim) {
+    return group;
+  }
+  DbErr.err("Invalid user type claim for group", HttpStatusCode.FORBIDDEN); //!!throw
 }
 
 export function group_is_owned_by_account(
@@ -139,7 +142,60 @@ export function group_is_owned_by_account(
     ),
   );
 }
+//#endregion
 
+//#region Mutation
+/**
+ * @param owner_id - Id of the user who will own the created group
+ * @param req -
+ * @returns The id of the created
+ * @throws @link{@ HTTPException}
+ */
+export async function create_group(owner_id: Uuid, req: GroupPostReq) {
+  const entity = {
+    group_id: new_uuid(),
+    owner_id: owner_id,
+    group_description: req.group_description,
+    group_name: req.group_name,
+    unique_id_settings: req.unique_id_settings,
+    event_count: 0,
+    manager_ids: null,
+    member_ids: null,
+    pending_memeber_ids: null,
+    current_attendance_id: null,
+  } as GroupEntity;
+
+  const account_entity = await get_account(owner_id);
+
+  account_entity.fk_owned_group_ids = add_to_maybe_map(
+    account_entity.fk_owned_group_ids,
+    [[entity.group_id, {} as AccountOwnerGroupData]],
+    HttpStatusCode.INTERNAL_SERVER_ERROR,
+    () => "bad generated id",
+  );
+
+  await DbErr.err_on_commit_async(
+    kv
+      .atomic()
+      .set(["group", entity.group_id], entity)
+      .set(["account", owner_id], account_entity)
+      .commit(),
+    "Unable to perform mutation",
+  ); //!! throw
+
+  return entity;
+}
+
+/**
+ * @description Verifies the specified owner id owns the group and that the
+ * given user names exist. If checks are passed the group is updated with the
+ * pending member ids.
+ * @param tran - Transaction the group invite is being executed in
+ * @param owner_id - The account id for the owner of the group
+ * @param group_id - The group id users are being invited to
+ * @param invitees_usernames - List of usernames to invite to the group
+ * @returns Owner entity and account entities that are being invited
+ */
 export async function accounts_for_group_invite(
   tran: Deno.AtomicOperation,
   owner_id: Uuid,
@@ -159,12 +215,85 @@ export async function accounts_for_group_invite(
     account_entities.map((x) => x.value.user_id),
     HttpStatusCode.CONFLICT,
     (k) =>
-      `Attempted to invite user '${
-        account_entities.find((x) => x.value.user_id === k) ?? "N/A"
-      }'`,
+      `Attempted to invite user '${account_entities.find((x) => x.value.user_id === k) ?? "N/A"}'`,
   );
 
   tran.set(["group", group_id], group_entity.value);
 
   return { owner_entity, account_entities };
 }
+
+/**
+ * @description Verifies that the provided unique id matches the requirements
+ * specified by the group. If all checks are passed the user is either added to
+ * the group of removed from the pending list, depending on the users action.
+ * @param tran - Transaction the group invite respond is being executed in
+ * @param group_id - The group id the user is being invited to
+ * @param user_id - The id of the user taking action on the group invite
+ * @param accept - If the user accepts the group invite
+ * @param is_manager_invite - If the invite should add the user as a manager
+ * @param unique_id - The unique id of the user, if one is needed
+ */
+export async function respond_to_group_invite(
+  tran: Deno.AtomicOperation,
+  user_id: Uuid,
+  group_id: Uuid,
+  accept: boolean,
+  is_manager_invite: boolean,
+  unique_id: string | null = null,
+) {
+  const group_entity = (await get_group(group_id)).value;
+
+  // Validate unique id if unique ids are enabled for this group
+  if (group_entity.unique_id_settings !== null) {
+    // Get message suffix based on the group settings
+    let bad_unique_id_setting_message: string;
+    if (
+      group_entity.unique_id_settings.max_length ===
+        group_entity.unique_id_settings.min_length
+    ) {
+      bad_unique_id_setting_message =
+        `of exactly ${group_entity.unique_id_settings.max_length} character(s)`;
+    } else {
+      bad_unique_id_setting_message =
+        `between ${group_entity.unique_id_settings.min_length} and ${group_entity.unique_id_settings.max_length} character(s)`;
+    }
+
+    if (
+      unique_id === null ||
+      unique_id.length < group_entity.unique_id_settings.min_length ||
+      unique_id.length > group_entity.unique_id_settings.max_length
+    ) {
+      DbErr.err(
+        `This group requires a unique id ${bad_unique_id_setting_message}`,
+        HttpStatusCode.BAD_REQUEST,
+      );
+    }
+  }
+
+  if (!group_entity.pending_memeber_ids?.delete(user_id)) {
+    DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
+  }
+
+  // Add the user to the group if they are acepting the invite
+  if (accept && is_manager_invite) {
+    group_entity.manager_ids = add_to_maybe_set(
+      group_entity.manager_ids,
+      [user_id],
+      HttpStatusCode.CONFLICT,
+      () => "User is already a manager",
+    );
+  } else if (accept) {
+    group_entity.member_ids = add_to_maybe_set(
+      group_entity.member_ids,
+      [user_id],
+      HttpStatusCode.CONFLICT,
+      () => "User is already a memeber",
+    );
+  }
+
+  tran
+    .delete(["group", group_id])
+    .set(["group", group_id], group_entity);
+}
+//#endregion

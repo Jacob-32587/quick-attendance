@@ -37,10 +37,9 @@ async function init_test(test_num: number, base_url: string) {
 
   if (!ok_health_check) {
     console.log(`Failed to launch server process for test ${test_num}`);
-    assertFalse(true);
+    assertNever();
   }
   res.body?.cancel();
-  console.log(`Failed to launch server process for test ${test_num}`);
   return c_p;
 }
 
@@ -72,17 +71,23 @@ async function cleanup_test(
  * failing requests the body will always be consumed. This will default not true if a check function is not specified,
  * if one is then false. It is assumed that that check function will need to read the body, if
  * this is not the case this parameter can be set to true manually.
+ * @returns Promise that will resolve with headers are sent back
  */
 export async function test_fetch(
   input: RequestInfo | URL,
   init?: RequestInit & { client?: Deno.HttpClient },
-  maybe_check_fn?: (
-    res: Response,
-    req?: RequestInit & { client?: Deno.HttpClient },
-  ) => Promise<boolean> | undefined,
-  consume_body?: boolean,
+  maybe_check_fn?:
+    | ((
+      res: Response,
+      req?: RequestInit & { client?: Deno.HttpClient },
+    ) => Promise<boolean> | undefined)
+    | null,
+  consume_body?: boolean | null,
 ): Promise<Response> {
-  if (consume_body === undefined && maybe_check_fn === undefined) {
+  if (
+    (consume_body === undefined || consume_body === null) &&
+    (maybe_check_fn === undefined || consume_body === null)
+  ) {
     consume_body = true;
   } else {
     consume_body = false;
@@ -114,6 +119,57 @@ export async function test_fetch(
   }
 
   return ret;
+}
+
+/**
+ * @description Send a test fetch request and optionally include a JSON body and JWT authorization header
+ * @template T - Type of the JSON body
+ * @param url - URL to send the HTTP request to
+ * @param method - method of the HTTP endpoint
+ * @param json_body - JSON body of the request
+ * @param jwt - Optional authorization header with JWT
+ * @param maybe_check_fn - Optional check function that allows for additional logic to be checked by {@link assert}.
+ * @param consume_body - Specify if the body should be consumed by the function on successful requests. Note that on
+ * failing requests the body will always be consumed. This will default not true if a check function is not specified,
+ * if one is then false. It is assumed that that check function will need to read the body, if
+ * this is not the case this parameter can be set to true manually.
+ * @returns Promise that will resolve with headers are sent back
+ */
+export async function test_fetch_json<T>(
+  url: string,
+  method: "PUT" | "GET" | "PATCH" | "DELETE" | "POST",
+  jwt?: string | null,
+  json_body?: T | null,
+  maybe_check_fn?:
+    | ((
+      res: Response,
+      req?: RequestInit & { client?: Deno.HttpClient },
+    ) => Promise<boolean> | undefined)
+    | null,
+  consume_body?: boolean | null,
+): Promise<Response> {
+  const headers = {} as { [key: string]: string };
+
+  const req_init = {
+    headers: headers,
+    method: method,
+  } as RequestInit;
+
+  // Attach JWT if provided
+  if (jwt !== undefined && jwt !== null) {
+    headers["Authorization"] = `Bearer ${jwt}`;
+  }
+  if (json_body !== undefined && json_body !== null) {
+    headers["content-type"] = "application/json";
+    req_init.body = JSON.stringify(json_body);
+  }
+
+  return await test_fetch(
+    url,
+    req_init,
+    maybe_check_fn,
+    consume_body,
+  );
 }
 
 export const init_test_step = async (
