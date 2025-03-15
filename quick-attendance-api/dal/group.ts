@@ -239,8 +239,8 @@ export async function accounts_for_group_invite(
  */
 export async function respond_to_group_invite(
   tran: Deno.AtomicOperation,
-  group_id: Uuid,
   user_id: Uuid,
+  group_id: Uuid,
   accept: boolean,
   is_manager_invite: boolean,
   unique_id: string | null = null,

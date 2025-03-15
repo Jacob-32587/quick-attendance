@@ -11,7 +11,7 @@ import { data_views_are_equal } from "../util/array_buffer.ts";
 import { GroupInviteJwtPayload } from "../models/group_invite_jwt_payload.ts";
 import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
 import { decode, sign } from "npm:hono/jwt";
-import { jwt_secret } from "../endpoints/account.ts";
+import { jwt_alg, jwt_secret } from "../endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { AccountPutReq } from "../models/account/account_put_req.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
@@ -281,17 +281,21 @@ export async function invite_accounts_to_group(
       invitees_accounts[i].fk_pending_group_invites,
       [[
         group_id,
-        await sign({
-          iss: "quick-attendance-api",
-          sub: "group-invite",
-          aud: "quick-attendance-client",
-          username: invitees_accounts[i].username,
-          group_name,
-          user_id: invitees_accounts[i].user_id,
-          owner_id,
-          group_id,
-          is_manager_invite,
-        } as GroupInviteJwtPayload, jwt_secret),
+        await sign(
+          {
+            iss: "quick-attendance-api",
+            sub: "group-invite",
+            aud: "quick-attendance-client",
+            username: invitees_accounts[i].username,
+            group_name,
+            user_id: invitees_accounts[i].user_id,
+            owner_id,
+            group_id,
+            is_manager_invite,
+          } as GroupInviteJwtPayload,
+          jwt_secret,
+          jwt_alg,
+        ),
       ]],
       HttpStatusCode.CONFLICT,
       (_, v) =>

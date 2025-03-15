@@ -113,7 +113,8 @@ account.put(
         jwt_secret,
         jwt_alg,
       );
-    } catch {
+    } catch (e) {
+      console.log(e);
       throw new HTTPException(HttpStatusCode.FORBIDDEN, {
         message: "Invite JWT invalid",
       });
@@ -131,7 +132,7 @@ account.put(
     const invite_jwt = maybe_invite_jwt.data;
 
     const tran = kv.atomic();
-
+    console.log(invite_jwt);
     // Accept or deny the group invitation, update the account information appropriately
     dal.respond_to_group_invite(
       tran,
