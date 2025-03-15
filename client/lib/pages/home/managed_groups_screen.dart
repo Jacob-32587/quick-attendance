@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
-import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/pages/home/components/group_list.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 
@@ -11,6 +9,10 @@ class ManagedGroupsScreen extends StatelessWidget
   final ProfileController _profileController = Get.find();
 
   ManagedGroupsScreen({super.key});
+
+  Future<void> onRefresh() async {
+    _profileController.fetchGroups();
+  }
 
   @override
   Widget buildFAB(BuildContext context) {
@@ -25,10 +27,12 @@ class ManagedGroupsScreen extends StatelessWidget
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: RefreshIndicator(
+        // Enables scroll down to refresh
+        onRefresh: onRefresh,
+        child: ListView(
+          padding: EdgeInsets.all(16.0),
+          physics: AlwaysScrollableScrollPhysics(),
           children: [
             // Greeting to the user
             Text(
@@ -44,7 +48,7 @@ class ManagedGroupsScreen extends StatelessWidget
             // Display the groups the user manages
             Obx(
               () => GroupList(
-                groups: _profileController.managedGroups.value,
+                groups: _profileController.ownedGroups,
                 isListView: _profileController.prefersListView,
               ),
             ),
