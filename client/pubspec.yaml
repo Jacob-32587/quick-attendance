@@ -40,6 +40,7 @@ dependencies:
   socket_io_client: ^3.0.2
   jwt_decode: ^0.3.1
   qr_flutter: ^4.1.0
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
