@@ -8,7 +8,7 @@ import 'package:quick_attendance/pages/home/components/join_group_popup.dart';
 
 class JoinedGroupsScreen extends StatelessWidget
     implements HasFloatingActionButton {
-  final ProfileController profileController = Get.find();
+  final ProfileController _profileController = Get.find();
 
   JoinedGroupsScreen({super.key});
 
@@ -59,14 +59,14 @@ class JoinedGroupsScreen extends StatelessWidget
                 Obx(
                   () => IconButton(
                     icon: Icon(
-                      profileController.prefersListView
+                      _profileController.prefersListView
                           ? Icons.grid_view
                           : Icons.list,
                       color: Colors.lightBlue,
                     ),
                     onPressed: () {
-                      profileController.prefersListView =
-                          !profileController.prefersListView;
+                      _profileController.prefersListView =
+                          !_profileController.prefersListView;
                     },
                   ),
                 ),
@@ -76,8 +76,8 @@ class JoinedGroupsScreen extends StatelessWidget
             // Display the groups the user is in
             Obx(
               () => GroupList(
-                groups: profileController.memberGroups,
-                isListView: profileController.prefersListView,
+                groups: _profileController.memberGroups,
+                isListView: _profileController.prefersListView,
               ),
             ),
             SizedBox(height: 24),
