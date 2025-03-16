@@ -13,10 +13,10 @@ import { group_unique_id_settings_get_req } from "../models/group/group_unique_i
 import { group_invite_jwt_payload } from "../models/group_invite_jwt_payload.ts";
 import { GroupPostRes } from "../models/group/group_post_res.ts";
 import { group_get_req } from "../models/group/group_get_req.ts";
-import { is_privileged_user_type, UserType } from "../models/user_type.ts";
+import { is_privileged_user_type } from "../models/user_type.ts";
 import { GroupGetRes } from "../models/group/group_get_res.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
-import { gen_alpanumeric_string, get_alphanumeric_str } from "../util/csharp-utils.ts";
+import { get_alphanumeric_str } from "../util/csharp-utils.ts";
 
 const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
@@ -172,7 +172,6 @@ group.get(
   `${group_base_path}/code`,
   async (ctx) => {
     const rand_str = await get_alphanumeric_str(6);
-    console.log(rand_str);
     return ctx.text(rand_str.random_chars);
   },
 );
