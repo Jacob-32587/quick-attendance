@@ -5,6 +5,9 @@ This is the API that the quick attendance Fluter app uses authenticate user and 
 - Install [Deno](https://deno.com/)
 - Run `deno run --watch --allow-net --unstable-kv --allow-read --allow-write main.ts` in this directory
 - Alternatively you can run `bash serv.sh` (on systems with bash)
+- If you are calling on an endpoint that uses a C# util ensure that you have compiled according to the `comp_cs.sh` script
+- When using a C# util function you must write the equivalent JS code and conditionally use JS when the C# executable fails. This
+will happen if the application is deployed to managed deno services.
 
 ## Endpoint documentation
 - We are using `.http` files for endpoint documentation following the [IntelliJ](https://www.jetbrains.com/help/idea/exploring-http-syntax.html#) standard.

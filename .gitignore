@@ -1,3 +1,5 @@
 quick-attendance-api/db.sqlite
 quick-attendance-api/db.sqlite-shm
 quick-attendance-api/db.sqlite-wal
+obj/
+bin/
