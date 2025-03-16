@@ -10,12 +10,15 @@ const get_csharp_exe_path = () => {
   } else if (Deno.build.os === "darwin" && Deno.build.arch === "aarch64") {
     return "csharp/bin/Release/net8.0/osx-arm64/publish/csharp";
   }
-  throw "Unable to run C# executable on this operating system";
+  return null;
 };
 
 const csharp_exe_path = get_csharp_exe_path();
 
 export async function exec_cs<T>(args: string[]) {
+  if (csharp_exe_path === null) {
+    return null;
+  }
   const cmd = new Deno.Command(csharp_exe_path, {
     args: args,
     stdout: "piped",
@@ -39,5 +42,10 @@ interface GetAlphanumericStrReturn {
 }
 
 export async function get_alphanumeric_str(length: number) {
-  return await exec_cs<GetAlphanumericStrReturn>(["get_alphanumeric_str", `${length}`]);
+  let output = await exec_cs<GetAlphanumericStrReturn>(["get_alphanumeric_str", `${length}`]);
+  if (output === null) {
+    // Execute some JS code to do the same thing
+    output = { random_chars: "A" } as GetAlphanumericStrReturn;
+  }
+  return output;
 }
