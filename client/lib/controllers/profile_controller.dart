@@ -45,6 +45,7 @@ class ProfileController extends GetxController {
     ever(authController.isLoggedIn, (loggedIn) {
       if (loggedIn) {
         _fetchProfileData();
+        fetchGroups();
       } else {
         _clearProfileData();
       }
@@ -76,14 +77,6 @@ class ProfileController extends GetxController {
       // TODO: What should we do when this request fails
     }
     isLoadingGroups.value = false;
-  }
-
-  void fetchJoinedGroups() {
-    // TODO: Fetch joined groups
-  }
-
-  void fetchManagedGroups() {
-    // TODO: Fetch managed groups
   }
 
   void leaveJoinedGroup(String groupId) {
