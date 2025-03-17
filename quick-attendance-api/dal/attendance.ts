@@ -1,4 +1,5 @@
 import { AttendanceEntity } from "../entities/attendance_entity.ts";
+import { GroupEntity } from "../entities/group_entity.ts";
 import { get_week_num_of_month } from "../util/time.ts";
 import { get_uuid_time, new_uuid, Uuid } from "../util/uuid.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
@@ -39,33 +40,25 @@ export function get_attendance_entities_for_week(
 //#endregion
 
 //#region Mutation
-export async function create_attendance_entity(group_id: Uuid) {
+export async function create_attendance_entity(group_id: Uuid, group_entity: GroupEntity) {
   const tran = kv.atomic();
   const attendance_id = new_uuid();
   const time = get_uuid_time(attendance_id);
 
-  const group_entity = (await group_dal.get_group(group_id)).value;
-
   group_entity.current_attendance_id = attendance_id;
+  group_entity.event_count++;
 
-  tran.set([
-    "attendance",
-    group_id,
-    time.getUTCFullYear(),
-    time.getUTCMonth(),
-    get_week_num_of_month(time),
-    attendance_id,
-  ], {
+  await set_attendance_entity(group_id, attendance_id, {
     group_id: group_id,
     year: time.getUTCFullYear(),
     month: time.getUTCMonth(),
     week: get_week_num_of_month(time),
     attendance_id: attendance_id,
     present_member_ids: new Set(),
-  } as AttendanceEntity);
+  } as AttendanceEntity, tran);
 
   await group_dal.set_group(group_entity, tran);
-  await DbErr.err_on_commit_async(tran.commit(), "Unable to begin attendance");
+  await DbErr.err_on_commit_async(tran.commit(), "Unable to create attendance record");
 }
 
 export async function set_attendance_entity(
