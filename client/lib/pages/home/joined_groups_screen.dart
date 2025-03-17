@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer_list.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/pages/home/components/group_header.dart';
 import 'package:quick_attendance/pages/home/components/group_list.dart';
@@ -27,14 +28,18 @@ class JoinedGroupsScreen extends StatelessWidget
     Get.toNamed("/group/$groupId");
   }
 
+  Future<void> onRefresh() async {
+    _profileController.fetchGroups();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-
+      child: RefreshIndicator(
+        onRefresh: onRefresh,
+        child: ListView(
+          padding: EdgeInsets.all(16.0),
+          physics: AlwaysScrollableScrollPhysics(),
           children: [
             // Greeting to the user
             Text(
@@ -50,12 +55,6 @@ class JoinedGroupsScreen extends StatelessWidget
             GroupHeader(
               title: "",
               children: [
-                IconButton(
-                  icon: const Icon(Icons.add, color: Colors.lightBlue),
-                  onPressed: () {
-                    // TODO: Handle joining a group with a screen for entering invite code.
-                  },
-                ),
                 Obx(
                   () => IconButton(
                     icon: Icon(
@@ -73,11 +72,14 @@ class JoinedGroupsScreen extends StatelessWidget
               ],
             ),
             SizedBox(height: 8),
-            // Display the groups the user is in
             Obx(
-              () => GroupList(
-                groups: _profileController.memberGroups,
+              () => SkeletonShimmerList(
+                isLoading: _profileController.isLoadingGroups.value,
                 isListView: _profileController.prefersListView,
+                widget: GroupList(
+                  groups: _profileController.memberGroups,
+                  isListView: _profileController.prefersListView,
+                ),
               ),
             ),
             SizedBox(height: 24),
