@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer_list.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
-import 'package:quick_attendance/pages/home/components/group_list.dart';
+import 'package:quick_attendance/pages/home/components/display_groups.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 
 class ManagedGroupsScreen extends StatelessWidget
     implements HasFloatingActionButton {
   final ProfileController _profileController = Get.find();
+
+  bool get hasAnyManagedGroups =>
+      _profileController.managedGroups?.isEmpty == false;
+
+  bool get hasAnyOwnedGroups =>
+      _profileController.ownedGroups?.isEmpty == false;
 
   ManagedGroupsScreen({super.key});
 
@@ -46,29 +51,20 @@ class ManagedGroupsScreen extends StatelessWidget
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             SizedBox(height: 24),
-            Obx(
-              () => IconButton(
-                icon: Icon(
-                  _profileController.prefersListView
-                      ? Icons.grid_view
-                      : Icons.list,
-                  color: Colors.lightBlue,
-                ),
-                onPressed: () {
-                  _profileController.prefersListView =
-                      !_profileController.prefersListView;
-                },
-              ),
+            DisplayGroups(
+              title: "Owned Groups",
+              isLoading: _profileController.isLoadingGroups,
+              hasLoaded: _profileController.hasLoadedGroups,
+              emptyMessage: "You do not own any groups yet.",
+              groups: _profileController.ownedGroups,
             ),
-            Obx(
-              () => SkeletonShimmerList(
-                isLoading: _profileController.isLoadingGroups.value,
-                isListView: _profileController.prefersListView,
-                widget: GroupList(
-                  groups: _profileController.ownedGroups,
-                  isListView: _profileController.prefersListView,
-                ),
-              ),
+            SizedBox(height: 24),
+            DisplayGroups(
+              title: "Managed Groups",
+              isLoading: _profileController.isLoadingGroups,
+              hasLoaded: _profileController.hasLoadedGroups,
+              emptyMessage: "You are not a manager of any group yet.",
+              groups: _profileController.managedGroups,
             ),
             SizedBox(height: 24),
           ],
