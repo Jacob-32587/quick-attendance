@@ -66,7 +66,9 @@ class GroupList extends StatelessWidget {
               },
               child: Text(
                 "Show More",
-                style: TextStyle(color: Colors.lightBlue),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
               ),
             );
           } else {
