@@ -14,12 +14,19 @@ class ProfileController extends GetxController {
   var user = Rx<UserModel>(UserModel());
   final userSettings = Rx<AccountSettingsModel>(AccountSettingsModel());
   final _groupListResponse = Rxn<GroupListResponseModel>();
+
   RxList<GroupModel>? get memberGroups =>
       _groupListResponse.value?.memberGroups;
   RxList<GroupModel>? get managedGroups =>
       _groupListResponse.value?.managedGroups;
   RxList<GroupModel>? get ownedGroups => _groupListResponse.value?.ownedGroups;
-  RxBool creatingGroup = false.obs;
+
+  /// Loading state for creating a group
+  final RxBool isCreatingGroup = false.obs;
+
+  /// Loading state for fetching group list information
+  final RxBool isLoadingGroups = false.obs;
+  final RxBool hasLoadedGroups = false.obs;
 
   /// Getter for the user's list view preference
   bool get prefersListView => userSettings.value.prefersListView.value;
@@ -60,12 +67,15 @@ class ProfileController extends GetxController {
 
   /// Get the groups the user owns, manages, or has joined from the server
   Future<void> fetchGroups() async {
+    isLoadingGroups.value = true;
     final response = await _api.getUsersGroups();
     if (response.statusCode == HttpStatusCode.ok) {
+      hasLoadedGroups.value = true;
       _groupListResponse.value = response.body;
     } else {
       // TODO: What should we do when this request fails
     }
+    isLoadingGroups.value = false;
   }
 
   void fetchJoinedGroups() {
