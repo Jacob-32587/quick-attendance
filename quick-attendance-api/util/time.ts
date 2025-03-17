@@ -14,7 +14,7 @@
  * @param {Date=} date - The date object for which to calculate the week number.
  * @return The ISO week number of the given date.
  */
-export function get_week_num(date: Date = new Date()) {
+export function get_week_num_of_year(date: Date = new Date()) {
   const d = new Date(date.getTime());
   d.setHours(0, 0, 0, 0);
   // Thursday in current week decides the year.
