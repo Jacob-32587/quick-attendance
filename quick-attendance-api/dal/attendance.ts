@@ -5,7 +5,10 @@ import kv, { DbErr } from "./db.ts";
 import * as group_dal from "./group.ts";
 
 //#region Query
-async function create_attendance_entity(group_id: Uuid) {
+//#endregion
+
+//#region Mutation
+export async function create_attendance_entity(group_id: Uuid) {
   const tran = kv.atomic();
   const attendance_id = new_uuid();
   const time = get_uuid_time(attendance_id);
@@ -30,12 +33,11 @@ async function create_attendance_entity(group_id: Uuid) {
     present_member_ids: new Set(),
   } as AttendanceEntity);
 
-    group_dal.
+  await group_dal.set_group(group_entity, tran);
+  await DbErr.err_on_commit_async(tran.commit(), "Unable to begin attendance");
 }
 
-async function update_attendance_entity(attendance_id: Uuid) {
+async function update_attendance_entity(group_id: Uuid, attendance_id: Uuid) {
+  const time = get_uuid_time(attendance_id);
 }
-//#endregion
-
-//#region Mutation
 //#endregion

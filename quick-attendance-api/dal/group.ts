@@ -296,11 +296,16 @@ export async function respond_to_group_invite(
     .set(["group", group_id], group_entity);
 }
 
-export function update_group(entity: GroupEntity, tran?: Deno.AtomicOperation) {
+export async function set_group(entity: GroupEntity, tran?: Deno.AtomicOperation) {
+  const no_tran = tran === undefined;
   if (tran === undefined) {
     tran = kv.atomic();
   }
-  return tran.set(["group", entity.group_id], entity);
+  tran.set(["group", entity.group_id], entity);
+  if (no_tran) {
+    await DbErr.err_on_commit_async(tran.commit(), "Unable to update group");
+  }
+  return tran;
 }
 
 //#endregion
