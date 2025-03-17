@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer_list.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
+import 'package:quick_attendance/models/user_type.dart';
 import 'package:quick_attendance/pages/home/components/display_groups.dart';
 import 'package:quick_attendance/pages/home/components/group_header.dart';
 import 'package:quick_attendance/pages/home/components/group_list.dart';
@@ -59,6 +60,7 @@ class JoinedGroupsScreen extends StatelessWidget
               groups: _profileController.memberGroups,
               emptyMessage:
                   "You are not apart of any groups. Click the + button to join one.",
+              userType: UserType.member,
             ),
             SizedBox(height: 24),
           ],

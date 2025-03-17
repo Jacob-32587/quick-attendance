@@ -1,29 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/models/group_model.dart';
+import 'package:quick_attendance/models/user_type.dart';
 
 class GroupList extends StatelessWidget {
   final List<GroupModel>? groups;
   final bool isListView;
-  final RxInt shownGroups = RxInt(6);
-  final RxString searchTerm = RxString("");
+  final RxInt _shownGroups = RxInt(6);
+  final RxString _searchTerm = RxString("");
+  final UserType userType;
 
   RxList<GroupModel> get filteredGroups {
     return RxList<GroupModel>.from(
       (groups ?? const [])
           .where(
             (group) => (group.name.value ?? "").toLowerCase().contains(
-              searchTerm.value.toLowerCase(),
+              _searchTerm.value.toLowerCase(),
             ),
           )
-          .take(shownGroups.value),
+          .take(_shownGroups.value),
     );
   }
 
-  GroupList({super.key, required this.groups, required this.isListView});
+  GroupList({
+    super.key,
+    required this.groups,
+    required this.isListView,
+    required this.userType,
+  });
 
   int get groupCount => filteredGroups.length;
-  int get groupsRemaining => (groups?.length ?? 0) - shownGroups.value;
+  int get groupsRemaining => (groups?.length ?? 0) - _shownGroups.value;
   bool get areGroupsHidden => groupsRemaining > 0;
 
   @override
@@ -38,7 +45,11 @@ class GroupList extends StatelessWidget {
                 itemCount: groupCount,
                 itemBuilder: (context, index) {
                   final group = filteredGroups[index];
-                  return _GroupCard(group: group, isListView: isListView);
+                  return _GroupCard(
+                    group: group,
+                    isListView: isListView,
+                    userType: userType,
+                  );
                 },
               ),
             )
@@ -54,7 +65,11 @@ class GroupList extends StatelessWidget {
                 itemCount: filteredGroups.length,
                 itemBuilder: (context, index) {
                   final group = filteredGroups[index];
-                  return _GroupCard(group: group, isListView: isListView);
+                  return _GroupCard(
+                    group: group,
+                    isListView: isListView,
+                    userType: userType,
+                  );
                 },
               ),
             ),
@@ -62,7 +77,7 @@ class GroupList extends StatelessWidget {
           if (areGroupsHidden) {
             return TextButton(
               onPressed: () {
-                shownGroups.value *= 2;
+                _shownGroups.value *= 2;
               },
               child: Text(
                 "Show More",
@@ -83,7 +98,12 @@ class GroupList extends StatelessWidget {
 class _GroupCard extends StatelessWidget {
   final bool isListView;
   final GroupModel group;
-  const _GroupCard({required this.group, required this.isListView});
+  final UserType userType;
+  const _GroupCard({
+    required this.group,
+    required this.isListView,
+    required this.userType,
+  });
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -95,7 +115,7 @@ class _GroupCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [const Icon(Icons.arrow_forward_ios, size: 16)],
         ),
-        onTap: () => Get.toNamed("/group/${group.groupId}"),
+        onTap: () => Get.toNamed("/group/${group.groupId}/${userType.value}"),
       ),
     );
   }

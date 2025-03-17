@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/models/group_model.dart';
+import 'package:quick_attendance/models/user_type.dart';
 import 'package:quick_attendance/pages/attendance_group/attendance_session_screen.dart';
 import 'package:quick_attendance/pages/attendance_group/attendees_screen.dart';
 import 'package:quick_attendance/pages/attendance_group/group_home_screen.dart';
@@ -19,11 +20,16 @@ class GroupController extends GetxController {
   /// in the URL and make it the active group
   void _fetchActiveGroup() async {
     String? groupId = Get.parameters["groupId"];
-    if (groupId == null) {
+    String? userTypeClaimRaw = Get.parameters["userType"];
+    if (groupId == null || userTypeClaimRaw == null) {
       return;
     }
+    UserType userTypeClaim = UserType.from(userTypeClaimRaw);
     isLoadingGroup.value = true;
-    final group = await _api.getGroup(groupId: groupId);
+    final group = await _api.getGroup(
+      groupId: groupId,
+      userTypeClaim: userTypeClaim,
+    );
     if (group == null) {
       // TODO: Handle what happens when a group was not found
     } else {

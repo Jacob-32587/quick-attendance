@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
+import 'package:quick_attendance/models/user_type.dart';
 import 'package:quick_attendance/pages/home/components/display_groups.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 
@@ -57,6 +58,7 @@ class ManagedGroupsScreen extends StatelessWidget
               hasLoaded: _profileController.hasLoadedGroups,
               emptyMessage: "You do not own any groups yet.",
               groups: _profileController.ownedGroups,
+              userType: UserType.owner,
             ),
             SizedBox(height: 24),
             DisplayGroups(
@@ -65,6 +67,7 @@ class ManagedGroupsScreen extends StatelessWidget
               hasLoaded: _profileController.hasLoadedGroups,
               emptyMessage: "You are not a manager of any group yet.",
               groups: _profileController.managedGroups,
+              userType: UserType.manager,
             ),
             SizedBox(height: 24),
           ],
