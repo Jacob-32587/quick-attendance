@@ -293,7 +293,14 @@ export async function respond_to_group_invite(
   }
 
   tran
-    .delete(["group", group_id])
     .set(["group", group_id], group_entity);
 }
+
+export function update_group(entity: GroupEntity, tran?: Deno.AtomicOperation) {
+  if (tran === undefined) {
+    tran = kv.atomic();
+  }
+  return tran.set(["group", entity.group_id], entity);
+}
+
 //#endregion
