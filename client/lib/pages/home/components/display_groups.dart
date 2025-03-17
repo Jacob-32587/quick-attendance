@@ -36,24 +36,23 @@ class DisplayGroups extends StatelessWidget {
         GroupHeader(
           title: title,
           children: [
-            Obx(() {
-              // Only display the list view preference button if there are groups
-              if (hasAnyGroups) {
-                return IconButton(
-                  icon: Icon(
-                    _profileController.prefersListView
-                        ? Icons.grid_view
-                        : Icons.list,
-                    color: Theme.of(context).colorScheme.primary,
+            // Only display the list view preference button if there are groups
+            hasAnyGroups
+                ? Obx(
+                  () => IconButton(
+                    icon: Icon(
+                      _profileController.prefersListView
+                          ? Icons.grid_view
+                          : Icons.list,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    onPressed: () {
+                      _profileController.prefersListView =
+                          !_profileController.prefersListView;
+                    },
                   ),
-                  onPressed: () {
-                    _profileController.prefersListView =
-                        !_profileController.prefersListView;
-                  },
-                );
-              }
-              return SizedBox.shrink();
-            }),
+                )
+                : SizedBox.shrink(),
           ],
         ),
         Obx(() {
