@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
+import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
+import 'package:quick_attendance/pages/home/components/group_list.dart';
 
 /// The client for sending requests to the Attenda Scan API
 class QuickAttendanceApi {
@@ -40,7 +42,7 @@ class QuickAttendanceApi {
 
   Future<GroupModel?> getGroup({required String groupId}) async {
     final Response response = await apiClient.get(
-      "",
+      "/group",
       query: {"groupId": groupId},
     );
     if (response.statusCode == 200) {
@@ -52,5 +54,34 @@ class QuickAttendanceApi {
         "Server failed to determine if group: '$groupId' exists.",
       );
     }
+  }
+
+  Future<ApiResponse<GroupListResponseModel>> getUsersGroups() async {
+    final Response response = await apiClient.get("/auth/group/list");
+    final GroupListResponseModel parsedBody = GroupListResponseModel.fromJson(
+      response.body,
+    );
+    final apiResponse = ApiResponse(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: parsedBody,
+    );
+    return apiResponse;
+  }
+
+  /// Create a group owned by the authenticated user.
+  /// Returns a partial group model which contains, at the very least,
+  /// the id of the group that was created
+  Future<ApiResponse<GroupModel>> createGroup({
+    required String groupName,
+    String? groupDescription,
+  }) async {
+    final Response response = await apiClient.post("/auth/group", {
+      "group_name": groupName,
+    });
+    final apiResponse = ApiResponse(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: GroupModel.fromJson(response.body),
+    );
+    return apiResponse;
   }
 }

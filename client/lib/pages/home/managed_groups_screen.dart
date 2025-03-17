@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
-import 'package:quick_attendance/pages/home/components/group_list.dart';
+import 'package:quick_attendance/pages/home/components/display_groups.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 
 class ManagedGroupsScreen extends StatelessWidget
     implements HasFloatingActionButton {
-  final ProfileController profileController = Get.find();
+  final ProfileController _profileController = Get.find();
+
+  bool get hasAnyManagedGroups =>
+      _profileController.managedGroups?.isEmpty == false;
+
+  bool get hasAnyOwnedGroups =>
+      _profileController.ownedGroups?.isEmpty == false;
 
   ManagedGroupsScreen({super.key});
+
+  Future<void> onRefresh() async {
+    _profileController.fetchGroups();
+  }
 
   @override
   Widget buildFAB(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
-        profileController.createGroup();
+        _profileController.createGroup();
       },
       child: const Icon(Icons.add),
     );
@@ -23,10 +33,12 @@ class ManagedGroupsScreen extends StatelessWidget
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: RefreshIndicator(
+        // Enables scroll down to refresh
+        onRefresh: onRefresh,
+        child: ListView(
+          padding: EdgeInsets.all(16.0),
+          physics: AlwaysScrollableScrollPhysics(),
           children: [
             // Greeting to the user
             Text(
@@ -39,12 +51,20 @@ class ManagedGroupsScreen extends StatelessWidget
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             SizedBox(height: 24),
-            // Display the groups the user manages
-            Obx(
-              () => GroupList(
-                groups: profileController.managedGroups,
-                isListView: profileController.prefersListView,
-              ),
+            DisplayGroups(
+              title: "Owned Groups",
+              isLoading: _profileController.isLoadingGroups,
+              hasLoaded: _profileController.hasLoadedGroups,
+              emptyMessage: "You do not own any groups yet.",
+              groups: _profileController.ownedGroups,
+            ),
+            SizedBox(height: 24),
+            DisplayGroups(
+              title: "Managed Groups",
+              isLoading: _profileController.isLoadingGroups,
+              hasLoaded: _profileController.hasLoadedGroups,
+              emptyMessage: "You are not a manager of any group yet.",
+              groups: _profileController.managedGroups,
             ),
             SizedBox(height: 24),
           ],
