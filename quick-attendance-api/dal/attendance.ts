@@ -1,10 +1,40 @@
 import { AttendanceEntity } from "../entities/attendance_entity.ts";
+import { get_week_num_of_month } from "../util/time.ts";
 import { get_uuid_time, new_uuid, Uuid } from "../util/uuid.ts";
-import { get_week_num } from "../util/week-num.ts";
 import kv, { DbErr } from "./db.ts";
 import * as group_dal from "./group.ts";
 
 //#region Query
+export async function get_attendance_entity(group_id: Uuid, attendance_id: Uuid) {
+  const time = get_uuid_time(attendance_id);
+  return await DbErr.err_on_empty_val_async(
+    kv.get<AttendanceEntity>([
+      "attendance",
+      group_id,
+      time.getUTCFullYear(),
+      time.getUTCMonth(),
+      get_week_num_of_month(time),
+      attendance_id,
+    ]),
+    () =>
+      `Unable to find attendance record with group_id = ${group_id}, attendance_id = ${attendance_id}`,
+  );
+}
+export async function get_attendance_entity_for_week(group_id: Uuid, attendance_id: Uuid) {
+  const time = get_uuid_time(attendance_id);
+  return await DbErr.err_on_empty_val_async(
+    kv.get<AttendanceEntity>([
+      "attendance",
+      group_id,
+      time.getUTCFullYear(),
+      time.getUTCMonth(),
+      get_week_num_of_month(time),
+      attendance_id,
+    ]),
+    () =>
+      `Unable to find attendance record with group_id = ${group_id}, attendance_id = ${attendance_id}`,
+  );
+}
 //#endregion
 
 //#region Mutation
@@ -22,13 +52,13 @@ export async function create_attendance_entity(group_id: Uuid) {
     group_id,
     time.getUTCFullYear(),
     time.getUTCMonth(),
-    get_week_num(time),
+    get_week_num_of_month(time),
     attendance_id,
   ], {
     group_id: group_id,
     year: time.getUTCFullYear(),
     month: time.getUTCMonth(),
-    week: get_week_num(time),
+    week: get_week_num_of_month(time),
     attendance_id: attendance_id,
     present_member_ids: new Set(),
   } as AttendanceEntity);
@@ -37,7 +67,26 @@ export async function create_attendance_entity(group_id: Uuid) {
   await DbErr.err_on_commit_async(tran.commit(), "Unable to begin attendance");
 }
 
-async function update_attendance_entity(group_id: Uuid, attendance_id: Uuid) {
-  const time = get_uuid_time(attendance_id);
+export async function set_attendance_entity(
+  group_id: Uuid,
+  attendance_id: Uuid,
+  entity: AttendanceEntity,
+  tran?: Deno.AtomicOperation,
+) {
+  const no_tran = tran === undefined;
+  if (tran === undefined) {
+    tran = kv.atomic();
+  }
+  tran.set([
+    "attendance",
+    group_id,
+    entity.year,
+    entity.month,
+    entity.week,
+    attendance_id,
+  ], entity);
+  if (no_tran) {
+    await DbErr.err_on_commit_async(tran.commit(), "Unable to set attendance entity");
+  }
 }
 //#endregion
