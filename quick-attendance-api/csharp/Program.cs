@@ -17,6 +17,6 @@ public static class Program
         }
 
         // Output JSON response with EOF
-        Console.WriteLine(command_ret.Append((char)0x1A));
+        Console.WriteLine(command_ret);
     }
 }
