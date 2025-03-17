@@ -316,8 +316,6 @@ export async function invite_accounts_to_group(
 export async function update_account(user_id: Uuid, req: AccountPutReq) {
   const account_entity = await get_account(user_id);
   const tran = kv.atomic()
-    .delete(["account_by_username", account_entity.username])
-    .delete(["account_by_email", account_entity.email])
     .set(["account_by_username", req.username], ["account", user_id])
     .set(["account_by_email", req.email], ["account", user_id]);
 
@@ -362,7 +360,6 @@ export async function respond_to_group_invite(
     );
   }
   tran
-    .delete(["account", user_id])
     .set(["account", user_id], entity);
 }
 

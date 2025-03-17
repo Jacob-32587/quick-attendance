@@ -1,7 +1,7 @@
 import { AttendanceEntity } from "../entities/attendance_entity.ts";
 import { get_week_num_of_month } from "../util/time.ts";
 import { get_uuid_time, new_uuid, Uuid } from "../util/uuid.ts";
-import kv, { DbErr } from "./db.ts";
+import kv, { DbErr, KvHelper } from "./db.ts";
 import * as group_dal from "./group.ts";
 
 //#region Query
@@ -20,20 +20,21 @@ export async function get_attendance_entity(group_id: Uuid, attendance_id: Uuid)
       `Unable to find attendance record with group_id = ${group_id}, attendance_id = ${attendance_id}`,
   );
 }
-export async function get_attendance_entity_for_week(group_id: Uuid, attendance_id: Uuid) {
-  const time = get_uuid_time(attendance_id);
-  return await DbErr.err_on_empty_val_async(
-    kv.get<AttendanceEntity>([
+export function get_attendance_entities_for_week(
+  group_id: Uuid,
+  year: number,
+  month: number,
+  week: number,
+) {
+  return kv.list<AttendanceEntity[]>({
+    prefix: [
       "attendance",
       group_id,
-      time.getUTCFullYear(),
-      time.getUTCMonth(),
-      get_week_num_of_month(time),
-      attendance_id,
-    ]),
-    () =>
-      `Unable to find attendance record with group_id = ${group_id}, attendance_id = ${attendance_id}`,
-  );
+      year,
+      month,
+      week,
+    ],
+  }, { limit: 8 });
 }
 //#endregion
 
