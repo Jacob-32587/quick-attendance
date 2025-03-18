@@ -126,7 +126,7 @@ Deno.test(
       for (const entity of accept_member_entities) {
         await test_fetch_json(
           GROUP_AUTH_URL(test_num) +
-            `?group_id=${owner_group_list.owned_groups[0].group_id}&user_type=Member`,
+            `?group_id=${owner_group_list.owned_groups[0].group_id}`,
           "GET",
           entity.jwt,
           null,
@@ -141,7 +141,7 @@ Deno.test(
 
       await test_fetch_json(
         GROUP_AUTH_URL(test_num) +
-          `?group_id=${owner_group_list.owned_groups[0].group_id}&user_type=Owner`,
+          `?group_id=${owner_group_list.owned_groups[0].group_id}`,
         "GET",
         owner_jwt,
         null,
