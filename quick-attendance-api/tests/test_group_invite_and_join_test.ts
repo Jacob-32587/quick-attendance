@@ -60,7 +60,7 @@ Deno.test(
           user_rocco_mason.username,
       );
       assert(owner_group_list.managed_groups.length === 0);
-      assert(owner_group_list.memeber_groups.length === 0);
+      assert(owner_group_list.member_groups.length === 0);
 
       await test_fetch_json(GROUP_AUTH_URL(test_num) + "/invite", "PUT", owner_jwt, {
         "usernames": invite_members.map((x) => x.user_data.username),
@@ -126,7 +126,7 @@ Deno.test(
       for (const entity of accept_member_entities) {
         await test_fetch_json(
           GROUP_AUTH_URL(test_num) +
-            `?group_id=${owner_group_list.owned_groups[0].group_id}&user_type=Member`,
+            `?group_id=${owner_group_list.owned_groups[0].group_id}`,
           "GET",
           entity.jwt,
           null,
@@ -134,14 +134,14 @@ Deno.test(
             const group = (await res.json()) as GroupGetRes;
             return group.event_count === 0 && group.group_name === "Rocco's group of friends" &&
               group.members?.length === 2 && group.members.every((x) => x.unique_id === null) &&
-              group.pending_memebers === null;
+              group.pending_members === null;
           },
         );
       }
 
       await test_fetch_json(
         GROUP_AUTH_URL(test_num) +
-          `?group_id=${owner_group_list.owned_groups[0].group_id}&user_type=Owner`,
+          `?group_id=${owner_group_list.owned_groups[0].group_id}`,
         "GET",
         owner_jwt,
         null,

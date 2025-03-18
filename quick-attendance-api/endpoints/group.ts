@@ -13,10 +13,11 @@ import { group_unique_id_settings_get_req } from "../models/group/group_unique_i
 import { group_invite_jwt_payload } from "../models/group_invite_jwt_payload.ts";
 import { GroupPostRes } from "../models/group/group_post_res.ts";
 import { group_get_req } from "../models/group/group_get_req.ts";
-import { is_privileged_user_type } from "../models/user_type.ts";
+import { is_privileged_user_type, UserType } from "../models/user_type.ts";
 import { GroupGetRes } from "../models/group/group_get_res.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
 import { get_alphanumeric_str } from "../util/csharp-utils.ts";
+import { HTTPException } from "@hono/hono/http-exception";
 
 const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
@@ -32,10 +33,26 @@ group.get(
   async (ctx) => {
     const req = ctx.req.valid("query");
     const user_id = get_jwt_payload(ctx).user_id;
+
+    // Determine what the type of the user is
+    const account = await account_dal.get_account(user_id);
+    let user_type: UserType;
+    if (account.fk_owned_group_ids?.has(req.group_id) === true) {
+      user_type = UserType.Owner;
+    } else if (account.fk_managed_group_ids?.has(req.group_id) === true) {
+      user_type = UserType.Manager;
+    } else if (account.fk_member_group_ids?.has(req.group_id) === true) {
+      user_type = UserType.Member;
+    } else {
+      throw new HTTPException(HttpStatusCode.NOT_FOUND, {
+        message: "User does not belong to the specified group",
+      });
+    }
+
     const group = await dal.get_group_and_verify_user_type(
       req.group_id,
       user_id,
-      req.user_type,
+      user_type,
     );
 
     const get_group_res = {
@@ -53,7 +70,7 @@ group.get(
       return ctx.json(get_group_res);
     }
 
-    const memeber_get_promise = account_dal.get_public_account_models(
+    const member_get_promise = account_dal.get_public_account_models(
       group.member_ids?.entries().map((x) => x[0]).toArray() ?? [],
     );
     const manager_get_promise = account_dal.get_public_account_models(
@@ -67,7 +84,7 @@ group.get(
       null as PublicAccountGetModel[] | null,
     );
 
-    if (is_privileged_user_type(req.user_type)) {
+    if (is_privileged_user_type(user_type)) {
       pending_accounts = account_dal.get_public_account_models(
         group.manager_ids?.entries().map((x) => x[0]).toArray() ?? [],
       );
@@ -75,7 +92,7 @@ group.get(
 
     const account_promises = await Promise.all([
       owner_get_promise,
-      memeber_get_promise,
+      member_get_promise,
       manager_get_promise,
       pending_accounts,
     ]);
@@ -83,7 +100,7 @@ group.get(
     get_group_res.owner = account_promises[0][0];
     get_group_res.members = account_promises[1];
     get_group_res.managers = account_promises[2];
-    get_group_res.pending_memebers = account_promises[3];
+    get_group_res.pending_members = account_promises[3];
 
     return ctx.json(get_group_res, HttpStatusCode.OK);
   },
