@@ -12,6 +12,7 @@ class GroupController extends GetxController {
   late final QuickAttendanceApi _api = Get.find();
   String? get groupId => group.value?.groupId.value;
   final RxBool isLoadingGroup = RxBool(false);
+  final RxBool hasLoadedGroup = RxBool(false);
 
   /// The active group being accessed
   final group = Rxn<GroupModel>();
@@ -35,6 +36,7 @@ class GroupController extends GetxController {
     } else {
       this.group.value = group;
     }
+    hasLoadedGroup.value = true;
     isLoadingGroup.value = false;
   }
 
@@ -59,7 +61,6 @@ class GroupPage extends StatelessWidget {
   late final GroupController _controller = Get.put(GroupController());
 
   final RxInt _currentIndex = 1.obs;
-  final RxBool isLoading = true.obs;
 
   GroupPage({super.key});
 
@@ -75,12 +76,6 @@ class GroupPage extends StatelessWidget {
   void onPageChanged(int index) {
     _currentIndex.value = index;
   }
-
-  late final List<Widget> _pages = [
-    GroupAttendeesScreen(isLoading: isLoading),
-    GroupHomeScreen(group: _controller.group, isLoading: isLoading),
-    GroupAttendanceSessionScreen(group: _controller.group),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +93,15 @@ class GroupPage extends StatelessWidget {
         body: PageView(
           controller: _pageController,
           onPageChanged: onPageChanged,
-          children: _pages,
+          children: [
+            GroupAttendeesScreen(isLoading: _controller.isLoadingGroup),
+            GroupHomeScreen(
+              group: _controller.group,
+              isLoading: _controller.isLoadingGroup.value,
+              hasLoaded: _controller.isLoadingGroup.value,
+            ),
+            GroupAttendanceSessionScreen(group: _controller.group),
+          ],
         ),
         bottomNavigationBar:
             _controller.group.value == null

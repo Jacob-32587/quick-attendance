@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
 import 'package:quick_attendance/models/group_model.dart';
 
 class GroupHomeScreen extends StatelessWidget {
   final Rxn<GroupModel> group;
-  final Rx<bool> isLoading;
+  final bool isLoading;
+  final bool hasLoaded;
 
   const GroupHomeScreen({
     super.key,
     required this.group,
     required this.isLoading,
+    required this.hasLoaded,
   });
 
   @override
@@ -17,10 +20,10 @@ class GroupHomeScreen extends StatelessWidget {
     return SafeArea(
       child: Obx(() {
         GroupModel? val = group.value;
-        if (val == null) {
+        if (hasLoaded && val == null) {
           return _GroupNotFoundScreen();
         } else {
-          return _GroupDetailsScreen(group: val);
+          return _GroupDetailsScreen(group: val, isLoading: isLoading);
         }
       }),
     );
@@ -50,9 +53,10 @@ class _GroupNotFoundScreen extends StatelessWidget {
 }
 
 class _GroupDetailsScreen extends StatelessWidget {
-  final GroupModel group;
+  final GroupModel? group;
+  final bool isLoading;
 
-  const _GroupDetailsScreen({required this.group});
+  const _GroupDetailsScreen({required this.group, required this.isLoading});
 
   @override
   Widget build(BuildContext context) {
@@ -63,9 +67,12 @@ class _GroupDetailsScreen extends StatelessWidget {
         children: [
           Obx(
             // Group Name
-            () => Text(
-              group.name.value ?? "",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            () => SkeletonShimmer(
+              isLoading: isLoading,
+              widget: Text(
+                group?.name.value ?? "",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
           SizedBox(height: 8),
@@ -73,7 +80,7 @@ class _GroupDetailsScreen extends StatelessWidget {
           Obx(
             // Group Description
             () => Text(
-              group.description.value ?? "",
+              group?.description.value ?? "",
               style: TextStyle(fontSize: 16),
             ),
           ),
