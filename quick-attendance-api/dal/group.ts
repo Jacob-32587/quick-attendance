@@ -106,25 +106,35 @@ export async function get_group(group_id: Uuid) {
  * @description Verify the type of a user and get the associated group for that user
  * @param group_id - The id of the group to retrieve
  * @param user_id - The user id to check with
- * @param user_type_claim - The type of user the caller is claiming for the given group
+ * @param user_type_claim - The type of user the caller is claiming for the given group, if multiple are given
+ * the function will verify that the user satisfies any claim
  * @throw {@link HTTPException} If the user claim does not agree with the what is stored in the DB
  */
 export async function get_group_and_verify_user_type(
   group_id: Uuid,
   user_id: Uuid,
-  user_type_claim: UserType,
+  user_type_claim: UserType | UserType[],
 ): Promise<GroupEntity | never> {
   const group = (await get_group(group_id)).value;
-  const matchesUserClaim = Match.value(user_type_claim).pipe(
-    Match.when(UserType.Owner, (_) => group.owner_id === user_id),
-    Match.when(
-      UserType.Manager,
-      (_) => group.manager_ids?.has(user_id) ?? false,
-    ),
-    Match.when(UserType.Member, (_) => group.member_ids?.has(user_id) ?? false),
-    Match.exhaustive,
-  );
-  if (matchesUserClaim) {
+  let has_match = false;
+  const matches_user_claim = (claim: UserType) =>
+    Match.value(claim).pipe(
+      Match.when(UserType.Owner, (_) => group.owner_id === user_id),
+      Match.when(
+        UserType.Manager,
+        (_) => group.manager_ids?.has(user_id) ?? false,
+      ),
+      Match.when(UserType.Member, (_) => group.member_ids?.has(user_id) ?? false),
+      Match.exhaustive,
+    );
+
+  if (Array.isArray(user_type_claim)) {
+    has_match = user_type_claim.some((x) => matches_user_claim(x));
+  } else {
+    has_match = matches_user_claim(user_type_claim);
+  }
+
+  if (has_match) {
     return group;
   }
   DbErr.err("Invalid user type claim for group", HttpStatusCode.FORBIDDEN); //!!throw

@@ -5,6 +5,7 @@ import { get_jwt_payload } from "../main.ts";
 import { attendance_post_req } from "../models/attendance/attendance_post_req.ts";
 import { zValidator } from "npm:@hono/zod-validator";
 import { UserType } from "../models/user_type.ts";
+import { attendance_put_req } from "../models/attendance/attendance_put_req.ts";
 
 const attendance_base_path = "/attendance";
 const auth_attendance_base_path = `/auth${attendance_base_path}`;
@@ -25,6 +26,29 @@ attendance.post(auth_attendance_base_path, zValidator("json", attendance_post_re
     UserType.Owner,
   );
   await dal.create_attendance_entity(req.group_id, group_entity);
+
+  return ctx.text("");
+});
+
+attendance.put(auth_attendance_base_path, zValidator("json", attendance_put_req), async (ctx) => {
+  const user_id = get_jwt_payload(ctx).user_id;
+  const req = ctx.req.valid("json");
+  // Verify the user is privileged
+  const verify_user_promise = group_dal.get_group_and_verify_user_type(
+    req.group_id,
+    user_id,
+    [UserType.Owner, UserType.Manager],
+  );
+  const attendance_entity =
+    (await dal.get_attendance_entity(req.group_id, req.attendance_id)).value;
+
+  await verify_user_promise;
+
+  for (let i = 0; i < req.member_ids.length; i++) {
+    attendance_entity.present_member_ids.add(req.member_ids[i]);
+  }
+
+  await dal.set_attendance_entity(req.group_id, req.attendance_id, attendance_entity);
 
   return ctx.text("");
 });
