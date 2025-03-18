@@ -6,7 +6,7 @@ export interface GroupGetRes {
   owner: PublicAccountGetModel;
   managers: PublicAccountGetModel[] | null;
   members: PublicAccountGetModel[] | null;
-  pending_memebers: PublicAccountGetModel[] | null;
+  pending_members: PublicAccountGetModel[] | null;
   group_name: string;
   group_description: string | null;
   current_attendance_id: Uuid | null;
