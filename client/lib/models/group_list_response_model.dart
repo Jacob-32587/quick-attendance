@@ -29,9 +29,9 @@ class GroupListResponseModel extends BaseApiModel {
               .map((x) => GroupModel.fromJson(x))
               .toList(),
       memberGroups:
-          (json["memeber_groups"] as List<dynamic>)
+          (json["member_groups"] as List<dynamic>)
               .map((x) => GroupModel.fromJson(x))
-              .toList(), // TODO: Fix typo when Jacob fixes his
+              .toList(),
     );
   }
 
