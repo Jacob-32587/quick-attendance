@@ -53,7 +53,7 @@ group.get(
       return ctx.json(get_group_res);
     }
 
-    const memeber_get_promise = account_dal.get_public_account_models(
+    const member_get_promise = account_dal.get_public_account_models(
       group.member_ids?.entries().map((x) => x[0]).toArray() ?? [],
     );
     const manager_get_promise = account_dal.get_public_account_models(
@@ -75,7 +75,7 @@ group.get(
 
     const account_promises = await Promise.all([
       owner_get_promise,
-      memeber_get_promise,
+      member_get_promise,
       manager_get_promise,
       pending_accounts,
     ]);
@@ -83,7 +83,7 @@ group.get(
     get_group_res.owner = account_promises[0][0];
     get_group_res.members = account_promises[1];
     get_group_res.managers = account_promises[2];
-    get_group_res.pending_memebers = account_promises[3];
+    get_group_res.pending_members = account_promises[3];
 
     return ctx.json(get_group_res, HttpStatusCode.OK);
   },
