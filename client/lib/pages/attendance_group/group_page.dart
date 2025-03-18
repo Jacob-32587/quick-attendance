@@ -9,7 +9,8 @@ import 'package:quick_attendance/pages/attendance_group/group_home_screen.dart';
 /// Handles the logic for retrieving group information
 class GroupController extends GetxController {
   late final QuickAttendanceApi _api = Get.find();
-  String? get groupId => group.value?.groupId;
+  String? get groupId => group.value?.groupId.value;
+  final RxBool isLoadingGroup = RxBool(false);
 
   /// The active group being accessed
   final group = Rxn<GroupModel>();
@@ -21,12 +22,14 @@ class GroupController extends GetxController {
     if (groupId == null) {
       return;
     }
+    isLoadingGroup.value = true;
     final group = await _api.getGroup(groupId: groupId);
     if (group == null) {
       // TODO: Handle what happens when a group was not found
     } else {
       this.group.value = group;
     }
+    isLoadingGroup.value = false;
   }
 
   @override

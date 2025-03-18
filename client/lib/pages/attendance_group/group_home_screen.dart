@@ -64,7 +64,7 @@ class _GroupDetailsScreen extends StatelessWidget {
           Obx(
             // Group Name
             () => Text(
-              group.name.value,
+              group.name.value ?? "",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ),
@@ -72,7 +72,10 @@ class _GroupDetailsScreen extends StatelessWidget {
 
           Obx(
             // Group Description
-            () => Text(group.description.value, style: TextStyle(fontSize: 16)),
+            () => Text(
+              group.description.value ?? "",
+              style: TextStyle(fontSize: 16),
+            ),
           ),
           SizedBox(height: 16),
           // TODO: Display attendance records of this group for this user

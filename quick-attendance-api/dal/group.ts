@@ -34,7 +34,7 @@ export async function get_groups_for_account(user_id: Uuid) {
       KvHelper.map_to_kvs("group", account_entity.fk_managed_group_ids),
     ),
   );
-  const memeber_groups_promise = KvHelper.remove_kv_nones_async(
+  const member_groups_promise = KvHelper.remove_kv_nones_async(
     KvHelper.get_many_return_empty<GroupEntity[]>(
       kv,
       KvHelper.map_to_kvs("group", account_entity.fk_member_group_ids),
@@ -45,7 +45,7 @@ export async function get_groups_for_account(user_id: Uuid) {
   const groups = await Promise.all([
     owned_groups_promise,
     managed_groups_promise,
-    memeber_groups_promise,
+    member_groups_promise,
   ]);
 
   // Collect the unique owner id's here, this is to prevent the extra
@@ -84,7 +84,7 @@ export async function get_groups_for_account(user_id: Uuid) {
   return {
     owned_groups: to_sparse_model(groups[0]),
     managed_groups: to_sparse_model(groups[1]),
-    memeber_groups: to_sparse_model(groups[2]),
+    member_groups: to_sparse_model(groups[2]),
   } as GroupListGetRes;
 }
 
@@ -161,7 +161,7 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
     event_count: 0,
     manager_ids: null,
     member_ids: null,
-    pending_memeber_ids: null,
+    pending_member_ids: null,
     current_attendance_id: null,
   } as GroupEntity;
 
@@ -210,8 +210,8 @@ export async function accounts_for_group_invite(
     [get_accounts_by_usernames(invitees_usernames), get_group(group_id)],
   );
 
-  group_entity.value.pending_memeber_ids = add_to_maybe_set(
-    group_entity.value.pending_memeber_ids,
+  group_entity.value.pending_member_ids = add_to_maybe_set(
+    group_entity.value.pending_member_ids,
     account_entities.map((x) => x.value.user_id),
     HttpStatusCode.CONFLICT,
     (k) =>
@@ -271,7 +271,7 @@ export async function respond_to_group_invite(
     }
   }
 
-  if (!group_entity.pending_memeber_ids?.delete(user_id)) {
+  if (!group_entity.pending_member_ids?.delete(user_id)) {
     DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
   }
 
@@ -288,7 +288,7 @@ export async function respond_to_group_invite(
       group_entity.member_ids,
       [user_id],
       HttpStatusCode.CONFLICT,
-      () => "User is already a memeber",
+      () => "User is already a member",
     );
   }
 

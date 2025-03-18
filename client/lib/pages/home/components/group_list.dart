@@ -3,9 +3,28 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/models/group_model.dart';
 
 class GroupList extends StatelessWidget {
-  final List<GroupModel> groups;
+  final List<GroupModel>? groups;
   final bool isListView;
-  const GroupList({super.key, required this.groups, required this.isListView});
+  final RxInt shownGroups = RxInt(6);
+  final RxString searchTerm = RxString("");
+
+  RxList<GroupModel> get filteredGroups {
+    return RxList<GroupModel>.from(
+      (groups ?? const [])
+          .where(
+            (group) => (group.name.value ?? "").toLowerCase().contains(
+              searchTerm.value.toLowerCase(),
+            ),
+          )
+          .take(shownGroups.value),
+    );
+  }
+
+  GroupList({super.key, required this.groups, required this.isListView});
+
+  int get groupCount => filteredGroups.length;
+  int get groupsRemaining => (groups?.length ?? 0) - shownGroups.value;
+  bool get areGroupsHidden => groupsRemaining > 0;
 
   @override
   Widget build(BuildContext context) {
@@ -16,12 +35,11 @@ class GroupList extends StatelessWidget {
             ? Obx(
               () => ListView.builder(
                 shrinkWrap: true,
-                itemCount: groups.length,
-                itemBuilder:
-                    (context, index) => _GroupCard(
-                      group: groups[index],
-                      isListView: isListView,
-                    ),
+                itemCount: groupCount,
+                itemBuilder: (context, index) {
+                  final group = filteredGroups[index];
+                  return _GroupCard(group: group, isListView: isListView);
+                },
               ),
             )
             : Obx(
@@ -33,19 +51,30 @@ class GroupList extends StatelessWidget {
                   mainAxisSpacing: 8,
                   childAspectRatio: 3,
                 ),
-                itemCount: groups.length,
-                itemBuilder:
-                    (context, index) => _GroupCard(
-                      group: groups[index],
-                      isListView: isListView,
-                    ),
+                itemCount: filteredGroups.length,
+                itemBuilder: (context, index) {
+                  final group = filteredGroups[index];
+                  return _GroupCard(group: group, isListView: isListView);
+                },
               ),
             ),
-        if (groups.length >= 4)
-          TextButton(
-            onPressed: () => {},
-            child: Text("Show More", style: TextStyle(color: Colors.lightBlue)),
-          ),
+        Obx(() {
+          if (areGroupsHidden) {
+            return TextButton(
+              onPressed: () {
+                shownGroups.value *= 2;
+              },
+              child: Text(
+                "Show More",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+            );
+          } else {
+            return SizedBox.shrink();
+          }
+        }),
       ],
     );
   }
@@ -60,8 +89,8 @@ class _GroupCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
-        title: Text(group.name.value),
-        subtitle: Text(group.description.value),
+        title: Text(group.name.value ?? ""),
+        subtitle: Text(group.description.value ?? ""),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [const Icon(Icons.arrow_forward_ios, size: 16)],

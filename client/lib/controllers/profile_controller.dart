@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
+import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/user_model.dart';
 import 'package:quick_attendance/models/account_settings_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
@@ -10,10 +12,21 @@ class ProfileController extends GetxController {
   late final AuthController authController = Get.find();
   var jwt = Rxn<String>();
   var user = Rx<UserModel>(UserModel());
-  var userSettings = Rx<AccountSettingsModel>(AccountSettingsModel());
-  var joinedGroups = RxList<GroupModel>([]);
-  var managedGroups = RxList<GroupModel>([]);
-  RxBool creatingGroup = false.obs;
+  final userSettings = Rx<AccountSettingsModel>(AccountSettingsModel());
+  final _groupListResponse = Rxn<GroupListResponseModel>();
+
+  RxList<GroupModel>? get memberGroups =>
+      _groupListResponse.value?.memberGroups;
+  RxList<GroupModel>? get managedGroups =>
+      _groupListResponse.value?.managedGroups;
+  RxList<GroupModel>? get ownedGroups => _groupListResponse.value?.ownedGroups;
+
+  /// Loading state for creating a group
+  final RxBool isCreatingGroup = false.obs;
+
+  /// Loading state for fetching group list information
+  final RxBool isLoadingGroups = false.obs;
+  final RxBool hasLoadedGroups = false.obs;
 
   /// Getter for the user's list view preference
   bool get prefersListView => userSettings.value.prefersListView.value;
@@ -32,6 +45,7 @@ class ProfileController extends GetxController {
     ever(authController.isLoggedIn, (loggedIn) {
       if (loggedIn) {
         _fetchProfileData();
+        fetchGroups();
       } else {
         _clearProfileData();
       }
@@ -52,12 +66,17 @@ class ProfileController extends GetxController {
     user.value = UserModel();
   }
 
-  void fetchJoinedGroups() {
-    // TODO: Fetch joined groups
-  }
-
-  void fetchManagedGroups() {
-    // TODO: Fetch managed groups
+  /// Get the groups the user owns, manages, or has joined from the server
+  Future<void> fetchGroups() async {
+    isLoadingGroups.value = true;
+    final response = await _api.getUsersGroups();
+    if (response.statusCode == HttpStatusCode.ok) {
+      hasLoadedGroups.value = true;
+      _groupListResponse.value = response.body;
+    } else {
+      // TODO: What should we do when this request fails
+    }
+    isLoadingGroups.value = false;
   }
 
   void leaveJoinedGroup(String groupId) {
@@ -68,16 +87,17 @@ class ProfileController extends GetxController {
     // TODO: Connect to backend
   }
 
-  void createGroup() {
-    creatingGroup.value = true;
-    // TODO: Connect to backend
-    managedGroups.add(
-      GroupModel(name: "Default", description: "Default description"),
-    );
-    // TODO: Figure out how to notify the user group creation failed
-    // I don't think we need a success notification, it should automatically
-    // navigate to the new group's page.
-    creatingGroup.value = false;
+  void createGroup() async {
+    final response = await _api.createGroup(groupName: "Default");
+    if (response.statusCode == HttpStatusCode.ok) {
+      fetchGroups();
+      final String? newGroupId = response.body?.groupId.value;
+      if (newGroupId == null) {
+        // Should we do something in response to a missing group id?
+        return;
+      }
+      Get.toNamed("/group/$newGroupId");
+    }
   }
 
   void joinGroup(String groupCode) {
