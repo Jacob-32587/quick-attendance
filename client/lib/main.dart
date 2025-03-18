@@ -49,8 +49,8 @@ class MyApp extends StatelessWidget {
         GetPage(name: "/home", page: () => HomePage()),
         GetPage(name: "/signup", page: () => Signup()),
         GetPage(name: "/login", page: () => Login()),
-        GetPage(name: "/group/:groupId/:userType", page: () => GroupPage()),
-        GetPage(name: "/group/:groupId/:userType/qr", page: () => GroupPage()),
+        GetPage(name: "/group/:groupId/", page: () => GroupPage()),
+        GetPage(name: "/group/:groupId/qr", page: () => GroupPage()),
       ],
       home: HomePage(),
     );

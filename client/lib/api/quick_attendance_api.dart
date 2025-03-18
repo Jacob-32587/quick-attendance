@@ -2,8 +2,6 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
-import 'package:quick_attendance/models/user_type.dart';
-import 'package:quick_attendance/pages/home/components/group_list.dart';
 
 /// The client for sending requests to the Attenda Scan API
 class QuickAttendanceApi {
@@ -41,16 +39,10 @@ class QuickAttendanceApi {
     return apiClient.get("/auth/account");
   }
 
-  Future<GroupModel?> getGroup({
-    required String groupId,
-
-    /// In relation to the target group, who does this user claim to be?
-    /// This is an optimization to improve request times
-    required UserType userTypeClaim,
-  }) async {
+  Future<GroupModel?> getGroup({required String groupId}) async {
     final Response response = await apiClient.get(
       "/auth/group",
-      query: {"group_id": groupId, "user_type": userTypeClaim.value},
+      query: {"group_id": groupId},
     );
     if (response.statusCode == 200) {
       return GroupModel.fromJson(response.body);

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer_list.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/group_model.dart';
-import 'package:quick_attendance/models/user_type.dart';
 import 'package:quick_attendance/pages/home/components/group_header.dart';
 import 'package:quick_attendance/pages/home/components/group_list.dart';
 
@@ -16,7 +15,6 @@ class DisplayGroups extends StatelessWidget {
   final String title;
   final String emptyMessage;
   final RxList<GroupModel>? groups;
-  final UserType userType;
 
   DisplayGroups({
     super.key,
@@ -25,9 +23,6 @@ class DisplayGroups extends StatelessWidget {
     this.title = "",
     required this.groups,
     required this.emptyMessage,
-
-    /// Required for navigating to a group. See Group GET request for details.
-    required this.userType,
   });
 
   bool get hasAnyGroups => groups?.isEmpty == false;
@@ -80,7 +75,6 @@ class DisplayGroups extends StatelessWidget {
             isListView: _profileController.prefersListView,
             widget: GroupList(
               groups: groups,
-              userType: userType,
               isListView: _profileController.prefersListView,
             ),
           ),

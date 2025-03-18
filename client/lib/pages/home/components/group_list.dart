@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/models/group_model.dart';
-import 'package:quick_attendance/models/user_type.dart';
 
 class GroupList extends StatelessWidget {
   final List<GroupModel>? groups;
   final bool isListView;
   final RxInt _shownGroups = RxInt(6);
   final RxString _searchTerm = RxString("");
-  final UserType userType;
 
   RxList<GroupModel> get filteredGroups {
     return RxList<GroupModel>.from(
@@ -22,12 +20,7 @@ class GroupList extends StatelessWidget {
     );
   }
 
-  GroupList({
-    super.key,
-    required this.groups,
-    required this.isListView,
-    required this.userType,
-  });
+  GroupList({super.key, required this.groups, required this.isListView});
 
   int get groupCount => filteredGroups.length;
   int get groupsRemaining => (groups?.length ?? 0) - _shownGroups.value;
@@ -45,11 +38,7 @@ class GroupList extends StatelessWidget {
                 itemCount: groupCount,
                 itemBuilder: (context, index) {
                   final group = filteredGroups[index];
-                  return _GroupCard(
-                    group: group,
-                    isListView: isListView,
-                    userType: userType,
-                  );
+                  return _GroupCard(group: group, isListView: isListView);
                 },
               ),
             )
@@ -65,11 +54,7 @@ class GroupList extends StatelessWidget {
                 itemCount: filteredGroups.length,
                 itemBuilder: (context, index) {
                   final group = filteredGroups[index];
-                  return _GroupCard(
-                    group: group,
-                    isListView: isListView,
-                    userType: userType,
-                  );
+                  return _GroupCard(group: group, isListView: isListView);
                 },
               ),
             ),
@@ -98,12 +83,7 @@ class GroupList extends StatelessWidget {
 class _GroupCard extends StatelessWidget {
   final bool isListView;
   final GroupModel group;
-  final UserType userType;
-  const _GroupCard({
-    required this.group,
-    required this.isListView,
-    required this.userType,
-  });
+  const _GroupCard({required this.group, required this.isListView});
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -115,7 +95,7 @@ class _GroupCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [const Icon(Icons.arrow_forward_ios, size: 16)],
         ),
-        onTap: () => Get.toNamed("/group/${group.groupId}/${userType.value}"),
+        onTap: () => Get.toNamed("/group/${group.groupId}"),
       ),
     );
   }
