@@ -55,6 +55,8 @@ export async function create_attendance_entity(group_id: Uuid, group_entity: Gro
     week: get_week_num_of_month(time),
     attendance_id: attendance_id,
     present_member_ids: new Set(),
+    codes_taken: new Map(),
+    user_codes: new Map(),
   } as AttendanceEntity, tran);
 
   await group_dal.set_group(group_entity, tran);

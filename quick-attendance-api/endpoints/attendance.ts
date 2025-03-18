@@ -6,6 +6,7 @@ import { attendance_post_req } from "../models/attendance/attendance_post_req.ts
 import { zValidator } from "npm:@hono/zod-validator";
 import { UserType } from "../models/user_type.ts";
 import { attendance_put_req } from "../models/attendance/attendance_put_req.ts";
+import { Uuid } from "../util/uuid.ts";
 
 const attendance_base_path = "/attendance";
 const auth_attendance_base_path = `/auth${attendance_base_path}`;
@@ -44,10 +45,20 @@ attendance.put(auth_attendance_base_path, zValidator("json", attendance_put_req)
 
   await verify_user_promise;
 
-  for (let i = 0; i < req.member_ids.length; i++) {
-    attendance_entity.present_member_ids.add(req.member_ids[i]);
+  let current_user_id: Uuid | undefined;
+  for (let i = 0; i < req.member_codes.length; i++) {
+    // Ensure the user exists in the attendance record and has a code
+    current_user_id = attendance_entity.codes_taken.get(req.member_codes[i]);
+    if (current_user_id !== undefined) {
+      // Remove tracking data for the user
+      attendance_entity.codes_taken.delete(req.member_codes[i]);
+      attendance_entity.user_codes.delete(current_user_id);
+      // Mark the user as present
+      attendance_entity.present_member_ids.add(current_user_id);
+    }
   }
 
+  // Attempt to save the current attendance record
   await dal.set_attendance_entity(req.group_id, req.attendance_id, attendance_entity);
 
   return ctx.text("");
