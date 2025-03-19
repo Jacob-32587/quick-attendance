@@ -45,14 +45,13 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
+      initialRoute: "/",
       getPages: [
-        GetPage(name: "/home", page: () => HomePage()),
-        GetPage(name: "/signup", page: () => Signup()),
-        GetPage(name: "/login", page: () => Login()),
+        GetPage(name: "/", page: () => HomePage()),
+        GetPage(name: "/signup/", page: () => Signup()),
+        GetPage(name: "/login/", page: () => Login()),
         GetPage(name: "/group/:groupId/", page: () => GroupPage()),
-        GetPage(name: "/group/:groupId/qr", page: () => GroupPage()),
       ],
-      home: HomePage(),
     );
   }
 }
