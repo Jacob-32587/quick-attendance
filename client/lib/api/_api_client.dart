@@ -14,7 +14,8 @@ class BaseApiClient extends GetConnect {
       return request;
     });
 
-    httpClient.addResponseModifier((request, response) {
+    httpClient.addResponseModifier((request, response) async {
+      await Future.delayed(const Duration(seconds: 1));
       // TODO: Handle unauthorized (401) status codes navigating to login page.
       if (response.statusCode == 500) {
         Get.snackbar(
