@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:quick_attendance/pages/auth/components/signup_form.dart';
 
-class Signup extends StatefulWidget {
+class Signup extends StatelessWidget {
   const Signup({super.key});
-  @override
-  State<StatefulWidget> createState() => _SignupState();
-}
-
-class _SignupState extends State<Signup> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
