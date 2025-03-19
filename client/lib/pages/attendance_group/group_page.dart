@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
 import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/pages/attendance_group/attendance_session_screen.dart';
 import 'package:quick_attendance/pages/attendance_group/attendees_screen.dart';
@@ -26,7 +27,7 @@ class GroupController extends GetxController {
     isLoadingGroup.value = true;
     final group = await _api.getGroup(groupId: groupId);
     if (group == null) {
-      // TODO: Handle what happens when a group was not found
+      this.group.value = null;
     } else {
       this.group.value = group;
     }
@@ -76,7 +77,12 @@ class GroupPage extends StatelessWidget {
     return Obx(
       () => Scaffold(
         appBar: AppBar(
-          title: Text("${_controller.group.value?.name ?? ''}"),
+          title: Obx(
+            () => SkeletonShimmer(
+              isLoading: _controller.isLoadingGroup.value,
+              widget: Obx(() => Text("${_controller.group.value?.name ?? ''}")),
+            ),
+          ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
@@ -91,8 +97,8 @@ class GroupPage extends StatelessWidget {
             GroupAttendeesScreen(isLoading: _controller.isLoadingGroup),
             GroupHomeScreen(
               group: _controller.group,
-              isLoading: _controller.isLoadingGroup.value,
-              hasLoaded: _controller.isLoadingGroup.value,
+              isLoading: _controller.isLoadingGroup,
+              hasLoaded: _controller.hasLoadedGroup,
             ),
             GroupAttendanceSessionScreen(group: _controller.group),
           ],
