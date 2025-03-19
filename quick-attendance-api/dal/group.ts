@@ -107,7 +107,7 @@ export async function get_group(group_id: Uuid) {
  * @param group_id - The id of the group to retrieve
  * @param user_id - The user id to check with
  * @param user_type_claim - The type of user the caller is claiming for the given group
- * @throw {@link HTTPException} If the user claim does not agree with the what is stored in the DB
+ * @throw {@link HTTPException} If the user claim does not agree with what is stored in the DB
  */
 export async function get_group_and_verify_user_type(
   group_id: Uuid,

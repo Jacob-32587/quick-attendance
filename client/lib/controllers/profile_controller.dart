@@ -11,7 +11,7 @@ class ProfileController extends GetxController {
   late final QuickAttendanceApi _api = Get.find();
   late final AuthController authController = Get.find();
   var jwt = Rxn<String>();
-  var user = Rx<UserModel>(UserModel());
+  var user = Rxn<UserModel>();
   final userSettings = Rx<AccountSettingsModel>(AccountSettingsModel());
   final _groupListResponse = Rxn<GroupListResponseModel>();
 
@@ -34,8 +34,11 @@ class ProfileController extends GetxController {
   set prefersListView(bool value) =>
       userSettings.value.prefersListView.value = value;
 
-  String get firstName => user.value.firstName.value;
-  String get lastName => user.value.lastName.value;
+  /// Get the user's first name or empty string
+  String get firstName => user()?.firstName() ?? "";
+
+  /// Get the user's last name or empty string
+  String get lastName => user()?.lastName() ?? "";
 
   @override
   void onInit() {
@@ -53,9 +56,9 @@ class ProfileController extends GetxController {
   }
 
   void _fetchProfileData() async {
-    Response response = await _api.getAccount();
-    if (response.statusCode == 200) {
-      user.value = UserModel.fromJson(response.body);
+    final response = await _api.getUser();
+    if (response.statusCode == HttpStatusCode.ok) {
+      user.value = response.body;
     } else {
       // TODO: Handle failure getting account information
     }

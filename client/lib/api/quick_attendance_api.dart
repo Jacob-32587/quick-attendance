@@ -2,11 +2,11 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
-import 'package:quick_attendance/pages/home/components/group_list.dart';
+import 'package:quick_attendance/models/user_model.dart';
 
 /// The client for sending requests to the Attenda Scan API
 class QuickAttendanceApi {
-  final apiClient = BaseApiClient("http://localhost:8080/quick-scan-api");
+  final apiClient = BaseApiClient("http://localhost:8080/quick-attendance-api");
 
   /// Example
   Future<Response> getData({required String groupCode}) async {
@@ -36,14 +36,21 @@ class QuickAttendanceApi {
     });
   }
 
-  Future<Response> getAccount() {
-    return apiClient.get("/auth/account");
+  Future<ApiResponse<UserModel>> getUser() async {
+    // Get the authenticated user's profile
+    final Response response = await apiClient.get("/auth/account");
+    final UserModel parsedBody = UserModel.fromJson(response.body);
+    final apiResponse = ApiResponse(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: parsedBody,
+    );
+    return apiResponse;
   }
 
   Future<GroupModel?> getGroup({required String groupId}) async {
     final Response response = await apiClient.get(
-      "/group",
-      query: {"groupId": groupId},
+      "/auth/group",
+      query: {"group_id": groupId},
     );
     if (response.statusCode == 200) {
       return GroupModel.fromJson(response.body);

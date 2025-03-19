@@ -6,16 +6,15 @@ import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/pages/attendance_group/components/qr-code-view.dart';
 
 class GroupAttendanceSessionScreen extends StatelessWidget {
-  late final ProfileController profileController = Get.find();
+  late final ProfileController _profileController = Get.find();
   final Rxn<GroupModel> group;
   GroupAttendanceSessionScreen({super.key, required this.group});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(automaticallyImplyLeading: true),
-      body: Obx(() {
-        String? activeAccountId = profileController.user.value.userId;
+    return SafeArea(
+      child: Obx(() {
+        String? activeAccountId = _profileController.user()?.userId();
         // TODO: Change this display to handle when the group
         // does not have an active attendance session
         // And if it does have an active session, get a generated ID

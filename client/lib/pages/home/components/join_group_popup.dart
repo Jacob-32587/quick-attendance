@@ -90,7 +90,7 @@ class _JoinGroupFormState extends State<_JoinGroupForm> {
             onPressed: () {
               if (_formKey.currentState!.validate()) {
                 profileController.joinGroup(_codeController.text.trim());
-                Navigator.pop(context); // Close the modal / popover
+                Get.back();
               }
             },
             child: Text("Submit"),
