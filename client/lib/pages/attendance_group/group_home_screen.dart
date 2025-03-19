@@ -5,8 +5,8 @@ import 'package:quick_attendance/models/group_model.dart';
 
 class GroupHomeScreen extends StatelessWidget {
   final Rxn<GroupModel> group;
-  final bool isLoading;
-  final bool hasLoaded;
+  final RxBool isLoading;
+  final RxBool hasLoaded;
 
   const GroupHomeScreen({
     super.key,
@@ -19,11 +19,14 @@ class GroupHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Obx(() {
-        GroupModel? val = group.value;
-        if (hasLoaded && val == null) {
-          return _GroupNotFoundScreen();
+        if (isLoading.value || (hasLoaded.value && group.value != null)) {
+          return _GroupDetailsScreen(
+            group: group,
+            isLoading: isLoading,
+            hasLoaded: hasLoaded,
+          );
         } else {
-          return _GroupDetailsScreen(group: val, isLoading: isLoading);
+          return _GroupNotFoundScreen();
         }
       }),
     );
@@ -43,7 +46,7 @@ class _GroupNotFoundScreen extends StatelessWidget {
         SizedBox(height: 16),
         ElevatedButton(
           onPressed: () {
-            Get.offNamed("/home");
+            Get.offNamed("/");
           },
           child: Text("Back to Home"),
         ),
@@ -53,10 +56,15 @@ class _GroupNotFoundScreen extends StatelessWidget {
 }
 
 class _GroupDetailsScreen extends StatelessWidget {
-  final GroupModel? group;
-  final bool isLoading;
+  final Rxn<GroupModel> group;
+  final RxBool isLoading;
+  final RxBool hasLoaded;
 
-  const _GroupDetailsScreen({required this.group, required this.isLoading});
+  const _GroupDetailsScreen({
+    required this.group,
+    required this.isLoading,
+    required this.hasLoaded,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -68,10 +76,12 @@ class _GroupDetailsScreen extends StatelessWidget {
           Obx(
             // Group Name
             () => SkeletonShimmer(
-              isLoading: isLoading,
-              widget: Text(
-                group?.name.value ?? "",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              isLoading: isLoading.value,
+              widget: Obx(
+                () => Text(
+                  group.value?.name.value ?? "",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ),
@@ -80,7 +90,7 @@ class _GroupDetailsScreen extends StatelessWidget {
           Obx(
             // Group Description
             () => Text(
-              group?.description.value ?? "",
+              group.value?.description.value ?? "",
               style: TextStyle(fontSize: 16),
             ),
           ),
