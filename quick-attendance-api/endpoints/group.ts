@@ -37,11 +37,11 @@ group.get(
     // Determine what the type of the user is
     const account = await account_dal.get_account(user_id);
     let user_type: UserType;
-    if (account.fk_owned_group_ids?.has(req.group_id) === true) {
+    if (account.value.fk_owned_group_ids?.has(req.group_id) === true) {
       user_type = UserType.Owner;
-    } else if (account.fk_managed_group_ids?.has(req.group_id) === true) {
+    } else if (account.value.fk_managed_group_ids?.has(req.group_id) === true) {
       user_type = UserType.Manager;
-    } else if (account.fk_member_group_ids?.has(req.group_id) === true) {
+    } else if (account.value.fk_member_group_ids?.has(req.group_id) === true) {
       user_type = UserType.Member;
     } else {
       throw new HTTPException(HttpStatusCode.NOT_FOUND, {
@@ -156,9 +156,9 @@ group.put(
       tran,
       req.group_id,
       group_entity.value.group_name,
-      owner_entity.user_id,
+      owner_entity.value.user_id,
       req.is_manager_invite,
-      account_entities.map((x) => x.value),
+      account_entities,
     );
 
     await DbErr.err_on_commit_async(tran.commit(), "Unable to invite users");

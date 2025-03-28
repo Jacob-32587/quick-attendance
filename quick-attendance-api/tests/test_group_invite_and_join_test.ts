@@ -68,9 +68,9 @@ Deno.test(
         "is_manager_invite": false,
       } as GroupInvitePutReq);
 
-      ////////////////////////////////////////////
-      // Henrik and Maeve accept, Indiea denys //
-      //////////////////////////////////////////
+      /////////////////////////////////////////////
+      // Henrik and Maeve accept, Indiea denies //
+      ///////////////////////////////////////////
 
       let accept_member_entities = await get_user_accounts(
         accept_members,
@@ -80,7 +80,8 @@ Deno.test(
         [deny_member],
         test_num,
       ))[0];
-
+      console.log(accept_member_entities);
+      console.log(deny_member_entity);
       // Ensure that all users have an invite
       assert(
         accept_member_entities.every((x) => (x.fk_pending_group_ids?.length ?? 0) === 1) &&

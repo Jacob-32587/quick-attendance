@@ -29,15 +29,17 @@ const account = new Hono();
 
 // Get account information
 account.get(auth_account_base_path, async (ctx) => {
-  const entity = await dal.get_account(get_jwt_payload(ctx).user_id);
+  console.log("USER ID ", get_jwt_payload(ctx).user_id);
+  const entity = (await dal.get_account(get_jwt_payload(ctx).user_id)).value;
+  console.log("USER ENTITY", entity);
   return ctx.json({
     username: entity.username,
     email: entity.email,
     first_name: entity.first_name,
     last_name: entity.last_name,
     user_id: entity.user_id,
-    fk_pending_group_ids: entity.fk_pending_group_invites?.entries().map((x) => x[1]).toArray(),
-    versionstamp: entity.versionstamp,
+    fk_pending_group_ids: entity.fk_pending_group_invites?.entries().map((x) => x[1])
+      .toArray(),
   } as AccountGetModel);
 });
 

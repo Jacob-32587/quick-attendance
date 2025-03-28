@@ -78,9 +78,9 @@ export class DbErr {
     return Match.value(maybe_kv).pipe(
       Match.when(
         (v) => v.versionstamp == null,
-        () => DbErr.err(reason(maybe_kv.key), status_code),
+        DbErr.err(reason(maybe_kv.key), status_code),
       ),
-      Match.orElse((v) => v as Deno.KvEntry<T>),
+      Match.orElse((v) => v),
     );
   }
 

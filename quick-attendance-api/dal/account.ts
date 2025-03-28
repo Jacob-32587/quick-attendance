@@ -52,11 +52,11 @@ function hash_password(password: string, salt: Uint8Array) {
  * @throws {@link HTTPException} if no user with the given id could found
  */
 export async function get_account(user_id: Uuid) {
-  return (await DbErr.err_on_empty_val_async(
+  return await DbErr.err_on_empty_val_async(
     kv.get<AccountEntity>(["account", user_id]),
     () => "Unable to find account",
     HttpStatusCode.NOT_FOUND,
-  )).value; //!! throw
+  ); //!! throw
 }
 
 /**
@@ -242,10 +242,14 @@ export async function create_account(account: AccountPostReq) {
   };
 
   const pk = ["account", entity.user_id];
-  // Attempt to insert the user with the hashed password
+  // Attempt to insert the user with the hashed password, atomically ensure
+  // that all unique identifiers are valid
   DbErr.err_on_commit(
     await kv
       .atomic()
+      .check({ key: ["account_by_username", entity.username], versionstamp: null })
+      .check({ key: ["account_by_email", entity.username], versionstamp: null })
+      .check({ key: ["account", entity.user_id], versionstamp: null })
       .set(
         pk,
         entity,
@@ -266,7 +270,7 @@ export async function create_account(account: AccountPostReq) {
 /**
  * @description Invite the list of users to the specified group. If any of
  * these users have a pending invite to the specified group the function will throw.
- * @param tran - Deno transaction the invite is occuring in
+ * @param tran - Deno transaction the invite is occurring in
  * @param group_id - Id of the group users are being invited to
  * @param invitees_accounts - Account entities with associated invite JWTs
  * @throw {@link HTTPException}
@@ -278,11 +282,11 @@ export async function invite_accounts_to_group(
   group_name: string,
   owner_id: Uuid,
   is_manager_invite: boolean,
-  invitees_accounts: AccountEntity[],
+  invitees_accounts: Deno.KvEntry<AccountEntity>[],
 ) {
   for (let i = 0; i < invitees_accounts.length; i++) {
-    invitees_accounts[i].fk_pending_group_invites = add_to_maybe_map(
-      invitees_accounts[i].fk_pending_group_invites,
+    invitees_accounts[i].value.fk_pending_group_invites = add_to_maybe_map(
+      invitees_accounts[i].value.fk_pending_group_invites,
       [[
         group_id,
         await sign(
@@ -290,9 +294,9 @@ export async function invite_accounts_to_group(
             iss: "quick-attendance-api",
             sub: "group-invite",
             aud: "quick-attendance-client",
-            username: invitees_accounts[i].username,
+            username: invitees_accounts[i].value.username,
             group_name,
-            user_id: invitees_accounts[i].user_id,
+            user_id: invitees_accounts[i].value.user_id,
             owner_id,
             group_id,
             is_manager_invite,
@@ -306,26 +310,44 @@ export async function invite_accounts_to_group(
         `User ${(decode(v).payload?.username ??
           "unknown")} already invited to this group`,
     ); //!! throw
-    tran.set(
-      ["account", invitees_accounts[i].user_id],
-      invitees_accounts[i],
-    );
+    tran
+      .check({
+        key: ["account", invitees_accounts[i].value.user_id],
+        versionstamp: invitees_accounts[i].versionstamp,
+      })
+      .set(
+        ["account", invitees_accounts[i].value.user_id],
+        invitees_accounts[i],
+      );
   }
 }
 
 export async function update_account(user_id: Uuid, req: AccountPutReq) {
   const account_entity = await get_account(user_id);
-  const tran = kv.atomic()
-    .set(["account_by_username", req.username], ["account", user_id])
-    .set(["account_by_email", req.email], ["account", user_id]);
+  const tran = kv.atomic();
 
-  account_entity.username = req.username;
-  account_entity.email = req.email;
-  account_entity.first_name = req.first_name;
-  account_entity.last_name = req.last_name;
+  // If username or email is being updated ensure that these are not already being used
+  if (account_entity.value.username !== req.username) {
+    tran
+      .check({ key: ["account_by_username", req.username], versionstamp: null })
+      .set(["account_by_username", req.username], ["account", user_id]);
+  }
+  if (account_entity.value.email !== req.email) {
+    tran
+      .check({ key: ["account_by_email", req.email], versionstamp: null })
+      .set(["account_by_email", req.email], ["account", user_id]);
+  }
+
+  account_entity.value.username = req.username;
+  account_entity.value.email = req.email;
+  account_entity.value.first_name = req.first_name;
+  account_entity.value.last_name = req.last_name;
+
   DbErr.err_on_commit_async(
-    tran.set(["account", user_id], account_entity).commit(),
-    "Unable to update account",
+    tran
+      .check({ key: ["account", user_id], versionstamp: account_entity.versionstamp })
+      .set(["account", user_id], account_entity.value).commit(),
+    "Unable to update account, username or email address is in use",
   );
   return account_entity;
 }
@@ -340,26 +362,27 @@ export async function respond_to_group_invite(
 ) {
   const entity = await get_account(user_id);
 
-  if (!entity.fk_pending_group_invites?.delete(group_id)) {
+  if (!entity.value.fk_pending_group_invites?.delete(group_id)) {
     DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
   }
 
   if (accept && is_manager_invite) {
-    entity.fk_managed_group_ids = add_to_maybe_map(
-      entity.fk_managed_group_ids,
+    entity.value.fk_managed_group_ids = add_to_maybe_map(
+      entity.value.fk_managed_group_ids,
       [[group_id, { unique_id: unique_id } as AccountManagerGroupData]],
       HttpStatusCode.CONFLICT,
       () => "User is already a manager for this group",
     );
   } else if (accept) {
-    entity.fk_member_group_ids = add_to_maybe_map(
-      entity.fk_member_group_ids,
+    entity.value.fk_member_group_ids = add_to_maybe_map(
+      entity.value.fk_member_group_ids,
       [[group_id, { unique_id: unique_id } as AccountManagerGroupData]],
       HttpStatusCode.CONFLICT,
       () => "User is already a member for this group",
     );
   }
   tran
+    .check({ key: ["account", user_id], versionstamp: entity.versionstamp })
     .set(["account", user_id], entity);
 }
 

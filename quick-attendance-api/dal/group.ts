@@ -25,19 +25,19 @@ export async function get_groups_for_account(user_id: Uuid) {
   const owned_groups_promise = KvHelper.remove_kv_nones_async(
     KvHelper.get_many_return_empty<GroupEntity[]>(
       kv,
-      KvHelper.map_to_kvs("group", account_entity.fk_owned_group_ids),
+      KvHelper.map_to_kvs("group", account_entity.value.fk_owned_group_ids),
     ),
   );
   const managed_groups_promise = KvHelper.remove_kv_nones_async(
     KvHelper.get_many_return_empty<GroupEntity[]>(
       kv,
-      KvHelper.map_to_kvs("group", account_entity.fk_managed_group_ids),
+      KvHelper.map_to_kvs("group", account_entity.value.fk_managed_group_ids),
     ),
   );
   const member_groups_promise = KvHelper.remove_kv_nones_async(
     KvHelper.get_many_return_empty<GroupEntity[]>(
       kv,
-      KvHelper.map_to_kvs("group", account_entity.fk_member_group_ids),
+      KvHelper.map_to_kvs("group", account_entity.value.fk_member_group_ids),
     ),
   );
 
@@ -177,8 +177,8 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
 
   const account_entity = await get_account(owner_id);
 
-  account_entity.fk_owned_group_ids = add_to_maybe_map(
-    account_entity.fk_owned_group_ids,
+  account_entity.value.fk_owned_group_ids = add_to_maybe_map(
+    account_entity.value.fk_owned_group_ids,
     [[entity.group_id, {} as AccountOwnerGroupData]],
     HttpStatusCode.INTERNAL_SERVER_ERROR,
     () => "bad generated id",
@@ -188,7 +188,7 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
     kv
       .atomic()
       .set(["group", entity.group_id], entity)
-      .set(["account", owner_id], account_entity)
+      .set(["account", owner_id], account_entity.value)
       .commit(),
     "Unable to perform mutation",
   ); //!! throw
@@ -214,7 +214,7 @@ export async function accounts_for_group_invite(
 ) {
   // Ensure the specified users owns this account
   const owner_entity = await get_account(owner_id);
-  group_is_owned_by_account(owner_entity, group_id);
+  group_is_owned_by_account(owner_entity.value, group_id);
 
   const [account_entities, group_entity] = await Promise.all(
     [get_accounts_by_usernames(invitees_usernames), get_group(group_id)],
@@ -285,7 +285,7 @@ export async function respond_to_group_invite(
     DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
   }
 
-  // Add the user to the group if they are acepting the invite
+  // Add the user to the group if they are accepting the invite
   if (accept && is_manager_invite) {
     group_entity.manager_ids = add_to_maybe_set(
       group_entity.manager_ids,
