@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
+import 'package:quick_attendance/models/responses/login_response.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -28,23 +30,22 @@ class _LoginState extends State<Login> {
       return;
     }
     // Perform login action
-    Response response = await _api.login(
+    ApiResponse<LoginResponse> response = await _api.login(
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
     );
 
     _emailError.value = null;
     _passwordError.value = null;
-    if (response.statusCode == 200) {
-      String jwt = response.body["jwt"];
-      authController.jwt.value = jwt;
+    if (response.statusCode == HttpStatusCode.ok) {
+      authController.jwt.value = response.body?.jwt;
       Get.toNamed("/home");
-      // TODO: Display login successful to the user?
       return;
-    } else if (response.statusCode == 404) {
+    } else if (response.statusCode == HttpStatusCode.notFound) {
       // The email was not found
       _emailError.value = "Email not found";
-    } else if (response.statusCode == 400 || response.statusCode == 401) {
+    } else if (response.statusCode == HttpStatusCode.badRequest ||
+        response.statusCode == HttpStatusCode.unauthorized) {
       // The password entered was not correct
       _passwordError.value = "Password is incorrect";
     }
