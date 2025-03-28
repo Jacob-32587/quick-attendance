@@ -24,23 +24,25 @@ class _LoginState extends State<Login> {
   final RxnString _emailError = RxnString();
   // Displays an error message underneath the password input
   final RxnString _passwordError = RxnString();
+  final RxBool _isLoading = false.obs;
 
   void _login() async {
     if (_formKey.currentState!.validate() == false) {
       return;
     }
+    _isLoading.value = true;
     // Perform login action
     ApiResponse<LoginResponse> response = await _api.login(
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
     );
+    _isLoading.value = false;
 
     _emailError.value = null;
     _passwordError.value = null;
     if (response.statusCode == HttpStatusCode.ok) {
-      authController.saveJwt(response.body?.jwt);
+      await authController.saveJwt(response.body?.jwt);
       Get.toNamed("/");
-      return;
     } else if (response.statusCode == HttpStatusCode.notFound) {
       // The email was not found
       _emailError.value = "Email not found";
@@ -126,7 +128,13 @@ class _LoginState extends State<Login> {
                   ),
                 ),
                 SizedBox(height: 20),
-                PrimaryButton(text: "Login", onPressed: _login),
+                Obx(
+                  () => PrimaryButton(
+                    text: "Login",
+                    onPressed: _login,
+                    isLoading: _isLoading.value,
+                  ),
+                ),
                 SizedBox(height: 10),
                 TextButton(
                   onPressed: () {
