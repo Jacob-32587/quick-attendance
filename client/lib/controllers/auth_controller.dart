@@ -16,11 +16,11 @@ class AuthController extends GetxController {
   String? get userId => jwtPayload.value?.userId;
   bool get isJwtExpired {
     if (jwtPayload.value == null) {
-      return false;
+      return true;
     }
     int? exp = jwtPayload.value?.exp;
     if (exp == null) return true;
-    final now = DateTime.now().millisecondsSinceEpoch;
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     return exp < now;
   }
 

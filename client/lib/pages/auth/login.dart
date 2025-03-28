@@ -38,8 +38,8 @@ class _LoginState extends State<Login> {
     _emailError.value = null;
     _passwordError.value = null;
     if (response.statusCode == HttpStatusCode.ok) {
-      authController.jwt.value = response.body?.jwt;
-      Get.toNamed("/home");
+      authController.saveJwt(response.body?.jwt);
+      Get.toNamed("/");
       return;
     } else if (response.statusCode == HttpStatusCode.notFound) {
       // The email was not found
