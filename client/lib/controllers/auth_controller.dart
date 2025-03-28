@@ -2,31 +2,67 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:quick_attendance/models/jwt_model.dart';
 
 class AuthController extends GetxController {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   late final QuickAttendanceApi api = Get.find();
 
   /// The JWT providing request Authorization and the logged in status
-  var jwt = Rxn<String>();
+  final jwt = Rxn<String>();
+  final jwtPayload = Rxn<JwtModel>();
 
   /// The user ID that is stored in the JWT.
-  final RxnString userId = RxnString();
+  String? get userId => jwtPayload.value?.userId;
+  bool get isJwtExpired {
+    if (jwtPayload.value == null) {
+      return true;
+    }
+    int? exp = jwtPayload.value?.exp;
+    if (exp == null) return true;
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    return exp < now;
+  }
 
   /// The logged in status of the user. DO NOT MODIFY OUTSIDE OF AUTH CONTROLLER
   final RxBool isLoggedIn = false.obs;
 
+  /// Tries to get the JWT stored on the device and load it into memory.
   Future<void> _tryGetJwt() async {
     jwt.value = await _storage.read(key: "jwt_token");
+    _processSavedJwt();
   }
 
-  Future<void> _saveJwt(String? token) async {
+  void _processSavedJwt() {
+    String? token = jwt.value;
+    if (token == null || token.isEmpty) {
+      jwtPayload.value = null;
+      isLoggedIn.value = false;
+      Get.toNamed("/login");
+      return;
+    }
+    try {
+      Map<String, dynamic> decodedJwt = Jwt.parseJwt(token);
+      jwtPayload.value = JwtModel.fromJson(decodedJwt);
+      isLoggedIn.value = true;
+    } catch (e) {
+      Get.snackbar(
+        "Failed to Login",
+        "The response from the server was not processable.",
+      );
+      Get.toNamed("login");
+    }
+  }
+
+  Future<void> saveJwt(String? token) async {
+    jwt.value = token;
     await _storage.write(key: "jwt_token", value: token);
+    _processSavedJwt();
   }
 
   void logout() {
     isLoggedIn.value = false;
-    _saveJwt(null);
+    saveJwt(null);
     Get.toNamed("/login");
   }
 
@@ -49,23 +85,6 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    ever(jwt, (newJwt) {
-      _saveJwt(newJwt);
-      if (newJwt == null || newJwt.isEmpty) {
-        userId.value = null;
-        isLoggedIn.value = false;
-        // TODO: Redirect user to login screen and notify them about the problem
-        return;
-      }
-      try {
-        var decodedJwt = Jwt.parseJwt(newJwt);
-        userId.value = decodedJwt["user_id"];
-        isLoggedIn.value = true;
-      } catch (e) {
-        Get.log("Failed to decode JWT: '$newJwt' : $e");
-        userId.value = null;
-      }
-    });
     _tryGetJwt();
   }
 }

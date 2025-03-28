@@ -16,8 +16,21 @@ class BaseApiClient extends GetConnect {
 
     httpClient.addResponseModifier((request, response) async {
       await Future.delayed(const Duration(seconds: 1));
-      // TODO: Handle unauthorized (401) status codes navigating to login page.
-      if (response.statusCode == 500) {
+      if (response.statusCode == 401 && Get.currentRoute != '/login') {
+        Get.toNamed("/login");
+        if (_authController.jwt.value == null) {
+          Get.snackbar(
+            "Unauthorized",
+            "You must be logged in to do this",
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+            duration: Duration(seconds: 3),
+          );
+        } else {
+          Get.snackbar("Unauthorized", "You have been logged out");
+        }
+      } else if (response.statusCode == 500) {
         Get.snackbar(
           "Request failed",
           "The server was unable to process the request. Please try again later.",

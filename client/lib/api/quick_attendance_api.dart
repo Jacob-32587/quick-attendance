@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
+import 'package:quick_attendance/models/responses/login_response.dart';
 import 'package:quick_attendance/models/user_model.dart';
 
 /// The client for sending requests to the Attenda Scan API
@@ -29,11 +30,19 @@ class QuickAttendanceApi {
     });
   }
 
-  Future<Response> login({required String email, required String password}) {
-    return apiClient.post("/account/login", {
+  Future<ApiResponse<LoginResponse>> login({
+    required String email,
+    required String password,
+  }) async {
+    Response response = await apiClient.post("/account/login", {
       "email": email,
       "password": password,
     });
+    ApiResponse<LoginResponse> apiResponse = ApiResponse(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: LoginResponse.fromJson(response.body),
+    );
+    return apiResponse;
   }
 
   Future<ApiResponse<UserModel>> getUser() async {
