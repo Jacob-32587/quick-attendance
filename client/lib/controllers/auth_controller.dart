@@ -38,7 +38,6 @@ class AuthController extends GetxController {
     if (token == null || token.isEmpty) {
       jwtPayload.value = null;
       isLoggedIn.value = false;
-      Get.toNamed("/login");
       return;
     }
     try {
@@ -50,7 +49,6 @@ class AuthController extends GetxController {
         "Failed to Login",
         "The response from the server was not processable.",
       );
-      Get.toNamed("login");
     }
   }
 
