@@ -213,13 +213,13 @@ export async function get_group_and_verify_user_type(
   group_id: Uuid,
   user_id: Uuid,
   user_type_claim: UserType | UserType[],
-): Promise<GroupEntity | never> {
-  const group = (await get_group(group_id)).value;
+): Promise<Deno.KvEntry<GroupEntity> | never> {
+  const group = await get_group(group_id);
   if (
     (Array.isArray(user_type_claim) && user_type_claim.some((x) => x === UserType.Owner)) ||
     user_type_claim === UserType.Owner
   ) {
-    if (user_id === group.owner_id) {
+    if (user_id === group.value.owner_id) {
       return group;
     }
   }
@@ -386,15 +386,14 @@ export async function respond_to_group_invite(
   }
 }
 
-export async function set_group(entity: GroupEntity, tran?: Deno.AtomicOperation) {
-  const no_tran = tran === undefined;
-  if (tran === undefined) {
-    tran = kv.atomic();
-  }
-  tran.set(["group", entity.group_id], entity);
-  if (no_tran) {
-    await DbErr.err_on_commit_async(tran.commit(), "Unable to update group");
-  }
+export function update_group_tran(
+  kv_entity: Deno.KvEntry<GroupEntity>,
+  tran: Deno.AtomicOperation,
+) {
+  const key = ["group", kv_entity.value.group_id];
+  tran
+    .check({ key: key, versionstamp: kv_entity.versionstamp })
+    .set(key, kv_entity.value);
   return tran;
 }
 

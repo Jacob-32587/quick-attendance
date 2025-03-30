@@ -26,7 +26,7 @@ attendance.post(auth_attendance_base_path, zValidator("json", attendance_post_re
     user_id,
     UserType.Owner,
   );
-  await dal.create_attendance_entity(req.group_id, group_entity);
+  await dal.create_attendance(req.group_id, group_entity);
 
   return ctx.text("");
 });
@@ -40,13 +40,10 @@ attendance.put(auth_attendance_base_path, zValidator("json", attendance_put_req)
     user_id,
     [UserType.Owner, UserType.Manager],
   );
-  const attendance_entity =
-    (await dal.get_attendance_entity(req.group_id, req.attendance_id)).value;
-
   await verify_user_promise;
 
   // Attempt to save the current attendance record
-  await dal.set_attendance_entity(req.group_id, req.attendance_id, attendance_entity);
+  dal.create_present_users_tran();
 
   return ctx.text("");
 });
