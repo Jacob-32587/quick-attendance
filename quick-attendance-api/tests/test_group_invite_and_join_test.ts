@@ -80,8 +80,6 @@ Deno.test(
         [deny_member],
         test_num,
       ))[0];
-      console.log(accept_member_entities);
-      console.log(deny_member_entity);
       // Ensure that all users have an invite
       assert(
         accept_member_entities.every((x) => (x.fk_pending_group_ids?.length ?? 0) === 1) &&
@@ -133,9 +131,15 @@ Deno.test(
           null,
           async (res) => {
             const group = (await res.json()) as GroupGetRes;
-            return group.event_count === 0 && group.group_name === "Rocco's group of friends" &&
+            const pass = group.event_count === 0 &&
+              group.group_name === "Rocco's group of friends" &&
               group.members?.length === 2 && group.members.every((x) => x.unique_id === null) &&
               group.pending_members === null;
+
+            if (!pass) {
+              console.log("GROUP MEMBER DID NOT PASS: ", group);
+            }
+            return pass;
           },
         );
       }
@@ -148,8 +152,13 @@ Deno.test(
         null,
         async (res) => {
           const group = (await res.json()) as GroupGetRes;
-          return group.event_count === 0 && group.group_name === "Rocco's group of friends" &&
+
+          const pass = group.event_count === 0 && group.group_name === "Rocco's group of friends" &&
             group.members?.length === 2 && group.members.every((x) => x.unique_id === null);
+          if (!pass) {
+            console.log("GROUP OWNER DID NOT PASS: ", group);
+          }
+          return pass;
         },
       );
     });

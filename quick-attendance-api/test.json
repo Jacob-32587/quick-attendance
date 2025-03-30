@@ -1,0 +1,26 @@
+{
+    "group_id": "0195e83e-0de9-71ea-bafa-5074371cd669",
+    "group_name": "FooBarGroup",
+    "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+    "current_attendance_id": null,
+    "event_count": 0,
+    "owner": {
+        "username": "FooBar",
+        "first_name": "Zab",
+        "last_name": "Baz",
+        "user_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+        "user_type": "Owner"
+    },
+    "members": [],
+    "managers": [],
+    "pending_members": [
+        {
+            "username": "FooBar",
+            "first_name": "Zab",
+            "last_name": "Baz",
+            "user_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "unique_id": null,
+            "user_type": null
+        }
+    ]
+}

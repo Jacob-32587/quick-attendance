@@ -33,8 +33,8 @@ app.use(
     origin: "*",
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Authorization", "Content-Type"],
-    credentials: true
-  })
+    credentials: true,
+  }),
 );
 
 app.use(

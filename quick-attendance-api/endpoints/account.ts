@@ -28,9 +28,7 @@ const account = new Hono();
 
 // Get account information
 account.get(auth_account_base_path, async (ctx) => {
-  console.log("USER ID ", get_jwt_payload(ctx).user_id);
   const entity = (await dal.get_account(get_jwt_payload(ctx).user_id)).value;
-  console.log("USER ENTITY", entity);
   return ctx.json({
     username: entity.username,
     email: entity.email,
@@ -60,7 +58,7 @@ account.put(
   zValidator("json", account_put_req_val),
   async (ctx) => {
     const req = ctx.req.valid("json");
-    await dal.update_account(get_jwt_payload(ctx).user_id, req);
+    await dal.update_account_from_req(get_jwt_payload(ctx).user_id, req);
     return ctx.text("ok");
   },
 );
@@ -128,22 +126,22 @@ account.put(
     const tran = kv.atomic();
     // Accept or deny the group invitation, update the account information appropriately
     const account_mut_promise = dal.respond_to_group_invite(
-      tran,
       user_jwt.user_id,
       invite_jwt.group_id,
       req.accept,
       invite_jwt.is_manager_invite,
       req.unique_id,
+      tran,
     );
     // Accept or deny the group invitation, update the group information appropriately
     // This will also verify that the unique id sent follows the group specifications
     await group_dal.respond_to_group_invite(
-      tran,
       user_jwt.user_id,
       invite_jwt.group_id,
       req.accept,
       invite_jwt.is_manager_invite,
       req.unique_id,
+      tran,
     );
     await account_mut_promise;
 

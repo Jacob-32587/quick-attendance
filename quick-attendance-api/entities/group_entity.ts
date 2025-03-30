@@ -3,9 +3,6 @@ import { Uuid } from "../util/uuid.ts";
 export interface GroupEntity {
   group_id: Uuid;
   owner_id: Uuid;
-  manager_ids: Set<Uuid> | null;
-  member_ids: Set<Uuid> | null;
-  pending_member_ids: Set<Uuid> | null;
   group_name: string;
   group_description: string | null;
   current_attendance_id: Uuid | null;

@@ -8,12 +8,12 @@ import { AccountPostReq } from "../models/account/account_post_req.ts";
 import { AccountPutReq } from "../models/account/account_put_req.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
 import { GroupInviteJwtPayload } from "../models/group_invite_jwt_payload.ts";
-import { UserType } from "../models/user_type.ts";
+import { is_privileged_user_type, UserType } from "../models/user_type.ts";
 import { data_views_are_equal } from "../util/array_buffer.ts";
 import HttpStatusCode from "../util/http_status_code.ts";
 import { add_to_maybe_map } from "../util/map.ts";
 import { new_uuid, Uuid } from "../util/uuid.ts";
-import kv, { DbErr } from "./db.ts";
+import kv, { DbErr, KvHelper } from "./db.ts";
 
 /**
  * @param password - The string password to merge with the salt value
@@ -66,11 +66,12 @@ export async function get_account(user_id: Uuid) {
  * @throws {@link HTTPException} if any user with the given ids could not be found
  */
 export async function get_accounts(user_ids: Uuid[]) {
-  return DbErr.err_on_any_empty_vals(
-    await kv.getMany<AccountEntity[]>(user_ids.map((x) => ["account", x])),
+  const acc = DbErr.err_on_any_empty_vals(
+    await KvHelper.get_many_return_empty<AccountEntity>(kv, user_ids.map((x) => ["account", x])),
     () => "Account not found",
     HttpStatusCode.NOT_FOUND,
   );
+  return acc;
 }
 
 /**
@@ -82,7 +83,6 @@ export async function get_accounts(user_ids: Uuid[]) {
 export async function get_public_account_models(
   user_ids: Uuid[] | null | undefined,
   group_id?: Uuid,
-  user_type?: UserType,
 ) {
   // Return nothing if given nothing
   if (user_ids === null || user_ids === undefined || user_ids.length === 0) {
@@ -90,32 +90,48 @@ export async function get_public_account_models(
   }
 
   // Get the unique if the given user type is privileged
-  const maybe_unique_id = (entity: AccountEntity) => {
-    if (group_id === undefined || user_type === undefined) {
+  const maybe_unique_id = (entity: AccountEntity, user_type: UserType | null) => {
+    if (group_id === undefined || user_type == null) {
       return null;
     }
-    return Match.value(user_type).pipe(
-      Match.when(UserType.Owner, () => null),
-      Match.when(
-        UserType.Manager,
-        () => entity.fk_managed_group_ids?.get(group_id)?.unique_id ?? null,
-      ),
-      Match.when(
-        UserType.Member,
-        () => entity.fk_member_group_ids?.get(group_id)?.unique_id ?? null,
-      ),
-      Match.exhaustive,
-    );
+    if (is_privileged_user_type(user_type)) {
+      let maybe_unique_id_setting = entity?.fk_member_group_ids?.get(group_id);
+      if (maybe_unique_id_setting === undefined) {
+        maybe_unique_id_setting = entity?.fk_managed_group_ids?.get(group_id);
+      }
+      return maybe_unique_id_setting ?? null;
+    }
+    return null;
   };
   return (await get_accounts(user_ids)).map(
-    (x) => ({
-      username: x.value.username,
-      first_name: x.value.first_name,
-      last_name: x.value.last_name,
-      user_id: x.value.user_id,
-      unique_id: maybe_unique_id(x.value),
-    } as PublicAccountGetModel),
+    (x) => {
+      const user_type = group_id != undefined ? determine_user_type(x.value, group_id) : null;
+      return {
+        username: x.value.username,
+        first_name: x.value.first_name,
+        last_name: x.value.last_name,
+        user_id: x.value.user_id,
+        unique_id: maybe_unique_id(x.value, user_type),
+        user_type: user_type,
+      } as PublicAccountGetModel;
+    },
   );
+}
+
+/**
+ * @description Find the user type of a given user entity for the group
+ * @param entity - User entity
+ * @param group_id - Group id to get the user type for
+ */
+export function determine_user_type(entity: AccountEntity, group_id: Uuid) {
+  if (entity.fk_member_group_ids?.has(group_id)) {
+    return UserType.Member;
+  } else if (entity.fk_managed_group_ids?.has(group_id)) {
+    return UserType.Manager;
+  } else if (entity.fk_owned_group_ids?.has(group_id)) {
+    return UserType.Owner;
+  }
+  DbErr.err("User does not belong to the group", HttpStatusCode.INTERNAL_SERVER_ERROR);
 }
 
 /**
@@ -277,12 +293,12 @@ export async function create_account(account: AccountPostReq) {
  * If any user has already been invited, this function fails fast.
  */
 export async function invite_accounts_to_group(
-  tran: Deno.AtomicOperation,
   group_id: Uuid,
   group_name: string,
   owner_id: Uuid,
   is_manager_invite: boolean,
   invitees_accounts: Deno.KvEntry<AccountEntity>[],
+  tran: Deno.AtomicOperation,
 ) {
   for (let i = 0; i < invitees_accounts.length; i++) {
     invitees_accounts[i].value.fk_pending_group_invites = add_to_maybe_map(
@@ -310,19 +326,11 @@ export async function invite_accounts_to_group(
         `User ${(decode(v).payload?.username ??
           "unknown")} already invited to this group`,
     ); //!! throw
-    tran
-      .check({
-        key: ["account", invitees_accounts[i].value.user_id],
-        versionstamp: invitees_accounts[i].versionstamp,
-      })
-      .set(
-        ["account", invitees_accounts[i].value.user_id],
-        invitees_accounts[i],
-      );
+    update_account_tran(invitees_accounts[i], tran);
   }
 }
 
-export async function update_account(user_id: Uuid, req: AccountPutReq) {
+export async function update_account_from_req(user_id: Uuid, req: AccountPutReq) {
   const account_entity = await get_account(user_id);
   const tran = kv.atomic();
 
@@ -352,13 +360,33 @@ export async function update_account(user_id: Uuid, req: AccountPutReq) {
   return account_entity;
 }
 
-export async function respond_to_group_invite(
+export function update_account(entity: Deno.KvEntry<AccountEntity>) {
+  return DbErr.err_on_commit_async(
+    update_account_tran(entity, kv.atomic()).commit(),
+    "Unable to update account",
+    HttpStatusCode.CONFLICT,
+  );
+}
+
+export function update_account_tran(
+  kv_entity: Deno.KvEntry<AccountEntity>,
   tran: Deno.AtomicOperation,
+) {
+  const key = ["account", kv_entity.value.user_id];
+  tran
+    .check({ key: key, versionstamp: kv_entity.versionstamp })
+    .set(key, kv_entity.value);
+
+  return tran;
+}
+
+export async function respond_to_group_invite(
   user_id: Uuid,
   group_id: Uuid,
   accept: boolean,
   is_manager_invite: boolean,
   unique_id: string | null,
+  tran: Deno.AtomicOperation,
 ) {
   const entity = await get_account(user_id);
 
@@ -381,9 +409,7 @@ export async function respond_to_group_invite(
       () => "User is already a member for this group",
     );
   }
-  tran
-    .check({ key: ["account", user_id], versionstamp: entity.versionstamp })
-    .set(["account", user_id], entity);
+  update_account_tran(entity, tran);
 }
 
 //#endregion
