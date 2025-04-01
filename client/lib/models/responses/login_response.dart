@@ -1,11 +1,11 @@
 import 'package:quick_attendance/models/base_api_model.dart';
 
 class LoginResponse extends BaseApiModel {
-  String jwt;
+  String? jwt;
   LoginResponse({required this.jwt});
 
-  factory LoginResponse.fromJson(Map<String, dynamic> json) {
-    return LoginResponse(jwt: json["jwt"]);
+  factory LoginResponse.fromJson(Map<String, dynamic>? json) {
+    return LoginResponse(jwt: json?["jwt"]);
   }
 
   @override
