@@ -5,6 +5,7 @@ import { get_week_num_of_month } from "../util/time.ts";
 import { get_uuid_time, new_uuid, Uuid } from "../util/uuid.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
 import * as group_dal from "./group.ts";
+import * as account_dal from "./account.ts";
 
 //#region Query
 export async function get_attendance_entity(group_id: Uuid, attendance_id: Uuid) {
@@ -86,10 +87,29 @@ export function create_attendance_entity_tran(
     .set(key, entity);
 }
 
-export function add_users_to_attendance(group_id: Uuid, attendance_id: Uuid, user_ids: Uuid[]) {
+export async function add_users_to_attendance(
+  group_id: Uuid,
+  user_ids: Uuid[],
+) {
   const tran = kv.atomic();
-  group_dal
-    .create_present_users_tran();
+
+  const current_attendance_id_p = group_dal.get_group(group_id);
+  const group_users = await group_dal.get_group_users(group_id);
+  const current_attendance_id = await current_attendance_id_p;
+  const unique_user_ids = new Set(user_ids);
+  // Only include user ids that belong to this group
+  const filtered_user_ids = group_users.filter((x) => unique_user_ids.has(x.value.user_id));
+
+  const present_users = filtered_user_ids.map(
+    (x) => ({
+      group_id: group_id,
+      attendance_id: current_attendance_id.value.current_attendance_id,
+      user_id: x.value.user_id,
+    } as AttendancePresentUserEntity),
+  );
+
+  create_present_users_tran(present_users, tran);
+  return tran;
 }
 
 export function create_present_users_tran(
