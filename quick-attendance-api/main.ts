@@ -7,6 +7,7 @@ import { HTTPException } from "@hono/hono/http-exception";
 import { Uuid } from "./util/uuid.ts";
 import { group } from "./endpoints/group.ts";
 import { cli_flags } from "./util/cli_parse.ts";
+import { attendance } from "./endpoints/attendance.ts";
 const app = new Hono().basePath("/quick-attendance-api");
 
 export { app };
@@ -76,6 +77,7 @@ app.get("/", (ctx: Context) => {
 });
 app.route("", account);
 app.route("", group);
+app.route("", attendance);
 
 export const server = Deno.serve({
   port: parseInt(cli_flags["test-number"]) + 8080,

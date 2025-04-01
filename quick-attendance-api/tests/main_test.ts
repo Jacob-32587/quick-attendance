@@ -9,6 +9,7 @@ import { GroupPostReq } from "../models/group/group_post_req.ts";
 import { GroupInvitePutReq } from "../models/group/group_invite_put_req.ts";
 import { AccountInviteActionPutReq } from "../models/account/account_invite_accept_put_req.ts";
 import { GroupGetRes } from "../models/group/group_get_res.ts";
+import { Uuid } from "../util/uuid.ts";
 
 export const URL = (n: number) => `http://0.0.0.0:${8080 + n}/quick-attendance-api`;
 export const ACCOUNT_URL = (n: number) => `${URL(n)}/account`;
@@ -126,6 +127,36 @@ export async function get_user_accounts(jwts: string[], test_num: number) {
   for (const response of responses) {
     body_promises.push(
       response.json() as Promise<AccountGetModel & { jwt: string }>,
+    );
+  }
+
+  const get_rets = await Promise.all(body_promises);
+  for (let i = 0; i < get_rets.length; i++) {
+    get_rets[i].jwt = jwts[i];
+  }
+  return get_rets;
+}
+
+export async function get_user_group(jwts: string[], group_id: Uuid, test_num: number) {
+  const get_user_group_promises = [];
+  for (const jwt of jwts) {
+    // Send upate request
+    get_user_group_promises.push(
+      test_fetch_json(
+        `${GROUP_AUTH_URL(test_num)}?group_id=${group_id}`,
+        "GET",
+        jwt,
+        null,
+        null,
+        false,
+      ),
+    );
+  }
+  const responses = await Promise.all(get_user_group_promises);
+  const body_promises = [];
+  for (const response of responses) {
+    body_promises.push(
+      response.json() as Promise<GroupGetRes & { jwt: string }>,
     );
   }
 
@@ -324,4 +355,8 @@ export async function create_users_and_group(test_num: number) {
     },
   );
   //#endregion
+  return {
+    user_jwts: [rocco_jwt, maeve_jwt, henrik_jwt, indie_jwt],
+    group_id: owner_group_list.owned_groups[0].group_id,
+  };
 }
