@@ -42,7 +42,7 @@ attendance.put(auth_attendance_base_path, zValidator("json", attendance_put_req)
   await verify_user_promise;
 
   // Attempt to save the current attendance record
-  await (await dal.add_users_to_attendance(req.group_id, req.user_ids)).commit();
+  await dal.add_users_to_attendance(req.group_id, req.user_ids);
 
   return ctx.text("");
 });

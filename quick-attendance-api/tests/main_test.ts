@@ -114,7 +114,7 @@ export async function create_and_login_test_users(test_num: number) {
   ];
 }
 
-export async function get_user_accounts(jwts: string[], test_num: number) {
+export async function get_users_accounts(jwts: string[], test_num: number) {
   const get_user_information_promises = [];
   for (const jwt of jwts) {
     // Send upate request
@@ -137,7 +137,7 @@ export async function get_user_accounts(jwts: string[], test_num: number) {
   return get_rets;
 }
 
-export async function get_user_group(jwts: string[], group_id: Uuid, test_num: number) {
+export async function get_users_groups(jwts: string[], group_id: Uuid, test_num: number) {
   const get_user_group_promises = [];
   for (const jwt of jwts) {
     // Send upate request
@@ -167,13 +167,24 @@ export async function get_user_group(jwts: string[], group_id: Uuid, test_num: n
   return get_rets;
 }
 
+export async function get_users_groups_and_accounts(
+  jwts: string[],
+  group_id: Uuid,
+  test_num: number,
+) {
+  const account_get_p = get_users_accounts(jwts, test_num);
+  const user_groups = await get_users_groups(jwts, group_id, test_num);
+  const user_accounts = await account_get_p;
+  return user_groups.map((u, i) => ({ group: u, account: user_accounts[i] }));
+}
+
 /**
  * @description Create a group owned by Rocco with two members. Maeve
  * and Henrik accept the first invite, Indie denies. Then Indie is invited
  * again, as a manager, and accepts.
  */
 export async function create_users_and_group(test_num: number) {
-  // Create a login users
+  // Create and login users
   const [rocco_jwt, maeve_jwt, henrik_jwt, indie_jwt] = await create_and_login_test_users(
     test_num,
   );
@@ -222,11 +233,11 @@ export async function create_users_and_group(test_num: number) {
 
   //#region Henrik and Maeve accept, Indie denies
 
-  let accept_member_entities = await get_user_accounts(
+  let accept_member_entities = await get_users_accounts(
     accept_members,
     test_num,
   );
-  let deny_member_entity = (await get_user_accounts(
+  let deny_member_entity = (await get_users_accounts(
     [deny_member],
     test_num,
   ))[0];
@@ -249,11 +260,11 @@ export async function create_users_and_group(test_num: number) {
   } as AccountInviteActionPutReq);
 
   // Ensure that all users invites are gone
-  accept_member_entities = await get_user_accounts(
+  accept_member_entities = await get_users_accounts(
     accept_members,
     test_num,
   );
-  deny_member_entity = (await get_user_accounts(
+  deny_member_entity = (await get_users_accounts(
     [deny_member],
     test_num,
   ))[0];
@@ -320,7 +331,7 @@ export async function create_users_and_group(test_num: number) {
     "is_manager_invite": true,
   } as GroupInvitePutReq);
 
-  const accept_manager_entity = (await get_user_accounts(
+  const accept_manager_entity = (await get_users_accounts(
     [deny_member],
     test_num,
   ))[0];

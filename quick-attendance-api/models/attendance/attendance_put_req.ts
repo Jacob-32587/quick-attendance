@@ -3,7 +3,6 @@ import { val_uuid_zod } from "../../util/uuid.ts";
 
 export const attendance_put_req = z.object({
   group_id: val_uuid_zod(),
-  attendance_id: val_uuid_zod(),
   user_ids: z.array(val_uuid_zod()),
 });
 

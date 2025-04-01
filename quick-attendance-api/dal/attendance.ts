@@ -109,9 +109,15 @@ export async function add_users_to_attendance(
   );
 
   create_present_users_tran(present_users, tran);
-  return tran;
+  await tran.commit();
 }
 
+/**
+ * @description This will set present users and ensure that no key
+ * already exists.
+ * @param entities - List of entites that represent present users
+ * @returns Transaction that commands were added to
+ */
 export function create_present_users_tran(
   entities: AttendancePresentUserEntity[],
   tran: Deno.AtomicOperation,
