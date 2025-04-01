@@ -2,7 +2,6 @@ import { AccountPostReq } from "../models/account/account_post_req.ts";
 import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
 import { AccountLoginPostReq } from "../models/account/account_login_post_req.ts";
 import { assertNever, test_fetch, test_fetch_json } from "../util/testing.ts";
-import { Uuid } from "../util/uuid.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
 
 export const URL = (n: number) => `http://0.0.0.0:${8080 + n}/quick-attendance-api`;
@@ -10,6 +9,8 @@ export const ACCOUNT_URL = (n: number) => `${URL(n)}/account`;
 export const ACCOUNT_AUTH_URL = (n: number) => `${URL(n)}/auth/account`;
 export const GROUP_URL = (n: number) => `${URL(n)}/group`;
 export const GROUP_AUTH_URL = (n: number) => `${URL(n)}/auth/group`;
+export const ATTENDANCE_URL = (n: number) => `${URL(n)}/attendance`;
+export const ATTENDANCE_AUTH_URL = (n: number) => `${URL(n)}/auth/attendance`;
 
 export const user_rocco_mason = {
   "username": "Rocco Mason",
