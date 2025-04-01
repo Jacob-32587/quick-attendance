@@ -26,7 +26,7 @@ const group = new Hono();
 
 //#region Query
 
-// Get a group for the given user
+// Get the group for the given user
 group.get(
   `${auth_group_base_path}`,
   zValidator("query", group_get_req),
@@ -37,11 +37,11 @@ group.get(
     // Determine what the type of the user is
     const account = await account_dal.get_account(user_id);
     let user_type: UserType;
-    if (account.fk_owned_group_ids?.has(req.group_id) === true) {
+    if (account.value.fk_owned_group_ids?.has(req.group_id) === true) {
       user_type = UserType.Owner;
-    } else if (account.fk_managed_group_ids?.has(req.group_id) === true) {
+    } else if (account.value.fk_managed_group_ids?.has(req.group_id) === true) {
       user_type = UserType.Manager;
-    } else if (account.fk_member_group_ids?.has(req.group_id) === true) {
+    } else if (account.value.fk_member_group_ids?.has(req.group_id) === true) {
       user_type = UserType.Member;
     } else {
       throw new HTTPException(HttpStatusCode.NOT_FOUND, {
@@ -49,58 +49,56 @@ group.get(
       });
     }
 
+    const group_users_p = dal.get_group_users(req.group_id);
+
     const group = await dal.get_group_and_verify_user_type(
       req.group_id,
       user_id,
       user_type,
     );
 
+    const group_users = await group_users_p;
+
     const get_group_res = {
-      group_id: group.group_id,
-      group_name: group.group_name,
-      group_description: group.group_description,
-      current_attendance_id: group.current_attendance_id,
-      event_count: group.event_count,
+      group_id: group.value.group_id,
+      group_name: group.value.group_name,
+      group_description: group.value.group_description,
+      current_attendance_id: group.value.current_attendance_id,
+      event_count: group.value.event_count,
     } as GroupGetRes;
 
-    // There are no members or managers in this group, skip
-    if (
-      ((group.member_ids?.size ?? 0) === 0) && ((group.manager_ids?.size ?? 0) === 0)
-    ) {
-      return ctx.json(get_group_res);
-    }
+    const user_get_promise = account_dal.get_public_account_models(
+      group_users.map((x) => x.value.user_id),
+      req.group_id,
+    );
 
-    const member_get_promise = account_dal.get_public_account_models(
-      group.member_ids?.entries().map((x) => x[0]).toArray() ?? [],
+    const owner_get_promise = account_dal.get_public_account_models(
+      [group.value.owner_id],
+      req.group_id,
     );
-    const manager_get_promise = account_dal.get_public_account_models(
-      group.manager_ids?.entries().map((x) => x[0]).toArray() ?? [],
-    );
-    const owner_get_promise = account_dal.get_public_account_models([
-      group.owner_id,
-    ]);
 
     let pending_accounts = Promise.resolve(
       null as PublicAccountGetModel[] | null,
     );
 
+    // If the users is allowed to see pending users include in the response
     if (is_privileged_user_type(user_type)) {
+      const pending_users = await dal.get_group_pending_users(req.group_id);
       pending_accounts = account_dal.get_public_account_models(
-        group.manager_ids?.entries().map((x) => x[0]).toArray() ?? [],
+        pending_users.map((x) => x.value.user_id),
       );
     }
 
     const account_promises = await Promise.all([
       owner_get_promise,
-      member_get_promise,
-      manager_get_promise,
+      user_get_promise,
       pending_accounts,
     ]);
 
     get_group_res.owner = account_promises[0][0];
-    get_group_res.members = account_promises[1];
-    get_group_res.managers = account_promises[2];
-    get_group_res.pending_members = account_promises[3];
+    get_group_res.members = account_promises[1].filter((x) => x.user_type === UserType.Member);
+    get_group_res.managers = account_promises[1].filter((x) => x.user_type === UserType.Manager);
+    get_group_res.pending_members = account_promises[2];
 
     return ctx.json(get_group_res, HttpStatusCode.OK);
   },
@@ -123,7 +121,7 @@ group.post(
   zValidator("json", group_post_req),
   async (ctx) => {
     const req = ctx.req.valid("json");
-    const group_entity = await dal.create_group(
+    const group_entity = await dal.create_group_from_req(
       get_jwt_payload(ctx).user_id,
       req,
     );
@@ -139,26 +137,28 @@ group.put(
   zValidator("json", group_invite_put_req),
   async (ctx) => {
     const req = ctx.req.valid("json");
-    const tran = kv.atomic();
+    let tran = kv.atomic();
 
     // Verify the group is owned by the users and get user accounts to invite
     const { owner_entity, account_entities } = await dal
       .accounts_for_group_invite(
-        tran,
         get_jwt_payload(ctx).user_id,
         req.group_id,
         req.usernames,
+        tran,
       );
+    await DbErr.err_on_commit_async(tran.commit(), "Unable to update user account");
     const group_entity = await dal.get_group(req.group_id);
+    tran = kv.atomic();
 
     // Set account pending invites for the transaction
     await account_dal.invite_accounts_to_group(
-      tran,
       req.group_id,
       group_entity.value.group_name,
-      owner_entity.user_id,
+      owner_entity.value.user_id,
       req.is_manager_invite,
-      account_entities.map((x) => x.value),
+      account_entities,
+      tran,
     );
 
     await DbErr.err_on_commit_async(tran.commit(), "Unable to invite users");

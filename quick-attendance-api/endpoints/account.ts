@@ -1,19 +1,18 @@
-import { Hono } from "npm:hono";
-import { Uuid } from "../util/uuid.ts";
-import { sign, verify } from "npm:hono/jwt";
-import { account_post_req_val } from "../models/account/account_post_req.ts";
-import { account_login_post_req } from "../models/account/account_login_post_req.ts";
-import { group_invite_jwt_payload } from "../models/group_invite_jwt_payload.ts";
-import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
+import { HTTPException } from "@hono/hono/http-exception";
 import { zValidator } from "npm:@hono/zod-validator";
+import { Hono } from "npm:hono";
+import { sign, verify } from "npm:hono/jwt";
 import * as dal from "../dal/account.ts";
+import kv, { DbErr } from "../dal/db.ts";
+import * as group_dal from "../dal/group.ts";
 import { get_jwt_payload, QuickAttendanceJwtPayload } from "../main.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
-import { account_put_req_val } from "../models/account/account_put_req.ts";
 import { account_invite_accept_put_req } from "../models/account/account_invite_accept_put_req.ts";
-import * as group_dal from "../dal/group.ts";
-import kv, { DbErr } from "../dal/db.ts";
-import { HTTPException } from "@hono/hono/http-exception";
+import { account_login_post_req } from "../models/account/account_login_post_req.ts";
+import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
+import { account_post_req_val } from "../models/account/account_post_req.ts";
+import { account_put_req_val } from "../models/account/account_put_req.ts";
+import { group_invite_jwt_payload } from "../models/group_invite_jwt_payload.ts";
 import HttpStatusCode from "../util/http_status_code.ts";
 
 export const jwt_secret: string =
@@ -29,15 +28,15 @@ const account = new Hono();
 
 // Get account information
 account.get(auth_account_base_path, async (ctx) => {
-  const entity = await dal.get_account(get_jwt_payload(ctx).user_id);
+  const entity = (await dal.get_account(get_jwt_payload(ctx).user_id)).value;
   return ctx.json({
     username: entity.username,
     email: entity.email,
     first_name: entity.first_name,
     last_name: entity.last_name,
     user_id: entity.user_id,
-    fk_pending_group_ids: entity.fk_pending_group_invites?.entries().map((x) => x[1]).toArray(),
-    versionstamp: entity.versionstamp,
+    fk_pending_group_ids: entity.fk_pending_group_invites?.entries().map((x) => x[1])
+      .toArray(),
   } as AccountGetModel);
 });
 
@@ -59,7 +58,7 @@ account.put(
   zValidator("json", account_put_req_val),
   async (ctx) => {
     const req = ctx.req.valid("json");
-    await dal.update_account(get_jwt_payload(ctx).user_id, req);
+    await dal.update_account_from_req(get_jwt_payload(ctx).user_id, req);
     return ctx.text("ok");
   },
 );
@@ -127,22 +126,22 @@ account.put(
     const tran = kv.atomic();
     // Accept or deny the group invitation, update the account information appropriately
     const account_mut_promise = dal.respond_to_group_invite(
-      tran,
       user_jwt.user_id,
       invite_jwt.group_id,
       req.accept,
       invite_jwt.is_manager_invite,
       req.unique_id,
+      tran,
     );
     // Accept or deny the group invitation, update the group information appropriately
     // This will also verify that the unique id sent follows the group specifications
     await group_dal.respond_to_group_invite(
-      tran,
       user_jwt.user_id,
       invite_jwt.group_id,
       req.accept,
       invite_jwt.is_manager_invite,
       req.unique_id,
+      tran,
     );
     await account_mut_promise;
 

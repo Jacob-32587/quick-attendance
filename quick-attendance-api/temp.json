@@ -1,0 +1,83 @@
+{
+    "owned_groups": [
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e83e-0de9-71ea-bafa-5074371cd669",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        },
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e85f-4281-79d0-ae1f-4df0bf9d9243",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        },
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e85f-496b-79f0-81fd-3d8f65502563",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        },
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e85f-59cc-77ae-929d-e7fddc0c1818",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        },
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e85f-6091-7204-82d5-94eb5c4ab600",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        },
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e85f-65cb-7179-b458-01d5b50b5b62",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        },
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e85f-6b6d-726f-a846-018ea1b6c003",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        },
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e85f-80d5-7d2e-8bd1-bac6d01fa9c1",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        },
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e85f-8772-7550-ac08-cf9cb53b046b",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        },
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e85f-8ea8-730f-900d-2e1dbc749a75",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        },
+        {
+            "group_name": "FooBarGroup",
+            "group_id": "0195e85f-96b8-704a-b03d-ff41dccd8d8a",
+            "group_description": "This is a group that contains some foos and even bars but absolutely no zaas.",
+            "owner_id": "0195e83d-9208-70f2-9cd9-7b0ac50446ba",
+            "owner_username": "FooBar"
+        }
+    ],
+    "managed_groups": [],
+    "member_groups": []
+}
