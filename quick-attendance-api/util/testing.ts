@@ -9,8 +9,14 @@ import { sleep } from "./sleep.ts";
  * @returns Handle to the child process (self contained server instance)
  */
 async function init_test(test_num: number, base_url: string) {
+  // We just want to remove the directory if it exists. We don't care about errors here
+  try {
+    await Deno.remove(`./test-${test_num}`, { recursive: true });
+  } catch {
+    //
+  }
   // Create directory for deno-kv SQL lite files and spawn a server instance
-  Deno.mkdir(`./test-${test_num}`);
+  await Deno.mkdir(`./test-${test_num}`);
   const cmd = new Deno.Command(Deno.execPath(), {
     args: [
       "run",
