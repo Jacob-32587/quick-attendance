@@ -6,7 +6,6 @@ import { attendance_post_req } from "../models/attendance/attendance_post_req.ts
 import { zValidator } from "npm:@hono/zod-validator";
 import { UserType } from "../models/user_type.ts";
 import { attendance_put_req } from "../models/attendance/attendance_put_req.ts";
-import { Uuid } from "../util/uuid.ts";
 
 const attendance_base_path = "/attendance";
 const auth_attendance_base_path = `/auth${attendance_base_path}`;
@@ -43,7 +42,7 @@ attendance.put(auth_attendance_base_path, zValidator("json", attendance_put_req)
   await verify_user_promise;
 
   // Attempt to save the current attendance record
-  dal.create_present_users_tran();
+  await (await dal.add_users_to_attendance(req.group_id, req.user_ids)).commit();
 
   return ctx.text("");
 });

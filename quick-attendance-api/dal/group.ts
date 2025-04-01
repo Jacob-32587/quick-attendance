@@ -183,8 +183,8 @@ export function delete_group_pending_users(
 ) {
   return DbErr.err_on_commit_async(
     delete_group_pending_users_tran(group_id, user_ids, kv.atomic()).commit(),
-    "Unable to add user(s) to group",
-    HttpStatusCode.CONFLICT,
+    "Unable to delete user from group, not found",
+    HttpStatusCode.NOT_FOUND,
   ); // !!throw
 }
 
@@ -323,7 +323,7 @@ export async function accounts_for_group_invite(
 
   const account_entities = await account_dal.get_accounts_by_usernames(invitees_usernames);
 
-  add_pending_group_users_tran(group_id, [owner_id], tran);
+  add_pending_group_users_tran(group_id, account_entities.map((x) => x.value.user_id), tran);
 
   return { owner_entity, account_entities };
 }

@@ -60,11 +60,11 @@ group.get(
     const group_users = await group_users_p;
 
     const get_group_res = {
-      group_id: group.group_id,
-      group_name: group.group_name,
-      group_description: group.group_description,
-      current_attendance_id: group.current_attendance_id,
-      event_count: group.event_count,
+      group_id: group.value.group_id,
+      group_name: group.value.group_name,
+      group_description: group.value.group_description,
+      current_attendance_id: group.value.current_attendance_id,
+      event_count: group.value.event_count,
     } as GroupGetRes;
 
     const user_get_promise = account_dal.get_public_account_models(
@@ -73,7 +73,7 @@ group.get(
     );
 
     const owner_get_promise = account_dal.get_public_account_models(
-      [group.owner_id],
+      [group.value.owner_id],
       req.group_id,
     );
 
@@ -137,7 +137,7 @@ group.put(
   zValidator("json", group_invite_put_req),
   async (ctx) => {
     const req = ctx.req.valid("json");
-    const tran = kv.atomic();
+    let tran = kv.atomic();
 
     // Verify the group is owned by the users and get user accounts to invite
     const { owner_entity, account_entities } = await dal
@@ -147,8 +147,9 @@ group.put(
         req.usernames,
         tran,
       );
-    // console.log("OWN: ", owner_entity, "ACC: ", account_entities);
+    await DbErr.err_on_commit_async(tran.commit(), "Unable to update user account");
     const group_entity = await dal.get_group(req.group_id);
+    tran = kv.atomic();
 
     // Set account pending invites for the transaction
     await account_dal.invite_accounts_to_group(

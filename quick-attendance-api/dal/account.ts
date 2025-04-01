@@ -66,6 +66,9 @@ export async function get_account(user_id: Uuid) {
  * @throws {@link HTTPException} if any user with the given ids could not be found
  */
 export async function get_accounts(user_ids: Uuid[]) {
+  if (user_ids.length === 0) {
+    return [];
+  }
   const acc = DbErr.err_on_any_empty_vals(
     await KvHelper.get_many_return_empty<AccountEntity>(kv, user_ids.map((x) => ["account", x])),
     () => "Account not found",
@@ -375,7 +378,7 @@ export function update_account_tran(
   const key = ["account", kv_entity.value.user_id];
   tran
     .check({ key: key, versionstamp: kv_entity.versionstamp })
-    .set(key, kv_entity.value);
+    .set(key, kv_entity.value as AccountEntity);
 
   return tran;
 }
