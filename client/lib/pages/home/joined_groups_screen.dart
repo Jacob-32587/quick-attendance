@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer_list.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/pages/home/components/display_groups.dart';
-import 'package:quick_attendance/pages/home/components/group_header.dart';
-import 'package:quick_attendance/pages/home/components/group_list.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 import 'package:quick_attendance/pages/home/components/join_group_popup.dart';
 

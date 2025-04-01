@@ -41,6 +41,10 @@ dependencies:
   jwt_decode: ^0.3.1
   qr_flutter: ^4.1.0
   shimmer: ^3.0.0
+  camera: 0.10.0
+  google_mlkit_barcode_scanning: ^0.14.1
+  permission_handler: ^11.4.0
+  mobile_scanner: ^6.0.7
 
 dev_dependencies:
   flutter_test:

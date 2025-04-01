@@ -37,6 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(height: 24),
             PrimaryButton(text: "Logout", onPressed: authController.logout),
+            PrimaryButton(
+              text: "Camera",
+              onPressed: () => Get.toNamed("/capture-attendance"),
+            ),
           ],
         ),
       ),

@@ -1,26 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
 import 'package:quick_attendance/models/group_model.dart';
 
 class GroupHomeScreen extends StatelessWidget {
   final Rxn<GroupModel> group;
-  final Rx<bool> isLoading;
+  final RxBool isLoading;
+  final RxBool hasLoaded;
 
   const GroupHomeScreen({
     super.key,
     required this.group,
     required this.isLoading,
+    required this.hasLoaded,
   });
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Obx(() {
-        GroupModel? val = group.value;
-        if (val == null) {
-          return _GroupNotFoundScreen();
+        if (isLoading.value || (hasLoaded.value && group.value != null)) {
+          return _GroupDetailsScreen(
+            group: group,
+            isLoading: isLoading,
+            hasLoaded: hasLoaded,
+          );
         } else {
-          return _GroupDetailsScreen(group: val);
+          return _GroupNotFoundScreen();
         }
       }),
     );
@@ -40,7 +46,7 @@ class _GroupNotFoundScreen extends StatelessWidget {
         SizedBox(height: 16),
         ElevatedButton(
           onPressed: () {
-            Get.offNamed("/home");
+            Get.offNamed("/");
           },
           child: Text("Back to Home"),
         ),
@@ -50,9 +56,15 @@ class _GroupNotFoundScreen extends StatelessWidget {
 }
 
 class _GroupDetailsScreen extends StatelessWidget {
-  final GroupModel group;
+  final Rxn<GroupModel> group;
+  final RxBool isLoading;
+  final RxBool hasLoaded;
 
-  const _GroupDetailsScreen({required this.group});
+  const _GroupDetailsScreen({
+    required this.group,
+    required this.isLoading,
+    required this.hasLoaded,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -63,9 +75,14 @@ class _GroupDetailsScreen extends StatelessWidget {
         children: [
           Obx(
             // Group Name
-            () => Text(
-              group.name.value ?? "",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            () => SkeletonShimmer(
+              isLoading: isLoading.value,
+              widget: Obx(
+                () => Text(
+                  group.value?.name.value ?? "",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
           ),
           SizedBox(height: 8),
@@ -73,7 +90,7 @@ class _GroupDetailsScreen extends StatelessWidget {
           Obx(
             // Group Description
             () => Text(
-              group.description.value ?? "",
+              group.value?.description.value ?? "",
               style: TextStyle(fontSize: 16),
             ),
           ),

@@ -17,6 +17,8 @@ final class GroupModel extends BaseApiModel<GroupModel> {
     String? description = "",
     String? ownerUsername = "",
     String? ownerId = "",
+    String? currentAttendanceId = "",
+    int? eventCount = 0,
   }) {
     this.groupId.value = groupId;
     this.name.value = name;

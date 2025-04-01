@@ -4,6 +4,8 @@ import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/home_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
+import 'package:quick_attendance/middleware/auth_middleware.dart';
+import 'package:quick_attendance/pages/attendance_group/camera_page.dart';
 import 'package:quick_attendance/pages/attendance_group/group_page.dart';
 import 'package:quick_attendance/pages/auth/login.dart';
 import 'package:quick_attendance/pages/auth/signup.dart';
@@ -45,14 +47,26 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
+      initialRoute: "/",
       getPages: [
-        GetPage(name: "/home", page: () => HomePage()),
-        GetPage(name: "/signup", page: () => Signup()),
-        GetPage(name: "/login", page: () => Login()),
-        GetPage(name: "/group/:groupId", page: () => GroupPage()),
-        GetPage(name: "/group/:groupId/qr", page: () => GroupPage()),
+        GetPage(
+          name: "/",
+          page: () => HomePage(),
+          middlewares: [AuthMiddleware()],
+        ),
+        GetPage(name: "/signup/", page: () => Signup()),
+        GetPage(name: "/login/", page: () => Login()),
+        GetPage(
+          name: "/group/:groupId/",
+          page: () => GroupPage(),
+          middlewares: [AuthMiddleware()],
+        ),
+        GetPage(
+          name: "/capture-attendance",
+          page: () => CameraPage(),
+          middlewares: [],
+        ),
       ],
-      home: HomePage(),
     );
   }
 }

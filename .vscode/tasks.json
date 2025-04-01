@@ -1,0 +1,32 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Launch API",
+			"type": "shell",
+			"command": "deno run --watch --allow-net --unstable-kv --allow-read --allow-write main.ts",
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}/quick-attendance-api"
+			}
+		},
+		{
+			"label": "Launch Client",
+			"type": "shell",
+			"command": "flutter run",
+			"problemMatcher": [],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": true,
+				"close": false,
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/client"
+			}
+		}
+	]
+}

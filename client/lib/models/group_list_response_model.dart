@@ -21,17 +21,17 @@ class GroupListResponseModel extends BaseApiModel {
   factory GroupListResponseModel.fromJson(Map<String, dynamic> json) {
     return GroupListResponseModel(
       ownedGroups:
-          (json["owned_groups"] as List<dynamic>)
-              .map((x) => GroupModel.fromJson(x))
+          (json["owned_groups"] as List<dynamic>?)
+              ?.map((x) => GroupModel.fromJson(x))
               .toList(),
       managedGroups:
-          (json["managed_groups"] as List<dynamic>)
-              .map((x) => GroupModel.fromJson(x))
+          (json["managed_groups"] as List<dynamic>?)
+              ?.map((x) => GroupModel.fromJson(x))
               .toList(),
       memberGroups:
-          (json["memeber_groups"] as List<dynamic>)
-              .map((x) => GroupModel.fromJson(x))
-              .toList(), // TODO: Fix typo when Jacob fixes his
+          (json["member_groups"] as List<dynamic>?)
+              ?.map((x) => GroupModel.fromJson(x))
+              .toList(),
     );
   }
 

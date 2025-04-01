@@ -2,14 +2,14 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/models/base_api_model.dart';
 
 final class UserModel extends BaseApiModel<UserModel> {
-  final String? userId;
+  late final RxnString userId;
   late final RxString email;
   late final RxString username;
   late final RxString firstName;
   late final RxString lastName;
 
   UserModel({
-    this.userId,
+    String? userId,
     String? email = "",
     String? username = "",
     String? firstName = "",
@@ -19,11 +19,12 @@ final class UserModel extends BaseApiModel<UserModel> {
     this.username = (username ?? "").obs;
     this.firstName = (firstName ?? "").obs;
     this.lastName = (lastName ?? "").obs;
+    this.userId = RxnString(userId);
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      userId: json["accountId"],
+      userId: json["user_id"],
       email: json["email"],
       username: json["username"],
       firstName: json["first_name"],
@@ -34,7 +35,7 @@ final class UserModel extends BaseApiModel<UserModel> {
   @override
   Map<String, dynamic> toJson() {
     return {
-      "accountId": userId,
+      "user_id": userId.value,
       "email": email.value,
       "username": username.value,
       "first_name": firstName.value,
