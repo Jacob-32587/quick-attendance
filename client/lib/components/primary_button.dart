@@ -7,6 +7,7 @@ class PrimaryButton extends StatelessWidget {
   /* Provide basic text to render in the primary button */
   final String? text;
   final double fontSize;
+  final bool isLoading;
 
   const PrimaryButton({
     super.key,
@@ -14,6 +15,7 @@ class PrimaryButton extends StatelessWidget {
     this.child,
     this.onPressed,
     this.fontSize = 18,
+    this.isLoading = false,
   });
 
   @override
@@ -26,7 +28,24 @@ class PrimaryButton extends StatelessWidget {
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
-      child: (child == null) ? Text(text ?? "Default") : child,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          (child == null) ? Text(text ?? "Default") : child!,
+          if (isLoading) ...[
+            SizedBox(width: 10),
+            SizedBox(
+              height: 16,
+              width: 16,
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.onPrimary,
+                strokeWidth: 2,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
