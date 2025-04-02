@@ -1,5 +1,6 @@
 import { assert, assertFalse } from "@std/assert";
 import { sleep } from "./sleep.ts";
+import { io } from "socket.io-client";
 
 /**
  * @description This will spawn and instance of a self contained server with it's own database.
@@ -204,4 +205,31 @@ export const cleanup_test_step = async (
 
 export function assertNever(): never {
   throw 1;
+}
+
+/**
+ * @description Opens a websocket connection with the server and verifies
+ * that an connection is established. If no connection is made within the
+ * first 3 seconds this function will throw an assertion error.
+ * @returns Websocket connection
+ */
+export async function open_ws(domain_and_port: string) {
+  const socket = io(`ws://${domain_and_port}`);
+
+  // Check if connected for 3 seconds, if no connection was established
+  // then fail.
+  let socket_check_cnt = 0;
+  while (socket.connected === false) {
+    if (socket_check_cnt === 30) {
+      assert(false, "Unable to establish websocket connection");
+    }
+    await sleep(100);
+    socket_check_cnt++;
+  }
+
+  socket.on("connect", () => {
+    console.log(socket.id);
+  });
+
+  return socket;
 }

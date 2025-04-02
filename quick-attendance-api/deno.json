@@ -10,7 +10,9 @@
     "@std/fs": "jsr:@std/fs@^1.0.14",
     "@std/uuid": "jsr:@std/uuid@^1.0.4",
     "effect": "npm:effect@^3.13.4",
-    "zod": "npm:zod@^3.24.2"
+    "zod": "npm:zod@^3.24.2",
+    "socket.io": "https://deno.land/x/socket_io@0.2.1/mod.ts",
+    "socket.io-client": "npm:socket.io-client@^4.8.1"
   },
   "fmt": {
     "lineWidth": 100

@@ -1,6 +1,7 @@
 import { Context, Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { jwt } from "npm:hono/jwt";
+import { logger } from "npm:hono/logger";
 import HttpStatusCode from "./util/http_status_code.ts";
 import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
@@ -8,6 +9,8 @@ import { Uuid } from "./util/uuid.ts";
 import { group } from "./endpoints/group.ts";
 import { cli_flags } from "./util/cli_parse.ts";
 import { attendance } from "./endpoints/attendance.ts";
+import { Server } from "socket.io";
+
 const app = new Hono().basePath("/quick-attendance-api");
 
 export { app };
@@ -29,6 +32,7 @@ export interface AuthJwtPayload extends QuickAttendanceJwtPayload {
   aud: "quick-attendance-client";
 }
 
+app.use("*", logger());
 app.use(
   cors({
     origin: "*",
@@ -38,6 +42,7 @@ app.use(
   }),
 );
 
+// Add auth middleware
 app.use(
   "/auth/*",
   jwt({
@@ -50,6 +55,7 @@ export function get_jwt_payload(ctx: Context) {
   return ctx.get("jwtPayload") as QuickAttendanceJwtPayload;
 }
 
+// Adde global error handling middleware
 app.onError((err, ctx) => {
   // Allow explicit HTTPExceptions to propagate through, otherwise return a generic
   // internal server error
@@ -72,6 +78,18 @@ app.onError((err, ctx) => {
   );
 });
 
+const ws = new Server();
+
+ws.on("connection", (socket) => {
+  console.log(`socket ${socket.id} connected`);
+
+  // socket.emit("hello", "world");
+  //
+  // socket.on("disconnect", (reason) => {
+  //   console.log(`socket ${socket.id} disconnected due to ${reason}`);
+  // });
+});
+
 app.get("/", (ctx: Context) => {
   return ctx.json({ utc_time: (new Date()).toUTCString() }, HttpStatusCode.OK);
 });
@@ -79,6 +97,12 @@ app.route("", account);
 app.route("", group);
 app.route("", attendance);
 
+const handler = ws.handler(async (req) => {
+  return await app.fetch(req);
+});
+
+const port_num = parseInt(cli_flags["test-number"]) + 8080;
+
 export const server = Deno.serve({
-  port: parseInt(cli_flags["test-number"]) + 8080,
-}, app.fetch);
+  port: port_num,
+}, handler);
