@@ -1,6 +1,6 @@
 import { Context, Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
-import { jwt } from "npm:hono/jwt";
+import { jwt, verify } from "npm:hono/jwt";
 import { logger } from "npm:hono/logger";
 import HttpStatusCode from "./util/http_status_code.ts";
 import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
@@ -8,7 +8,7 @@ import { HTTPException } from "@hono/hono/http-exception";
 import { Uuid } from "./util/uuid.ts";
 import { group } from "./endpoints/group.ts";
 import { cli_flags } from "./util/cli_parse.ts";
-import { attendance } from "./endpoints/attendance.ts";
+import { attendance, watch_attendance_ws } from "./endpoints/attendance.ts";
 import { Server } from "socket.io";
 
 const app = new Hono().basePath("/quick-attendance-api");
@@ -78,16 +78,46 @@ app.onError((err, ctx) => {
   );
 });
 
-const ws = new Server();
+interface ServerToClientEvents {
+  noArg: () => void;
+  groupAttendance: (a: string, b: string) => void;
+  withAck: (d: string, callback: (e: number) => void) => void;
+}
+
+interface ClientToServerEvents {
+  hello: () => void;
+}
+
+interface InterServerEvents {
+  ping: () => void;
+}
+
+interface SocketData {
+  name: string;
+  age: number;
+}
+const ws = new Server<ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketData>();
 
 ws.on("connection", (socket) => {
   console.log(`socket ${socket.id} connected`);
+
+  socket.on("groupAttendance", watch_attendance_ws);
 
   // socket.emit("hello", "world");
   //
   // socket.on("disconnect", (reason) => {
   //   console.log(`socket ${socket.id} disconnected due to ${reason}`);
   // });
+});
+
+ws.use((socket, next) => {
+  let joinServerParameters = JSON.parse(socket.handshake.query.auth);
+  if (joinServerParameters.token == "xxx") {
+    next();
+  } else {
+    //next(new Error('Authentication error'));
+  }
+  return;
 });
 
 app.get("/", (ctx: Context) => {

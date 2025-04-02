@@ -6,6 +6,7 @@ import { attendance_post_req } from "../models/attendance/attendance_post_req.ts
 import { zValidator } from "npm:@hono/zod-validator";
 import { UserType } from "../models/user_type.ts";
 import { attendance_put_req } from "../models/attendance/attendance_put_req.ts";
+import { Uuid, val_uuid } from "../util/uuid.ts";
 
 const attendance_base_path = "/attendance";
 const auth_attendance_base_path = `/auth${attendance_base_path}`;
@@ -13,7 +14,9 @@ const auth_attendance_base_path = `/auth${attendance_base_path}`;
 const attendance = new Hono();
 
 //#region Query
-
+export async function watch_attendance_ws(user_id: string, group_id: string) {
+  val_uuid();
+}
 //#endregion
 
 //#region Mutation
