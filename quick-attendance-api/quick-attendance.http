@@ -69,6 +69,14 @@ Content-Type: application/json
     "password": "ZabBar123"
 }
 
+###
+# @name=Account2AcceptInvite
+PUT {{base}}/account/invite/ HTTP/1.1
+Content-Type: application/json
+
+{
+}
+
 # @lang=lua
 > {%
     local body = vim.json.decode(response.body)
@@ -92,9 +100,21 @@ Content-Type: application/json
     }
 }
 
+
+# @lang=lua
+> {%
+    local body = vim.json.decode(response.body)
+    client.global.set("group_id", body.group_id);
+%}
+
 ###
 # @name=ListGroups
 GET {{base}}/auth/group/list HTTP/1.1
+Authorization: Bearer {{auth_token}}
+
+###
+# @name=GetGroup
+GET {{base}}/auth/group?group_id={{group_id}} HTTP/1.1
 Authorization: Bearer {{auth_token}}
 
 ###
@@ -105,7 +125,8 @@ Content-Type: application/json
 
 {
     "usernames": ["FooBarZaa"],
-    "group_id": "0195795b-9a9a-74ac-82be-df55ca304a7f"
+    "group_id": "0195e83e-0de9-71ea-bafa-5074371cd669",
+    "is_manager_invite": false
 }
 
 ###
