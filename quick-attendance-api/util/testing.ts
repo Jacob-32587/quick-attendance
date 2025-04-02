@@ -213,8 +213,14 @@ export function assertNever(): never {
  * first 3 seconds this function will throw an assertion error.
  * @returns Websocket connection
  */
-export async function open_ws(domain_and_port: string) {
-  const socket = io(`ws://${domain_and_port}`);
+export async function open_ws(domain_and_port: string, jwt: string) {
+  const socket = io(`ws://${domain_and_port}`, {
+    auth(cb) {
+      cb({
+        token: jwt,
+      });
+    },
+  });
 
   // Check if connected for 3 seconds, if no connection was established
   // then fail.

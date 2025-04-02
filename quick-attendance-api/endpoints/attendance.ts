@@ -15,7 +15,6 @@ const attendance = new Hono();
 
 //#region Query
 export async function watch_attendance_ws(user_id: string, group_id: string) {
-  val_uuid();
 }
 //#endregion
 

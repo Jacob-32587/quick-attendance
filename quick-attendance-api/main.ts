@@ -5,11 +5,13 @@ import { logger } from "npm:hono/logger";
 import HttpStatusCode from "./util/http_status_code.ts";
 import { account, jwt_alg, jwt_secret } from "./endpoints/account.ts";
 import { HTTPException } from "@hono/hono/http-exception";
-import { Uuid } from "./util/uuid.ts";
+import { Uuid, val_uuid_zod } from "./util/uuid.ts";
 import { group } from "./endpoints/group.ts";
 import { cli_flags } from "./util/cli_parse.ts";
 import { attendance, watch_attendance_ws } from "./endpoints/attendance.ts";
 import { Server } from "socket.io";
+import type { Socket } from "socket.io";
+import { z } from "zod";
 
 const app = new Hono().basePath("/quick-attendance-api");
 
@@ -26,11 +28,17 @@ export interface QuickAttendanceJwtPayload {
   iat: number;
 }
 
-export interface AuthJwtPayload extends QuickAttendanceJwtPayload {
-  iss: "quick-attendance-api";
-  sub: "user-auth";
-  aud: "quick-attendance-client";
-}
+export const auth_jwt_payload = z.object({
+  iss: z.literal("quick-attendance-api"),
+  sub: z.literal("user-auth"),
+  aud: z.literal("quick-attendance-client"),
+  user_id: val_uuid_zod(),
+  exp: z.number(),
+  nbf: z.number(),
+  iat: z.number(),
+}).passthrough();
+
+export type AuthJwtPayload = z.infer<typeof auth_jwt_payload>;
 
 app.use("*", logger());
 app.use(
@@ -80,7 +88,7 @@ app.onError((err, ctx) => {
 
 interface ServerToClientEvents {
   noArg: () => void;
-  groupAttendance: (a: string, b: string) => void;
+  groupAttendance: (group_id: Uuid) => void;
   withAck: (d: string, callback: (e: number) => void) => void;
 }
 
@@ -93,31 +101,29 @@ interface InterServerEvents {
 }
 
 interface SocketData {
-  name: string;
-  age: number;
+  auth_data: AuthJwtPayload;
 }
 const ws = new Server<ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketData>();
 
-ws.on("connection", (socket) => {
-  console.log(`socket ${socket.id} connected`);
-
-  socket.on("groupAttendance", watch_attendance_ws);
-
-  // socket.emit("hello", "world");
-  //
-  // socket.on("disconnect", (reason) => {
-  //   console.log(`socket ${socket.id} disconnected due to ${reason}`);
-  // });
-});
-
-ws.use((socket, next) => {
-  let joinServerParameters = JSON.parse(socket.handshake.query.auth);
-  if (joinServerParameters.token == "xxx") {
-    next();
-  } else {
-    //next(new Error('Authentication error'));
+ws.on("connection", async (socket) => {
+  // JWT authorization for user
+  const auth_header = socket.handshake.auth.token;
+  if (auth_header === null || typeof auth_header !== "string" || auth_header === undefined) {
+    throw "JWT header invalid";
   }
-  return;
+  const not_validated_jwt = (await verify(auth_header, jwt_secret, jwt_alg)) as unknown;
+  const jwt = auth_jwt_payload.safeParse(not_validated_jwt);
+  if (jwt.error) {
+    throw "Given JWT is not allowed for authorization";
+  }
+
+  // If valid JWT attach to socket data
+  socket.data.auth_data = jwt.data;
+
+  socket.on("groupAttendance", (group_id) => {
+    if (socket.data.auth_data === undefined) throw "Bad";
+    watch_attendance_ws(socket.data.auth_data.user_id, group_id);
+  });
 });
 
 app.get("/", (ctx: Context) => {
