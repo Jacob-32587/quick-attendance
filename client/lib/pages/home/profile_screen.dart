@@ -13,22 +13,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final ProfileController _profileController = Get.find();
+  final ProfileController profileController = Get.find();
   final AuthController authController = Get.find();
-
-  Future<void> onInit() async {
-    _profileController.onInit();
-  }
   
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final user = ProfileController().user.value;
-
-      if (user == null) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
       return Scaffold(
         appBar: AppBar(
           title: const Text('My Profile'),
@@ -41,9 +31,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: EdgeInsets.all(16.0),
               child: ProfileHeader(
-                name: '${user.firstName} ${user.lastName}',
-                user: '${user.username}',
-                email: '${user.email}',
+                name: '${profileController.firstName} ${profileController.lastName}',
+                user: '${profileController.username}',
+                email: '${profileController.email}',
               ),
             ),
             PrimaryButton(text: "Logout", onPressed: authController.logout),

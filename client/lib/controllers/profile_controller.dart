@@ -40,6 +40,12 @@ class ProfileController extends GetxController {
   /// Get the user's last name or empty string
   String get lastName => user()?.lastName() ?? "";
 
+  // Get the user's username or empty string
+  String get username => user()?.username() ?? "";
+
+  // Get the user's email or empty string
+  String get email => user()?.email() ?? "";
+
   @override
   void onInit() {
     super.onInit();
