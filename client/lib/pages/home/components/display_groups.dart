@@ -71,7 +71,7 @@ class DisplayGroups extends StatelessWidget {
         }),
         Obx(
           () => SkeletonShimmerList(
-            isLoading: isLoading.value,
+            isLoading: isLoading,
             isListView: _profileController.prefersListView,
             widget: GroupList(
               groups: groups,
