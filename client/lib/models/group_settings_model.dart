@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/models/base_api_model.dart';
 
 class GroupSettingsModel extends BaseApiModel {
-  late final Rx<String?> promptMessage;
+  final promptMessage = RxnString();
 
   /// Defaults to 1, must be less than or equal to max
   late final RxInt minLength;
@@ -15,23 +15,23 @@ class GroupSettingsModel extends BaseApiModel {
   late final RxBool requireManagerId;
 
   GroupSettingsModel({
-    String? promptMessage = "",
-    int minLength = 1,
-    int maxLength = 64,
-    bool requireManagerId = false,
+    String? promptMessage,
+    int? minLength,
+    int? maxLength,
+    bool? requireManagerId,
   }) {
-    this.promptMessage = promptMessage.obs;
-    this.minLength = minLength.obs;
-    this.maxLength = maxLength.obs;
-    this.requireManagerId = requireManagerId.obs;
+    this.promptMessage.value = promptMessage;
+    this.minLength = (minLength ?? 1).obs;
+    this.maxLength = (maxLength ?? 64).obs;
+    this.requireManagerId = (requireManagerId ?? false).obs;
   }
 
-  factory GroupSettingsModel.fromJson(Map<String, dynamic> json) {
+  factory GroupSettingsModel.fromJson(Map<String, dynamic>? json) {
     return GroupSettingsModel(
-      promptMessage: json["prompt_message"],
-      minLength: json["min_length"],
-      maxLength: json["max_length"],
-      requireManagerId: json["required_for_managers"],
+      promptMessage: json?["prompt_message"],
+      minLength: json?["min_length"],
+      maxLength: json?["max_length"],
+      requireManagerId: json?["required_for_managers"],
     );
   }
 
