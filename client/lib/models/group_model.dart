@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:quick_attendance/models/base_api_model.dart';
+import 'package:quick_attendance/models/group_settings_model.dart';
 
 final class GroupModel extends BaseApiModel<GroupModel> {
   /// uuid
@@ -7,6 +8,7 @@ final class GroupModel extends BaseApiModel<GroupModel> {
   final name = RxnString();
   final description = RxnString();
   final ownerUsername = RxnString();
+  final settings = Rxn<GroupSettingsModel>();
 
   /// uuid
   final ownerId = RxnString();
@@ -19,12 +21,14 @@ final class GroupModel extends BaseApiModel<GroupModel> {
     String? ownerId = "",
     String? currentAttendanceId = "",
     int? eventCount = 0,
+    GroupSettingsModel? groupSettings,
   }) {
     this.groupId.value = groupId;
     this.name.value = name;
     this.description.value = description;
     this.ownerUsername.value = ownerUsername;
     this.ownerId.value = ownerId;
+    settings.value = groupSettings;
   }
 
   // Factory method to convert JSON to a Group object
@@ -35,6 +39,7 @@ final class GroupModel extends BaseApiModel<GroupModel> {
       description: json?["group_description"],
       ownerUsername: json?["owner_username"],
       ownerId: json?["ownerId"],
+      groupSettings: GroupSettingsModel.fromJson(json?["unique_id_settings"]),
     );
   }
 
@@ -46,6 +51,7 @@ final class GroupModel extends BaseApiModel<GroupModel> {
       "group_description": description.value,
       "owner_username": ownerUsername.value,
       "owner_id": ownerId.value,
+      "unique_id_settings": settings.value?.toJson(),
     };
   }
 }
