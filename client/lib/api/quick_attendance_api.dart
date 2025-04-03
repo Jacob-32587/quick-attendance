@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
+import 'package:quick_attendance/models/group_settings_model.dart';
 import 'package:quick_attendance/models/responses/login_response.dart';
 import 'package:quick_attendance/models/user_model.dart';
 
@@ -90,9 +91,12 @@ class QuickAttendanceApi {
   Future<ApiResponse<GroupModel>> createGroup({
     required String groupName,
     String? groupDescription,
+    GroupSettingsModel? settings,
   }) async {
     final Response response = await apiClient.post("/auth/group", {
       "group_name": groupName,
+      "group_description": groupDescription,
+      "unique_id_settings": settings?.toJson(),
     });
     final apiResponse = ApiResponse(
       statusCode: HttpStatusCode.from(response.statusCode),
