@@ -14,7 +14,9 @@ const auth_attendance_base_path = `/auth${attendance_base_path}`;
 const attendance = new Hono();
 
 //#region Query
-export async function watch_attendance_ws(user_id: string, group_id: string) {
+export function watch_attendance_ws(user_id: string, group_id: string) {
+  console.log("User id", user_id);
+  console.log("Group id", group_id);
 }
 //#endregion
 

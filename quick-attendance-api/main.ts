@@ -119,9 +119,11 @@ ws.on("connection", async (socket) => {
 
   // If valid JWT attach to socket data
   socket.data.auth_data = jwt.data;
-
   socket.on("groupAttendance", (group_id) => {
-    if (socket.data.auth_data === undefined) throw "Bad";
+    console.log("Group id", group_id);
+    if (socket.data.auth_data === undefined) {
+      throw "Bad";
+    }
     watch_attendance_ws(socket.data.auth_data.user_id, group_id);
   });
 });

@@ -5,6 +5,7 @@
   "imports": {
     "@babia/uuid-v7": "jsr:@babia/uuid-v7@^0.2.0",
     "@hono/hono": "jsr:@hono/hono@^4.7.2",
+    "@nur/client-socket-io": "jsr:@nur/client-socket-io@^0.1.0",
     "@std/assert": "jsr:@std/assert@1",
     "@std/cli": "jsr:@std/cli@^1.0.14",
     "@std/fs": "jsr:@std/fs@^1.0.14",

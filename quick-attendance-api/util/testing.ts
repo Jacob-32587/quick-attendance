@@ -1,6 +1,6 @@
 import { assert, assertFalse } from "@std/assert";
 import { sleep } from "./sleep.ts";
-import { io } from "socket.io-client";
+import { default as io } from "socket.io-client";
 
 /**
  * @description This will spawn and instance of a self contained server with it's own database.
@@ -222,6 +222,18 @@ export async function open_ws(domain_and_port: string, jwt: string) {
     },
   });
 
+  let connected = false;
+
+  socket.on("connect", () => {
+    console.log(socket.id);
+    connected = true;
+    console.log(`Client connect websocket: ${socket.id}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected websocket");
+  });
+
   // Check if connected for 3 seconds, if no connection was established
   // then fail.
   let socket_check_cnt = 0;
@@ -233,9 +245,9 @@ export async function open_ws(domain_and_port: string, jwt: string) {
     socket_check_cnt++;
   }
 
-  socket.on("connect", () => {
-    console.log(socket.id);
-  });
+  // Ensure websocket receives connect data
+  await sleep(200);
+  assert(connected);
 
   return socket;
 }
