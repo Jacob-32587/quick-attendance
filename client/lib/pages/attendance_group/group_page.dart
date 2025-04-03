@@ -10,17 +10,17 @@ import 'package:quick_attendance/pages/attendance_group/group_home_screen.dart';
 /// Handles the logic for retrieving group information
 class GroupController extends GetxController {
   late final QuickAttendanceApi _api = Get.find();
+  late final GroupController groupController;
   String? get groupId => group.value?.groupId.value;
   final RxBool isLoadingGroup = RxBool(false);
+  final RxBool isEditingGroup = RxBool(false);
   final RxBool hasLoadedGroup = RxBool(false);
 
   /// The active group being accessed
   final group = Rxn<GroupModel>();
 
   /// Fetch group information for the provided group id
-  /// in the URL and make it the active group
-  void _fetchActiveGroup() async {
-    String? groupId = Get.parameters["groupId"];
+  void fetchGroup(String? groupId) async {
     if (groupId == null) {
       return;
     }
@@ -33,20 +33,6 @@ class GroupController extends GetxController {
     }
     hasLoadedGroup.value = true;
     isLoadingGroup.value = false;
-  }
-
-  @override
-  void onInit() {
-    super.onInit();
-    // Attempt to fetch the active group immediately
-    _fetchActiveGroup();
-  }
-
-  @override
-  void onReady() {
-    super.onReady();
-    // Listen for changes to the group ID URL parameter
-    ever(Get.parameters.obs, (_) => _fetchActiveGroup());
   }
 }
 
@@ -74,13 +60,30 @@ class GroupPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String? groupId = Get.parameters["groupId"];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (groupId != _controller.groupId) {
+        _controller.fetchGroup(groupId);
+      }
+    });
     return Obx(
       () => Scaffold(
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
-          title: Obx(
-            () => SkeletonShimmer(
-              isLoading: _controller.isLoadingGroup.value,
-              widget: Obx(() => Text("${_controller.group.value?.name ?? ''}")),
+          backgroundColor: Colors.black26,
+          elevation: 0,
+          title: SkeletonShimmer(
+            isLoading: _controller.isLoadingGroup,
+            widget: Obx(
+              () => IconButton(
+                onPressed:
+                    () =>
+                        _controller.isEditingGroup.value =
+                            !_controller.isEditingGroup.value,
+                icon: Icon(
+                  _controller.isEditingGroup.value ? Icons.save : Icons.edit,
+                ),
+              ),
             ),
           ),
           leading: IconButton(
@@ -95,11 +98,7 @@ class GroupPage extends StatelessWidget {
           onPageChanged: onPageChanged,
           children: [
             GroupAttendeesScreen(isLoading: _controller.isLoadingGroup),
-            GroupHomeScreen(
-              group: _controller.group,
-              isLoading: _controller.isLoadingGroup,
-              hasLoaded: _controller.hasLoadedGroup,
-            ),
+            GroupHomeScreen(),
             GroupAttendanceSessionScreen(group: _controller.group),
           ],
         ),
