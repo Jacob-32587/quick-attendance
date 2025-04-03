@@ -31,7 +31,6 @@ void showJoinGroupPopup(BuildContext context) {
 class _JoinGroupModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return AlertDialog(
       title: Text("Enter Group Code"),
       content: _JoinGroupForm(),
