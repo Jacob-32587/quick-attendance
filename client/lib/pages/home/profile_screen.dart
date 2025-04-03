@@ -30,17 +30,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Container(
               padding: EdgeInsets.all(16.0),
+              alignment: Alignment.center,
               child: ProfileHeader(
                 name: '${profileController.firstName} ${profileController.lastName}',
                 user: '${profileController.username}',
                 email: '${profileController.email}',
               ),
             ),
-            PrimaryButton(text: "Logout", onPressed: authController.logout),
+          PrimaryButton(text: "Logout", onPressed: authController.logout),
           ]
-        )
+        ),
       );
     });
   }
 }
-// 
