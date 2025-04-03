@@ -3,6 +3,7 @@ import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/models/group_list_response_model.dart';
+import 'package:quick_attendance/models/group_settings_model.dart';
 import 'package:quick_attendance/models/user_model.dart';
 import 'package:quick_attendance/models/account_settings_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
@@ -90,16 +91,17 @@ class ProfileController extends GetxController {
     // TODO: Connect to backend
   }
 
-  void createGroup() async {
+  /// Attempts to create a group and then navigate to its page
+  Future<String?> createGroup({GroupSettingsModel? settings}) async {
     final response = await _api.createGroup(groupName: "Default");
     if (response.statusCode == HttpStatusCode.ok) {
       fetchGroups();
       final String? newGroupId = response.body?.groupId.value;
       if (newGroupId == null) {
         // Should we do something in response to a missing group id?
-        return;
+        return null;
       }
-      Get.toNamed("/group/$newGroupId");
+      return newGroupId;
     }
   }
 
