@@ -6,7 +6,6 @@ import { attendance_post_req } from "../models/attendance/attendance_post_req.ts
 import { zValidator } from "npm:@hono/zod-validator";
 import { UserType } from "../models/user_type.ts";
 import { attendance_put_req } from "../models/attendance/attendance_put_req.ts";
-import { Uuid, val_uuid } from "../util/uuid.ts";
 
 const attendance_base_path = "/attendance";
 const auth_attendance_base_path = `/auth${attendance_base_path}`;
@@ -14,10 +13,6 @@ const auth_attendance_base_path = `/auth${attendance_base_path}`;
 const attendance = new Hono();
 
 //#region Query
-export function watch_attendance_ws(user_id: string, group_id: string) {
-  console.log("User id", user_id);
-  console.log("Group id", group_id);
-}
 //#endregion
 
 //#region Mutation
@@ -27,8 +22,9 @@ attendance.post(auth_attendance_base_path, zValidator("json", attendance_post_re
   const group_entity = await group_dal.get_group_and_verify_user_type(
     req.group_id,
     user_id,
-    UserType.Owner,
+    [UserType.Owner, UserType.Manager],
   );
+
   await dal.create_attendance(req.group_id, group_entity);
 
   return ctx.text("");

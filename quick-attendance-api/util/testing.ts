@@ -1,6 +1,7 @@
 import { assert, assertFalse } from "@std/assert";
 import { sleep } from "./sleep.ts";
 import { default as io } from "socket.io-client";
+import { Uuid } from "./uuid.ts";
 
 /**
  * @description This will spawn and instance of a self contained server with it's own database.
@@ -213,8 +214,8 @@ export function assertNever(): never {
  * first 3 seconds this function will throw an assertion error.
  * @returns Websocket connection
  */
-export async function open_ws(domain_and_port: string, jwt: string) {
-  const socket = io(`ws://${domain_and_port}`, {
+export async function open_ws(domain_and_port: string, jwt: string, group_id: Uuid) {
+  const socket = io(`ws://${domain_and_port}?group_id=${group_id}`, {
     auth(cb) {
       cb({
         token: jwt,

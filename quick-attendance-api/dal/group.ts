@@ -385,6 +385,14 @@ export async function respond_to_group_invite(
   }
 }
 
+export async function update_group(kv_entity: Deno.KvEntry<GroupEntity>) {
+  DbErr.err_on_commit(
+    await update_group_tran(kv_entity, kv.atomic()).commit(),
+    "Unable to update group",
+    HttpStatusCode.CONFLICT,
+  );
+}
+
 export function update_group_tran(
   kv_entity: Deno.KvEntry<GroupEntity>,
   tran: Deno.AtomicOperation,
