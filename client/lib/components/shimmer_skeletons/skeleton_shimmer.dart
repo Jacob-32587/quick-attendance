@@ -10,10 +10,14 @@ class SkeletonShimmer extends StatelessWidget {
 
   /// The widget to render when not in loading state.
   final Widget widget;
+  final double skeletonHeight;
+  final double skeletonWidth;
   const SkeletonShimmer({
     super.key,
     required this.isLoading,
     required this.widget,
+    this.skeletonHeight = 100,
+    this.skeletonWidth = double.infinity,
   });
   @override
   Widget build(BuildContext context) {
@@ -28,6 +32,8 @@ class SkeletonShimmer extends StatelessWidget {
           period: Duration(seconds: 1),
           child: Container(
             padding: EdgeInsets.all(16.0),
+            height: skeletonHeight,
+            width: skeletonWidth,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
