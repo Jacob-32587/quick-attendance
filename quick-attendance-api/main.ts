@@ -8,12 +8,12 @@ import { HTTPException } from "@hono/hono/http-exception";
 import { Uuid, val_uuid, val_uuid_zod } from "./util/uuid.ts";
 import { group } from "./endpoints/group.ts";
 import { cli_flags } from "./util/cli_parse.ts";
-import { attendance, watch_attendance_ws } from "./endpoints/attendance.ts";
+import { attendance } from "./endpoints/attendance.ts";
 import { Server } from "socket.io";
-import type { Socket } from "socket.io";
 import { z } from "zod";
 import { get_group_and_verify_user_type } from "./dal/group.ts";
 import { UserType } from "./models/user_type.ts";
+import qrcode from "qrcode-terminal";
 
 const app = new Hono().basePath("/quick-attendance-api");
 
@@ -157,6 +157,10 @@ const handler = ws.handler(async (req) => {
 });
 
 const port_num = parseInt(cli_flags["test-number"]) + 8080;
+
+if (port_num === 8080) {
+  qrcode.generate(Deno.networkInterfaces().find((x) => x.address.startsWith("192.168."))?.address);
+}
 
 export const server = Deno.serve({
   port: port_num,
