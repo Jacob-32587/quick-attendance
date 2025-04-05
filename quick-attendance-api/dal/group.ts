@@ -6,10 +6,12 @@ import { GroupSparseGetModel } from "../models/group/group_sparse_get_model.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
 import { new_uuid, Uuid } from "../util/uuid.ts";
 import AccountEntity, { AccountOwnerGroupData } from "../entities/account_entity.ts";
-import { get_account, get_accounts, get_accounts_by_usernames } from "./account.ts";
+import * as account_dal from "./account.ts";
 import HttpStatusCode from "../util/http_status_code.ts";
 import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
 import { UserType } from "../models/user_type.ts";
+import { GroupUserEntity } from "../entities/group_user_entity.ts";
+import { GroupPendingUserEntity } from "../entities/group_pending_user_entity.ts";
 
 //#region Query
 
@@ -19,25 +21,25 @@ import { UserType } from "../models/user_type.ts";
  * @returns List of owned groups, managed groups, and member groups
  */
 export async function get_groups_for_account(user_id: Uuid) {
-  const account_entity = await get_account(user_id); //!! throw
+  const account_entity = await account_dal.get_account(user_id); //!! throw
 
   // Get groups associated with this account
   const owned_groups_promise = KvHelper.remove_kv_nones_async(
-    KvHelper.get_many_return_empty<GroupEntity[]>(
+    KvHelper.get_many_return_empty<GroupEntity>(
       kv,
-      KvHelper.map_to_kvs("group", account_entity.fk_owned_group_ids),
+      KvHelper.map_to_kvs("group", account_entity.value.fk_owned_group_ids),
     ),
   );
   const managed_groups_promise = KvHelper.remove_kv_nones_async(
-    KvHelper.get_many_return_empty<GroupEntity[]>(
+    KvHelper.get_many_return_empty<GroupEntity>(
       kv,
-      KvHelper.map_to_kvs("group", account_entity.fk_managed_group_ids),
+      KvHelper.map_to_kvs("group", account_entity.value.fk_managed_group_ids),
     ),
   );
   const member_groups_promise = KvHelper.remove_kv_nones_async(
-    KvHelper.get_many_return_empty<GroupEntity[]>(
+    KvHelper.get_many_return_empty<GroupEntity>(
       kv,
-      KvHelper.map_to_kvs("group", account_entity.fk_member_group_ids),
+      KvHelper.map_to_kvs("group", account_entity.value.fk_member_group_ids),
     ),
   );
 
@@ -59,7 +61,7 @@ export async function get_groups_for_account(user_id: Uuid) {
   }
 
   const unique_owner_ids = new Map(
-    (await get_accounts(
+    (await account_dal.get_accounts(
       unique_user_ids
         .entries()
         .map((x) => x[0])
@@ -102,6 +104,103 @@ export async function get_group(group_id: Uuid) {
   );
 }
 
+export function get_group_users(group_id: Uuid) {
+  return KvHelper.kv_iter_to_array(kv.list<GroupUserEntity>({ prefix: ["group_user", group_id] }, {
+    limit: 128,
+    batchSize: 128,
+  }));
+}
+
+export function get_group_user(group_id: Uuid, user_id: Uuid) {
+  return DbErr.err_on_empty_val_async(
+    kv.get<GroupUserEntity>(["group_user", group_id, user_id]),
+    () => "User does not exist in group",
+    HttpStatusCode.NOT_FOUND,
+  );
+}
+
+export function add_group_users_tran(
+  group_id: Uuid,
+  user_id: Uuid[],
+  user_type: UserType,
+  tran: Deno.AtomicOperation,
+) {
+  for (let i = 0; i < user_id.length; i++) {
+    tran.set(
+      ["group_user", group_id, user_id[i]],
+      { group_id: group_id, user_id: user_id[i], user_type: user_type } as GroupUserEntity,
+    );
+  }
+  return tran;
+}
+
+export function add_pending_group_users(
+  group_id: Uuid,
+  user_ids: Uuid[],
+) {
+  return DbErr.err_on_commit_async(
+    add_pending_group_users_tran(group_id, user_ids, kv.atomic()).commit(),
+    "Unable to add user(s) to group",
+    HttpStatusCode.CONFLICT,
+  ); // !!throw
+}
+
+export function add_pending_group_users_tran(
+  group_id: Uuid,
+  user_ids: Uuid[],
+  tran: Deno.AtomicOperation,
+) {
+  let key;
+  for (let i = 0; i < user_ids.length; i++) {
+    key = ["group_pending_user", group_id, user_ids[i]];
+    tran
+      .check({ key, versionstamp: null })
+      .set(key, { group_id: group_id, user_id: user_ids[i] } as GroupPendingUserEntity);
+  }
+  return tran;
+}
+
+export function get_group_pending_users(group_id: Uuid) {
+  return KvHelper.kv_iter_to_array(
+    kv.list<GroupPendingUserEntity>({ prefix: ["group_pending_user", group_id] }, {
+      limit: 128,
+      batchSize: 128,
+    }),
+  );
+}
+
+export function get_group_pending_user(group_id: Uuid, user_id: Uuid) {
+  return DbErr.err_on_empty_val_async(
+    kv.get<GroupPendingUserEntity>(["group_pending_user", group_id, user_id]),
+    () => "Pending user does not exist for this group",
+    HttpStatusCode.NOT_FOUND,
+  ); // !!throw
+}
+
+export function delete_group_pending_users(
+  group_id: Uuid,
+  user_ids: Uuid[],
+) {
+  return DbErr.err_on_commit_async(
+    delete_group_pending_users_tran(group_id, user_ids, kv.atomic()).commit(),
+    "Unable to delete user from group, not found",
+    HttpStatusCode.NOT_FOUND,
+  ); // !!throw
+}
+
+export function delete_group_pending_users_tran(
+  group_id: Uuid,
+  user_ids: Uuid[],
+  tran: Deno.AtomicOperation,
+) {
+  for (let i = 0; i < user_ids.length; i++) {
+    tran.delete(
+      ["group_pending_user", group_id, user_ids[i]],
+    );
+  }
+  return tran;
+}
+
 /**
  * @description Verify the type of a user and get the associated group for that user
  * @param group_id - The id of the group to retrieve
@@ -112,21 +211,30 @@ export async function get_group(group_id: Uuid) {
 export async function get_group_and_verify_user_type(
   group_id: Uuid,
   user_id: Uuid,
-  user_type_claim: UserType,
-): Promise<GroupEntity | never> {
-  const group = (await get_group(group_id)).value;
-  const matchesUserClaim = Match.value(user_type_claim).pipe(
-    Match.when(UserType.Owner, (_) => group.owner_id === user_id),
-    Match.when(
-      UserType.Manager,
-      (_) => group.manager_ids?.has(user_id) ?? false,
-    ),
-    Match.when(UserType.Member, (_) => group.member_ids?.has(user_id) ?? false),
-    Match.exhaustive,
-  );
-  if (matchesUserClaim) {
-    return group;
+  user_type_claim: UserType | UserType[],
+): Promise<[Deno.KvEntry<GroupEntity>, UserType] | never> {
+  const group = await get_group(group_id);
+  if (
+    (Array.isArray(user_type_claim) && user_type_claim.some((x) => x === UserType.Owner)) ||
+    user_type_claim === UserType.Owner
+  ) {
+    if (user_id === group.value.owner_id) {
+      return [group, UserType.Owner];
+    }
   }
+
+  const group_user = await get_group_user(group_id, user_id);
+
+  if (
+    Array.isArray(user_type_claim) === true
+  ) {
+    if (user_type_claim.some((x) => x === group_user.value.user_type)) {
+      return [group, group_user.value.user_type];
+    }
+  } else if (user_type_claim === group_user.value.user_type) {
+    return [group, group_user.value.user_type];
+  }
+
   DbErr.err("Invalid user type claim for group", HttpStatusCode.FORBIDDEN); //!!throw
 }
 
@@ -148,10 +256,10 @@ export function group_is_owned_by_account(
 /**
  * @param owner_id - Id of the user who will own the created group
  * @param req -
- * @returns The id of the created
+ * @returns The id of the created group
  * @throws @link{@ HTTPException}
  */
-export async function create_group(owner_id: Uuid, req: GroupPostReq) {
+export async function create_group_from_req(owner_id: Uuid, req: GroupPostReq) {
   const entity = {
     group_id: new_uuid(),
     owner_id: owner_id,
@@ -165,25 +273,31 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
     current_attendance_id: null,
   } as GroupEntity;
 
-  const account_entity = await get_account(owner_id);
+  const account_entity = await account_dal.get_account(owner_id);
 
-  account_entity.fk_owned_group_ids = add_to_maybe_map(
-    account_entity.fk_owned_group_ids,
+  account_entity.value.fk_owned_group_ids = add_to_maybe_map(
+    account_entity.value.fk_owned_group_ids,
     [[entity.group_id, {} as AccountOwnerGroupData]],
     HttpStatusCode.INTERNAL_SERVER_ERROR,
     () => "bad generated id",
   );
 
+  // Update accont and create group
+  const tran = account_dal.update_account_tran(account_entity, kv.atomic());
   await DbErr.err_on_commit_async(
-    kv
-      .atomic()
-      .set(["group", entity.group_id], entity)
-      .set(["account", owner_id], account_entity)
-      .commit(),
+    create_group_tran(entity, tran).commit(),
     "Unable to perform mutation",
   ); //!! throw
 
   return entity;
+}
+
+export function create_group_tran(entity: GroupEntity, tran: Deno.AtomicOperation) {
+  const key = ["group", entity.group_id];
+  tran
+    .check({ key: key, versionstamp: null })
+    .set(key, entity);
+  return tran;
 }
 
 /**
@@ -197,28 +311,18 @@ export async function create_group(owner_id: Uuid, req: GroupPostReq) {
  * @returns Owner entity and account entities that are being invited
  */
 export async function accounts_for_group_invite(
-  tran: Deno.AtomicOperation,
   owner_id: Uuid,
   group_id: Uuid,
   invitees_usernames: string[],
+  tran: Deno.AtomicOperation,
 ) {
   // Ensure the specified users owns this account
-  const owner_entity = await get_account(owner_id);
-  group_is_owned_by_account(owner_entity, group_id);
+  const owner_entity = await account_dal.get_account(owner_id);
+  group_is_owned_by_account(owner_entity.value, group_id);
 
-  const [account_entities, group_entity] = await Promise.all(
-    [get_accounts_by_usernames(invitees_usernames), get_group(group_id)],
-  );
+  const account_entities = await account_dal.get_accounts_by_usernames(invitees_usernames);
 
-  group_entity.value.pending_member_ids = add_to_maybe_set(
-    group_entity.value.pending_member_ids,
-    account_entities.map((x) => x.value.user_id),
-    HttpStatusCode.CONFLICT,
-    (k) =>
-      `Attempted to invite user '${account_entities.find((x) => x.value.user_id === k) ?? "N/A"}'`,
-  );
-
-  tran.set(["group", group_id], group_entity.value);
+  add_pending_group_users_tran(group_id, account_entities.map((x) => x.value.user_id), tran);
 
   return { owner_entity, account_entities };
 }
@@ -235,12 +339,12 @@ export async function accounts_for_group_invite(
  * @param unique_id - The unique id of the user, if one is needed
  */
 export async function respond_to_group_invite(
-  tran: Deno.AtomicOperation,
   user_id: Uuid,
   group_id: Uuid,
   accept: boolean,
   is_manager_invite: boolean,
   unique_id: string | null = null,
+  tran: Deno.AtomicOperation,
 ) {
   const group_entity = (await get_group(group_id)).value;
 
@@ -267,33 +371,37 @@ export async function respond_to_group_invite(
       DbErr.err(
         `This group requires a unique id ${bad_unique_id_setting_message}`,
         HttpStatusCode.BAD_REQUEST,
-      );
+      ); //!!throw
     }
   }
 
-  if (!group_entity.pending_member_ids?.delete(user_id)) {
-    DbErr.err("Invite not found", HttpStatusCode.CONFLICT);
-  }
+  await delete_group_pending_users(group_id, [user_id]);
 
-  // Add the user to the group if they are acepting the invite
+  // Add the user to the group if they are accepting the invite
   if (accept && is_manager_invite) {
-    group_entity.manager_ids = add_to_maybe_set(
-      group_entity.manager_ids,
-      [user_id],
-      HttpStatusCode.CONFLICT,
-      () => "User is already a manager",
-    );
+    add_group_users_tran(group_id, [user_id], UserType.Manager, tran);
   } else if (accept) {
-    group_entity.member_ids = add_to_maybe_set(
-      group_entity.member_ids,
-      [user_id],
-      HttpStatusCode.CONFLICT,
-      () => "User is already a member",
-    );
+    add_group_users_tran(group_id, [user_id], UserType.Member, tran);
   }
-
-  tran
-    .delete(["group", group_id])
-    .set(["group", group_id], group_entity);
 }
+
+export async function update_group(kv_entity: Deno.KvEntry<GroupEntity>) {
+  DbErr.err_on_commit(
+    await update_group_tran(kv_entity, kv.atomic()).commit(),
+    "Unable to update group",
+    HttpStatusCode.CONFLICT,
+  );
+}
+
+export function update_group_tran(
+  kv_entity: Deno.KvEntry<GroupEntity>,
+  tran: Deno.AtomicOperation,
+) {
+  const key = ["group", kv_entity.value.group_id];
+  tran
+    .check({ key: key, versionstamp: kv_entity.versionstamp })
+    .set(key, kv_entity.value);
+  return tran;
+}
+
 //#endregion

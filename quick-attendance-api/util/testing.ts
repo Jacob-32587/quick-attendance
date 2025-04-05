@@ -1,5 +1,7 @@
 import { assert, assertFalse } from "@std/assert";
 import { sleep } from "./sleep.ts";
+import { default as io } from "socket.io-client";
+import { Uuid } from "./uuid.ts";
 
 /**
  * @description This will spawn and instance of a self contained server with it's own database.
@@ -9,8 +11,14 @@ import { sleep } from "./sleep.ts";
  * @returns Handle to the child process (self contained server instance)
  */
 async function init_test(test_num: number, base_url: string) {
+  // We just want to remove the directory if it exists. We don't care about errors here
+  try {
+    await Deno.remove(`./test-${test_num}`, { recursive: true });
+  } catch {
+    //
+  }
   // Create directory for deno-kv SQL lite files and spawn a server instance
-  Deno.mkdir(`./test-${test_num}`);
+  await Deno.mkdir(`./test-${test_num}`);
   const cmd = new Deno.Command(Deno.execPath(), {
     args: [
       "run",
@@ -198,4 +206,49 @@ export const cleanup_test_step = async (
 
 export function assertNever(): never {
   throw 1;
+}
+
+/**
+ * @description Opens a websocket connection with the server and verifies
+ * that an connection is established. If no connection is made within the
+ * first 3 seconds this function will throw an assertion error.
+ * @returns Websocket connection
+ */
+export async function open_ws(domain_and_port: string, jwt: string, group_id: Uuid) {
+  const socket = io(`ws://${domain_and_port}?group_id=${group_id}`, {
+    auth(cb) {
+      cb({
+        token: jwt,
+      });
+    },
+  });
+
+  let connected = false;
+
+  socket.on("connect", () => {
+    console.log(socket.id);
+    connected = true;
+    console.log(`Client connect websocket: ${socket.id}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected websocket");
+  });
+
+  // Check if connected for 3 seconds, if no connection was established
+  // then fail.
+  let socket_check_cnt = 0;
+  while (socket.connected === false) {
+    if (socket_check_cnt === 30) {
+      assert(false, "Unable to establish websocket connection");
+    }
+    await sleep(100);
+    socket_check_cnt++;
+  }
+
+  // Ensure websocket receives connect data
+  await sleep(200);
+  assert(connected);
+
+  return socket;
 }

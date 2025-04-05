@@ -77,10 +77,10 @@ export class DbErr {
   ): Deno.KvEntry<T> {
     return Match.value(maybe_kv).pipe(
       Match.when(
-        (v) => v.versionstamp == null,
+        (v) => v.versionstamp === null,
         () => DbErr.err(reason(maybe_kv.key), status_code),
       ),
-      Match.orElse((v) => v as Deno.KvEntry<T>),
+      Match.orElse((v) => v),
     );
   }
 
@@ -152,6 +152,11 @@ export class DbErr {
 }
 
 export class KvHelper {
+  public static async kv_iter_to_array<T>(list_iter: Deno.KvListIterator<T>) {
+    const entities = [];
+    for await (const res of list_iter) entities.push(res);
+    return entities;
+  }
   /**
    * @template T - The type of the value in the potential key value pair
    * @param maybe_vals - List of potential key value pairs
@@ -179,19 +184,31 @@ export class KvHelper {
   /**
    * @description This is a thin wrapper around the {@link Deno.Kv.getMany()} function, with the exception
    * that the list of keys can be null or undefined. If the list is null or undefined an empty array will be returned.
-   * @template T extends readonly unknown[] - The type of the value in the potential key value pair
+   * This wrapper also allows for more than 10 keys to be retrieved at once.
    * @param kv - Deno key value pair api instance
    * @param keys - List of keys that could be null or undefined
    * @returns List of {@link Deno.KvEntryMaybe} associated with the given keys
    */
-  public static async get_many_return_empty<T extends readonly unknown[]>(
+  public static async get_many_return_empty<T>(
     kv: Deno.Kv,
-    keys?: readonly [...{ [K in keyof T]: Deno.KvKey }] | null,
-  ): Promise<{ [K in keyof T]: Deno.KvEntryMaybe<T[K]> }> {
+    keys?: readonly Deno.KvKey[] | null,
+  ) {
     if (keys === null || keys === undefined) {
-      return [] as { [K in keyof T]: Deno.KvEntryMaybe<T[K]> };
+      return [];
     }
-    return await kv.getMany<T>(keys);
+    // Deno only allows 10 keys to be reterived at once, we must
+    // send multiple get many requests to prevent any errors
+    const get_many_promises = [];
+    for (let i = 0; i < keys.length / 10; i++) {
+      const sub_keys = [];
+      for (let j = 0, cur_idx = -1; j < 10 && cur_idx != keys.length - 1; j++) {
+        cur_idx = i * 10 + j;
+        sub_keys.push(keys[i * 10 + j]);
+      }
+      get_many_promises.push(kv.getMany(sub_keys));
+    }
+    const values = await Promise.all(get_many_promises);
+    return values.flat(1) as Deno.KvEntryMaybe<T>[];
   }
 
   /**
