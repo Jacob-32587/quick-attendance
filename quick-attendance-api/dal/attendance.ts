@@ -40,6 +40,19 @@ export function get_attendance_entities_for_week(
     ],
   }, { limit: 32, batchSize: 8 });
 }
+
+export function get_attendance_present_users(
+  group_id: Uuid,
+  attendance_id: Uuid,
+) {
+  return KvHelper.kv_iter_to_array(kv.list<AttendancePresentUserEntity>({
+    prefix: [
+      "attendance_present_user",
+      group_id,
+      attendance_id,
+    ],
+  }, { limit: 128, batchSize: 128 }));
+}
 //#endregion
 
 //#region Mutation
@@ -129,7 +142,7 @@ export function create_present_users_tran(
   tran: Deno.AtomicOperation,
 ) {
   for (let i = 0; i < entities.length; i++) {
-    create_present_member_tran(
+    create_present_user_tran(
       {
         group_id: entities[i].group_id,
         attendance_id: entities[i].attendance_id,
@@ -141,7 +154,7 @@ export function create_present_users_tran(
   return tran;
 }
 
-export function create_present_member_tran(
+export function create_present_user_tran(
   entity: AttendancePresentUserEntity,
   tran: Deno.AtomicOperation,
 ) {

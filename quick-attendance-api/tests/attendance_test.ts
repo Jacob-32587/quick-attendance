@@ -8,8 +8,10 @@ import {
   create_users_and_group,
   DOMAIN_AND_PORT,
   get_users_groups_and_accounts,
+  GROUP_AUTH_URL,
   URL,
 } from "./main_test.ts";
+import { GroupPutRequest } from "../models/group/group_unique_id_settings_get_req.ts";
 
 Deno.test(
   "Creates a group and takes attendance",
@@ -36,6 +38,8 @@ Deno.test(
 
       let maeve_attendance_taken = false;
       let henrik_attendance_taken = false;
+      let maeve_disconnect = false;
+      let henrik_disconnect = false;
 
       //#region Maeve and Henrik open a websocket and listen for attendance recording
       const maeve_ws = await open_ws(
@@ -45,6 +49,8 @@ Deno.test(
       );
       maeve_ws.on("attendanceTaken", () => {
         maeve_attendance_taken = true;
+      }).on("disconnect", () => {
+        maeve_disconnect = true;
       });
 
       const henrik_ws = await open_ws(
@@ -54,7 +60,10 @@ Deno.test(
       );
       henrik_ws.on("attendanceTaken", () => {
         henrik_attendance_taken = true;
+      }).on("disconnect", () => {
+        henrik_disconnect = true;
       });
+
       //#endregion
 
       //#region Rocco takes attendance for maeve and Indie takes attendance for henrik
@@ -83,6 +92,24 @@ Deno.test(
       await sleep(100);
       assert(maeve_attendance_taken);
       assert(henrik_attendance_taken);
+
+      //#region Indie stops attendance taking for the group and ensure
+      // users are disconnected
+      await test_fetch_json(
+        GROUP_AUTH_URL(test_num),
+        "PUT",
+        indie.group.jwt,
+        {
+          group_id: indie.group.group_id,
+          group_name: indie.group.group_name,
+          group_description: indie.group.group_description,
+          current_attendance_id: null,
+        } as GroupPutRequest,
+      );
+      await sleep(100);
+      assert(maeve_disconnect);
+      assert(henrik_disconnect);
+      //#endregion
     });
 
     await cleanup_test_step(test_num, t, sp);

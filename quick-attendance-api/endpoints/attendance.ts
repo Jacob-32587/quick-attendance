@@ -19,7 +19,7 @@ const attendance = new Hono();
 attendance.post(auth_attendance_base_path, zValidator("json", attendance_post_req), async (ctx) => {
   const user_id = get_jwt_payload(ctx).user_id;
   const req = ctx.req.valid("json");
-  const group_entity = await group_dal.get_group_and_verify_user_type(
+  const [group_entity, _] = await group_dal.get_group_and_verify_user_type(
     req.group_id,
     user_id,
     [UserType.Owner, UserType.Manager],
@@ -34,12 +34,11 @@ attendance.put(auth_attendance_base_path, zValidator("json", attendance_put_req)
   const user_id = get_jwt_payload(ctx).user_id;
   const req = ctx.req.valid("json");
   // Verify the user is privileged
-  const verify_user_promise = group_dal.get_group_and_verify_user_type(
+  await group_dal.get_group_and_verify_user_type(
     req.group_id,
     user_id,
     [UserType.Owner, UserType.Manager],
   );
-  await verify_user_promise;
 
   // Attempt to save the current attendance record
   await dal.add_users_to_attendance(req.group_id, req.user_ids);
