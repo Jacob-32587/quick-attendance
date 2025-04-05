@@ -69,35 +69,11 @@ class GroupPage extends StatelessWidget {
     return Obx(
       () => Scaffold(
         extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: Colors.black26,
-          elevation: 0,
-          title: SkeletonShimmer(
-            isLoading: _controller.isLoadingGroup,
-            widget: Obx(
-              () => IconButton(
-                onPressed:
-                    () =>
-                        _controller.isEditingGroup.value =
-                            !_controller.isEditingGroup.value,
-                icon: Icon(
-                  _controller.isEditingGroup.value ? Icons.save : Icons.edit,
-                ),
-              ),
-            ),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Get.back();
-            },
-          ),
-        ),
         body: PageView(
           controller: _pageController,
           onPageChanged: onPageChanged,
           children: [
-            GroupAttendeesScreen(isLoading: _controller.isLoadingGroup),
+            GroupAttendeesScreen(),
             GroupHomeScreen(),
             GroupAttendanceSessionScreen(group: _controller.group),
           ],
