@@ -212,14 +212,14 @@ export async function get_group_and_verify_user_type(
   group_id: Uuid,
   user_id: Uuid,
   user_type_claim: UserType | UserType[],
-): Promise<Deno.KvEntry<GroupEntity> | never> {
+): Promise<[Deno.KvEntry<GroupEntity>, UserType] | never> {
   const group = await get_group(group_id);
   if (
     (Array.isArray(user_type_claim) && user_type_claim.some((x) => x === UserType.Owner)) ||
     user_type_claim === UserType.Owner
   ) {
     if (user_id === group.value.owner_id) {
-      return group;
+      return [group, UserType.Owner];
     }
   }
 
@@ -229,10 +229,10 @@ export async function get_group_and_verify_user_type(
     Array.isArray(user_type_claim) === true
   ) {
     if (user_type_claim.some((x) => x === group_user.value.user_type)) {
-      return group;
+      return [group, group_user.value.user_type];
     }
   } else if (user_type_claim === group_user.value.user_type) {
-    return group;
+    return [group, group_user.value.user_type];
   }
 
   DbErr.err("Invalid user type claim for group", HttpStatusCode.FORBIDDEN); //!!throw
@@ -383,6 +383,14 @@ export async function respond_to_group_invite(
   } else if (accept) {
     add_group_users_tran(group_id, [user_id], UserType.Member, tran);
   }
+}
+
+export async function update_group(kv_entity: Deno.KvEntry<GroupEntity>) {
+  DbErr.err_on_commit(
+    await update_group_tran(kv_entity, kv.atomic()).commit(),
+    "Unable to update group",
+    HttpStatusCode.CONFLICT,
+  );
 }
 
 export function update_group_tran(
