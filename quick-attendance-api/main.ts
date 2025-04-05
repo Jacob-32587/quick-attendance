@@ -43,7 +43,7 @@ export const auth_jwt_payload = z.object({
 export type AuthJwtPayload = z.infer<typeof auth_jwt_payload>;
 
 // Uncomment the bellow line to see all requests
-// app.use("*", logger());
+app.use("*", logger());
 app.use(
   cors({
     origin: "*",
@@ -164,4 +164,5 @@ if (port_num === 8080) {
 
 export const server = Deno.serve({
   port: port_num,
+  hostname: "0.0.0.0",
 }, handler);

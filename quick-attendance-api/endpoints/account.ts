@@ -123,6 +123,8 @@ account.put(
 
     const invite_jwt = maybe_invite_jwt.data;
 
+    console.log(req.unique_id);
+
     const tran = kv.atomic();
     // Accept or deny the group invitation, update the account information appropriately
     const account_mut_promise = dal.respond_to_group_invite(

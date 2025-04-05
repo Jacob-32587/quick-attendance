@@ -12,6 +12,9 @@ import {
   URL,
 } from "./main_test.ts";
 import { GroupPutRequest } from "../models/group/group_unique_id_settings_get_req.ts";
+import { GroupGetReq } from "../models/group/group_get_req.ts";
+import { AttendanceGetReq } from "../models/attendance/attedance_get_req.ts";
+import { AttendanceGetRes } from "../models/attendance/attendance_get_res.ts";
 
 Deno.test(
   "Creates a group and takes attendance",
@@ -109,6 +112,22 @@ Deno.test(
       await sleep(100);
       assert(maeve_disconnect);
       assert(henrik_disconnect);
+      //#endregion
+
+      //#region Indie checks the attendance for the week
+      await test_fetch_json(
+        `${ATTENDANCE_AUTH_URL(test_num)}/group?group_id=${indie.group.group_id}`,
+        "GET",
+        indie.group.jwt,
+        null,
+        async (body) => {
+          const json = (await body.json()) as AttendanceGetRes;
+          console.log(json);
+          return json.attendance.length === 1 &&
+            json.attendance[0].users.some((x) => x.user_id === henrik.account.user_id) &&
+            json.attendance[0].users.some((x) => x.user_id === maeve.account.user_id);
+        },
+      );
       //#endregion
     });
 
