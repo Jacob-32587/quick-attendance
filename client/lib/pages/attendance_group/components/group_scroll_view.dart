@@ -24,6 +24,12 @@ class GroupPageContainer extends StatelessWidget {
           centerTitle: true,
           automaticallyImplyLeading: true,
           elevation: 4, // initial elevation
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Get.toNamed("/");
+            },
+          ),
           actions: [
             Obx(
               () => IconButton(
