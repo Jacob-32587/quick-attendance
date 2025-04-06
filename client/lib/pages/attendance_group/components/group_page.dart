@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/pages/attendance_group/attendance_session_screen.dart';
@@ -33,6 +34,20 @@ class GroupController extends GetxController {
     }
     hasLoadedGroup.value = true;
     isLoadingGroup.value = false;
+  }
+
+  Future<ApiResponse<Null>?> inviteUserToGroup(
+    String username,
+    bool inviteAsManager,
+  ) async {
+    if (groupId == null) {
+      return null;
+    }
+    return await _api.inviteUserToGroup(
+      username: username,
+      groupId: groupId!,
+      inviteAsManager: inviteAsManager,
+    );
   }
 }
 
