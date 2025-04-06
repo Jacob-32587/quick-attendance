@@ -104,4 +104,21 @@ class QuickAttendanceApi {
     );
     return apiResponse;
   }
+
+  Future<ApiResponse<Null>> inviteUserToGroup({
+    required String username,
+    required String groupId,
+    required bool inviteAsManager,
+  }) async {
+    final Response response = await apiClient.put("/auth/group/invite", {
+      "usernames": [username],
+      "group_id": groupId,
+      "is_manager_invite": inviteAsManager,
+    });
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
 }
