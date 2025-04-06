@@ -159,5 +159,6 @@ const handler = ws.handler(async (req) => {
 const port_num = parseInt(cli_flags["test-number"]) + 8080;
 
 export const server = Deno.serve({
+  hostname: "0.0.0.0",
   port: port_num,
 }, handler);

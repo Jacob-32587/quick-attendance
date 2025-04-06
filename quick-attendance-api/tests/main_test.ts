@@ -11,7 +11,7 @@ import { AccountInviteActionPutReq } from "../models/account/account_invite_acce
 import { GroupGetRes } from "../models/group/group_get_res.ts";
 import { Uuid } from "../util/uuid.ts";
 
-export const DOMAIN_AND_PORT = (n: number) => `0.0.0.0:${8080 + n}`;
+export const DOMAIN_AND_PORT = (n: number) => `127.0.0.1:${8080 + n}`;
 export const URL = (n: number) => `http://${DOMAIN_AND_PORT(n)}/quick-attendance-api`;
 export const ACCOUNT_URL = (n: number) => `${URL(n)}/account`;
 export const ACCOUNT_AUTH_URL = (n: number) => `${URL(n)}/auth/account`;
