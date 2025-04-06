@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/components/binary_choice.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
-import 'package:quick_attendance/pages/attendance_group/group_page.dart';
+import 'package:quick_attendance/pages/attendance_group/components/group_page.dart';
 
 class GroupPageContainer extends StatelessWidget {
   late final GroupController _controller = Get.find();
@@ -24,7 +23,7 @@ class GroupPageContainer extends StatelessWidget {
           stretch: true,
           centerTitle: true,
           automaticallyImplyLeading: true,
-          elevation: 0, // initial elevation
+          elevation: 4, // initial elevation
           actions: [
             Obx(
               () => IconButton(

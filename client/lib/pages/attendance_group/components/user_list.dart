@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/components/generic_list_widget.dart';
 import 'package:quick_attendance/models/public_user_model.dart';
+import 'package:quick_attendance/pages/attendance_group/components/user_card.dart';
 
 class UserList extends StatelessWidget {
   final List<PublicUserModel>? users;
@@ -43,7 +44,7 @@ class UserList extends StatelessWidget {
           isListView: isListView,
           itemCount: userCount,
           buildListItem: (context, idx, isListView) {
-            return _UserCard(user: filteredUsers[idx], isListView: isListView);
+            return UserCard(user: filteredUsers[idx], isListView: isListView);
           },
         ),
         Obx(() {
@@ -64,63 +65,6 @@ class UserList extends StatelessWidget {
           }
         }),
       ],
-    );
-  }
-}
-
-class _UserCard extends StatelessWidget {
-  final bool isListView;
-  final PublicUserModel user;
-  const _UserCard({required this.user, required this.isListView});
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // I don't think this needs to be reactive because users
-            // don't change their name dynamically.
-            Text(
-              "${user.firstName.value} ${user.lastName.value ?? ""}",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              user.username.value,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600]!.withAlpha(200),
-              ),
-            ),
-          ],
-        ),
-        leading:
-            isListView
-                ? CircleAvatar(
-                  radius: 28,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerLow,
-                  child: Icon(
-                    Icons.person,
-                    size: 30,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                )
-                : null,
-        subtitle: Padding(
-          padding: EdgeInsets.only(top: 4),
-          child:
-              user.uniqueId.value != null
-                  ? Text(
-                    "ID: ${user.uniqueId.value}",
-                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                  )
-                  : null,
-        ),
-        trailing: Row(mainAxisSize: MainAxisSize.min, children: []),
-      ),
     );
   }
 }
