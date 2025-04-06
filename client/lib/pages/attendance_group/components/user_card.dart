@@ -58,19 +58,15 @@ class UserCard extends StatelessWidget {
             ),
           ],
         ),
-        leading:
-            isListView
-                ? CircleAvatar(
-                  radius: 28,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerLow,
-                  child: Icon(
-                    Icons.person,
-                    size: 30,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                )
-                : null,
+        leading: CircleAvatar(
+          radius: 28,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+          child: Icon(
+            Icons.person,
+            size: 30,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
         subtitle: Padding(
           padding: EdgeInsets.only(top: 4),
           child:
