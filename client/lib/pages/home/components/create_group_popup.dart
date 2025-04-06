@@ -35,7 +35,7 @@ class _CreateGroupModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text("Create Group"),
-      content: Container(
+      content: SizedBox(
         width: MediaQuery.of(context).size.width * 0.75,
         child: _CreateGroupForm(),
       ),
