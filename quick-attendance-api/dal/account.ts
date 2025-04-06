@@ -102,7 +102,7 @@ export async function get_public_account_models(
       if (maybe_unique_id_setting === undefined) {
         maybe_unique_id_setting = entity?.fk_managed_group_ids?.get(group_id);
       }
-      return maybe_unique_id_setting ?? null;
+      return maybe_unique_id_setting?.unique_id ?? null;
     }
     return null;
   };
