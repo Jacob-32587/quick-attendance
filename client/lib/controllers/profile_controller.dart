@@ -13,6 +13,7 @@ class ProfileController extends GetxController {
   late final AuthController authController = Get.find();
   var jwt = Rxn<String>();
   var user = Rxn<UserModel>();
+  Future<void>? futureUser;
   final userSettings = Rx<AccountSettingsModel>(AccountSettingsModel());
   final _groupListResponse = Rxn<GroupListResponseModel>();
 
@@ -48,7 +49,7 @@ class ProfileController extends GetxController {
     // Create a listener to the auth controller's logged in status
     ever(authController.isLoggedIn, (loggedIn) {
       if (loggedIn) {
-        _fetchProfileData();
+        futureUser = _fetchProfileData();
         fetchGroups();
       } else {
         _clearProfileData();
@@ -56,7 +57,7 @@ class ProfileController extends GetxController {
     });
   }
 
-  void _fetchProfileData() async {
+  Future<void> _fetchProfileData() async {
     final response = await _api.getUser();
     if (response.statusCode == HttpStatusCode.ok) {
       user.value = response.body;

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/components/binary_choice.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
+import 'package:quick_attendance/pages/attendance_group/components/group_page.dart';
 import 'package:quick_attendance/pages/attendance_group/components/group_scroll_view.dart';
-import 'package:quick_attendance/pages/attendance_group/group_page.dart';
 
 class GroupHomeScreen extends StatelessWidget {
   late final GroupController _controller = Get.find();
@@ -45,21 +45,23 @@ class _GroupScreen extends StatelessWidget {
 class _GroupNotFoundScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          "Group does not exist",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: () {
-            Get.offNamed("/");
-          },
-          child: Text("Back to Home"),
-        ),
-      ],
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "Group does not exist",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              Get.offNamed("/");
+            },
+            child: Text("Back to Home"),
+          ),
+        ],
+      ),
     );
   }
 }

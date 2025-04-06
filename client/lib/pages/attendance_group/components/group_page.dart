@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
-import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
 import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/pages/attendance_group/attendance_session_screen.dart';
 import 'package:quick_attendance/pages/attendance_group/attendees_screen.dart';
@@ -12,7 +11,7 @@ class GroupController extends GetxController {
   late final QuickAttendanceApi _api = Get.find();
   late final GroupController groupController;
   String? get groupId => group.value?.groupId.value;
-  final RxBool isLoadingGroup = RxBool(false);
+  final RxBool isLoadingGroup = RxBool(true);
   final RxBool isEditingGroup = RxBool(false);
   final RxBool hasLoadedGroup = RxBool(false);
 
@@ -22,6 +21,7 @@ class GroupController extends GetxController {
   /// Fetch group information for the provided group id
   void fetchGroup(String? groupId) async {
     if (groupId == null) {
+      isLoadingGroup.value = false;
       return;
     }
     isLoadingGroup.value = true;
@@ -68,7 +68,6 @@ class GroupPage extends StatelessWidget {
     });
     return Obx(
       () => Scaffold(
-        extendBodyBehindAppBar: true,
         body: PageView(
           controller: _pageController,
           onPageChanged: onPageChanged,
