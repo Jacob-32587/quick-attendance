@@ -5,6 +5,7 @@ import 'package:quick_attendance/models/public_user_model.dart';
 import 'package:quick_attendance/pages/attendance_group/components/display_users.dart';
 import 'package:quick_attendance/pages/attendance_group/components/group_page.dart';
 import 'package:quick_attendance/pages/attendance_group/components/group_scroll_view.dart';
+import 'package:quick_attendance/pages/attendance_group/components/invite_user_popup.dart';
 
 class GroupAttendeesScreen extends StatelessWidget {
   late final GroupController _controller = Get.find();
@@ -102,39 +103,48 @@ class GroupAttendeesScreen extends StatelessWidget {
                 },
               ),
               const SizedBox(width: 20),
-              OutlinedButton.icon(
-                label: Text(
-                  "Invite User",
-                  style: TextStyle(
+              if (isOwner)
+                OutlinedButton.icon(
+                  label: Text(
+                    "Invite User",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  icon: Icon(
+                    Icons.person_add,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
-                ),
-                icon: Icon(
-                  Icons.person_add,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                    color: Theme.of(context).colorScheme.primary,
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 25, vertical: 10),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+                  onPressed: () {
+                    showInviteUserPopup(context);
+                  },
                 ),
-                onPressed: () {
-                  // TODO: View Attendance Records
-                },
-              ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 64),
           DisplayUsers(
             hasLoaded: _controller.hasLoadedGroup,
             isLoading: _controller.isLoadingGroup,
             emptyMessage: "There are no members in this group.",
             title: "Members",
             users: allMembers,
+          ),
+          const SizedBox(height: 64),
+          DisplayUsers(
+            title: "Pending Invites",
+            emptyMessage: "There are no pending invites.",
+            isLoading: _controller.isLoadingGroup,
+            hasLoaded: _controller.hasLoadedGroup,
+            users: _controller.group.value?.pendingMembers,
           ),
         ],
       ),
