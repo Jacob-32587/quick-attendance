@@ -8,7 +8,6 @@ import 'package:quick_attendance/models/public_user_model.dart';
 import 'package:quick_attendance/pages/attendance_group/components/user_list.dart';
 
 class DisplayUsers extends StatelessWidget {
-  late final ProfileController _profileController = Get.find();
   final String title;
   final String emptyMessage;
   final RxBool isLoading;
@@ -32,28 +31,7 @@ class DisplayUsers extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        ListHeader(
-          title: title,
-          children: [
-            BinaryChoice(
-              choice: hasAnyUsers,
-              widget1: Obx(
-                () => IconButton(
-                  icon: Icon(
-                    _profileController.prefersListView
-                        ? Icons.grid_view
-                        : Icons.list,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  onPressed: () {
-                    _profileController.prefersListView =
-                        !_profileController.prefersListView;
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
+        ListHeader(title: title, children: []),
         Obx(() {
           if (hasLoaded.value && hasAnyUsers == false) {
             return Text(
@@ -67,15 +45,10 @@ class DisplayUsers extends StatelessWidget {
           }
           return SizedBox.shrink();
         }),
-        Obx(
-          () => SkeletonShimmerList(
-            isLoading: isLoading,
-            isListView: _profileController.prefersListView,
-            widget: UserList(
-              users: users,
-              isListView: _profileController.prefersListView,
-            ),
-          ),
+        SkeletonShimmerList(
+          isLoading: isLoading,
+          isListView: true,
+          widget: UserList(users: users, isListView: true),
         ),
       ],
     );
