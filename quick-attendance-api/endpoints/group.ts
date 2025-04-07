@@ -15,6 +15,7 @@ import { is_privileged_user_type, UserType } from "../models/user_type.ts";
 import { GroupGetRes } from "../models/group/group_get_res.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
 import { HTTPException } from "@hono/hono/http-exception";
+import { get_maybe_uuid_time, get_uuid_time } from "../util/uuid.ts";
 
 const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
@@ -70,6 +71,8 @@ group.get(
       null as PublicAccountGetModel[] | null,
     );
 
+    const last_attendance = await attendance_dal.get_most_recent_attendance_entity(req.group_id);
+
     // If the users is allowed to see pending users include in the response
     if (is_privileged_user_type(user_type)) {
       const pending_users = await dal.get_group_pending_users(req.group_id);
@@ -93,6 +96,7 @@ group.get(
       owner: account_promises[0][0],
       members: account_promises[1].filter((x) => x.user_type === UserType.Member),
       managers: account_promises[1].filter((x) => x.user_type === UserType.Manager),
+      last_attendance_date: get_maybe_uuid_time(last_attendance?.value.attendance_id) ?? null,
       pending_members: account_promises[2],
     };
 
