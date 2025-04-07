@@ -8,7 +8,7 @@ import { new_uuid, Uuid } from "../util/uuid.ts";
 import AccountEntity, { AccountOwnerGroupData } from "../entities/account_entity.ts";
 import * as account_dal from "./account.ts";
 import HttpStatusCode from "../util/http_status_code.ts";
-import { add_to_maybe_map, add_to_maybe_set } from "../util/map.ts";
+import { add_to_maybe_map } from "../util/map.ts";
 import { UserType } from "../models/user_type.ts";
 import { GroupUserEntity } from "../entities/group_user_entity.ts";
 import { GroupPendingUserEntity } from "../entities/group_pending_user_entity.ts";
@@ -71,7 +71,7 @@ export async function get_groups_for_account(user_id: Uuid) {
 
   // Convert all the retrieve data to an API model
   const to_sparse_model = (e: Deno.KvEntry<GroupEntity>[]) => {
-    return e.map((x) => (
+    const sparse_models: GroupSparseGetModel[] = e.map((x) => (
       {
         group_name: x.value.group_name,
         group_id: x.value.group_id,
@@ -79,15 +79,17 @@ export async function get_groups_for_account(user_id: Uuid) {
         owner_id: x.value.owner_id,
         owner_username: unique_owner_ids.get(x.value.owner_id) ??
           DbErr.err(null),
-      } as GroupSparseGetModel
+      }
     ));
+    return sparse_models;
   };
 
-  return {
+  const res: GroupListGetRes = {
     owned_groups: to_sparse_model(groups[0]),
     managed_groups: to_sparse_model(groups[1]),
     member_groups: to_sparse_model(groups[2]),
-  } as GroupListGetRes;
+  };
+  return res;
 }
 
 /**
@@ -145,6 +147,10 @@ export function add_pending_group_users(
   ); // !!throw
 }
 
+/**
+ * @description Add a list of pending users to a group, the transaction will fail if any of the users are already part
+ * of the group or any of the users are already invited
+ */
 export function add_pending_group_users_tran(
   group_id: Uuid,
   user_ids: Uuid[],
@@ -154,7 +160,8 @@ export function add_pending_group_users_tran(
   for (let i = 0; i < user_ids.length; i++) {
     key = ["group_pending_user", group_id, user_ids[i]];
     tran
-      .check({ key, versionstamp: null })
+      .check({ key: key, versionstamp: null })
+      .check({ key: ["group_user", group_id, user_ids[i]], versionstamp: null })
       .set(key, { group_id: group_id, user_id: user_ids[i] } as GroupPendingUserEntity);
   }
   return tran;
@@ -260,18 +267,15 @@ export function group_is_owned_by_account(
  * @throws @link{@ HTTPException}
  */
 export async function create_group_from_req(owner_id: Uuid, req: GroupPostReq) {
-  const entity = {
+  const entity: GroupEntity = {
     group_id: new_uuid(),
     owner_id: owner_id,
     group_description: req.group_description,
     group_name: req.group_name,
     unique_id_settings: req.unique_id_settings,
     event_count: 0,
-    manager_ids: null,
-    member_ids: null,
-    pending_member_ids: null,
     current_attendance_id: null,
-  } as GroupEntity;
+  };
 
   const account_entity = await account_dal.get_account(owner_id);
 

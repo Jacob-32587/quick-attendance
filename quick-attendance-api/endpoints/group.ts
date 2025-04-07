@@ -56,14 +56,6 @@ group.get(
 
     const group_users = await group_users_p;
 
-    const get_group_res = {
-      group_id: group.value.group_id,
-      group_name: group.value.group_name,
-      group_description: group.value.group_description,
-      current_attendance_id: group.value.current_attendance_id,
-      event_count: group.value.event_count,
-    } as GroupGetRes;
-
     const user_get_promise = account_dal.get_public_account_models(
       group_users.map((x) => x.value.user_id),
       req.group_id,
@@ -92,10 +84,17 @@ group.get(
       pending_accounts,
     ]);
 
-    get_group_res.owner = account_promises[0][0];
-    get_group_res.members = account_promises[1].filter((x) => x.user_type === UserType.Member);
-    get_group_res.managers = account_promises[1].filter((x) => x.user_type === UserType.Manager);
-    get_group_res.pending_members = account_promises[2];
+    const get_group_res: GroupGetRes = {
+      group_id: group.value.group_id,
+      group_name: group.value.group_name,
+      group_description: group.value.group_description,
+      current_attendance_id: group.value.current_attendance_id,
+      event_count: group.value.event_count,
+      owner: account_promises[0][0],
+      members: account_promises[1].filter((x) => x.user_type === UserType.Member),
+      managers: account_promises[1].filter((x) => x.user_type === UserType.Manager),
+      pending_members: account_promises[2],
+    };
 
     return ctx.json(get_group_res, HttpStatusCode.OK);
   },
@@ -134,7 +133,7 @@ group.put(
   zValidator("json", group_invite_put_req),
   async (ctx) => {
     const req = ctx.req.valid("json");
-    let tran = kv.atomic();
+    const tran = kv.atomic();
 
     // Verify the group is owned by the users and get user accounts to invite
     const { owner_entity, account_entities } = await dal
@@ -144,9 +143,7 @@ group.put(
         req.usernames,
         tran,
       );
-    await DbErr.err_on_commit_async(tran.commit(), "Unable to update user account");
     const group_entity = await dal.get_group(req.group_id);
-    tran = kv.atomic();
 
     // Set account pending invites for the transaction
     await account_dal.invite_accounts_to_group(
@@ -158,7 +155,11 @@ group.put(
       tran,
     );
 
-    await DbErr.err_on_commit_async(tran.commit(), "Unable to invite users");
+    await DbErr.err_on_commit_async(
+      tran.commit(),
+      "Unable to invite users, check that the none of the users are already invited/part of the group",
+      HttpStatusCode.CONFLICT,
+    );
 
     return ctx.text("", HttpStatusCode.OK);
   },
