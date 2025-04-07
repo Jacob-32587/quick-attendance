@@ -133,7 +133,7 @@ group.put(
   zValidator("json", group_invite_put_req),
   async (ctx) => {
     const req = ctx.req.valid("json");
-    let tran = kv.atomic();
+    const tran = kv.atomic();
 
     // Verify the group is owned by the users and get user accounts to invite
     const { owner_entity, account_entities } = await dal
@@ -143,9 +143,7 @@ group.put(
         req.usernames,
         tran,
       );
-    await DbErr.err_on_commit_async(tran.commit(), "Unable to update user account");
     const group_entity = await dal.get_group(req.group_id);
-    tran = kv.atomic();
 
     // Set account pending invites for the transaction
     await account_dal.invite_accounts_to_group(
@@ -157,7 +155,11 @@ group.put(
       tran,
     );
 
-    await DbErr.err_on_commit_async(tran.commit(), "Unable to invite users");
+    await DbErr.err_on_commit_async(
+      tran.commit(),
+      "Unable to invite users, check that the none of the users are already invited/part of the group",
+      HttpStatusCode.CONFLICT,
+    );
 
     return ctx.text("", HttpStatusCode.OK);
   },

@@ -147,6 +147,10 @@ export function add_pending_group_users(
   ); // !!throw
 }
 
+/**
+ * @description Add a list of pending users to a group, the transaction will fail if any of the users are already part
+ * of the group or any of the users are already invited
+ */
 export function add_pending_group_users_tran(
   group_id: Uuid,
   user_ids: Uuid[],
@@ -156,7 +160,8 @@ export function add_pending_group_users_tran(
   for (let i = 0; i < user_ids.length; i++) {
     key = ["group_pending_user", group_id, user_ids[i]];
     tran
-      .check({ key, versionstamp: null })
+      .check({ key: key, versionstamp: null })
+      .check({ key: ["group_user", group_id, user_ids[i]], versionstamp: null })
       .set(key, { group_id: group_id, user_id: user_ids[i] } as GroupPendingUserEntity);
   }
   return tran;
