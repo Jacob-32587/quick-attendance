@@ -113,6 +113,36 @@ Deno.test(
       assert(henrik_disconnect);
       //#endregion
 
+      //#region Start taking attendance again but henrik is not present and no users connect to the websocket
+      await test_fetch_json(
+        ATTENDANCE_AUTH_URL(test_num),
+        "POST",
+        rocco.account.jwt,
+        { group_id: rocco.group.group_id } as AttendancePostReq,
+      );
+      await test_fetch_json(
+        ATTENDANCE_AUTH_URL(test_num),
+        "PUT",
+        rocco.group.jwt,
+        {
+          group_id: rocco.group.group_id,
+          user_ids: [maeve.account.user_id],
+        } as AttendancePutReq,
+      );
+
+      await test_fetch_json(
+        GROUP_AUTH_URL(test_num),
+        "PUT",
+        rocco.group.jwt,
+        {
+          group_id: rocco.group.group_id,
+          group_name: rocco.group.group_name,
+          group_description: rocco.group.group_description,
+          current_attendance_id: null,
+        } as GroupPutRequest,
+      );
+      //#endregion
+
       //#region Indie checks the attendance for the week
       await test_fetch_json(
         `${ATTENDANCE_AUTH_URL(test_num)}/group?group_id=${indie.group.group_id}`,
@@ -122,12 +152,15 @@ Deno.test(
         async (body) => {
           const json = (await body.json()) as AttendanceGroupGetRes;
           console.log(json);
-          return json.attendance.length === 1 &&
+          return json.attendance.length === 2 &&
             json.attendance[0].users.some((x) => x.user_id === henrik.account.user_id) &&
-            json.attendance[0].users.some((x) => x.user_id === maeve.account.user_id);
+            json.attendance[0].users.some((x) => x.user_id === maeve.account.user_id) &&
+            json.attendance[1].users.some((x) => x.user_id !== henrik.account.user_id) &&
+            json.attendance[1].users.some((x) => x.user_id === maeve.account.user_id);
         },
       );
       //#endregion
+
       //#region Maeve and henrik check there attendance for the week
       await test_fetch_json(
         `${ATTENDANCE_AUTH_URL(test_num)}/user`,
@@ -138,7 +171,10 @@ Deno.test(
           const json = (await body.json()) as AttendanceUserGetRes;
           console.log(json);
           return json.attendance.length === 1 &&
-            json.attendance[0].group.group_id === maeve.group.group_id;
+            json.attendance[0].attendance_records.length === 2 &&
+            json.attendance[0].group.group_id === maeve.group.group_id &&
+            json.attendance[0].attendance_records[0].present === true &&
+            json.attendance[0].attendance_records[1].present === true;
         },
       );
       await test_fetch_json(
@@ -150,7 +186,10 @@ Deno.test(
           const json = (await body.json()) as AttendanceUserGetRes;
           console.log(json);
           return json.attendance.length === 1 &&
-            json.attendance[0].group.group_id === henrik.group.group_id;
+            json.attendance[0].group.group_id === henrik.group.group_id &&
+            json.attendance[0].group.group_id === maeve.group.group_id &&
+            json.attendance[0].attendance_records[0].present === true &&
+            json.attendance[0].attendance_records[1].present === false;
         },
       );
       //#endregion

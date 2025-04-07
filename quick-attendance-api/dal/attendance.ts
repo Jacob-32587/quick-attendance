@@ -41,6 +41,17 @@ export function get_attendance_entities_for_week(
   }, { limit: 128, batchSize: 128 }));
 }
 
+export function get_attendances_present_user(
+  group_id: Uuid,
+  user_id: Uuid,
+  attendance_ids: Uuid[],
+) {
+  return KvHelper.get_many_return_empty<AttendancePresentUserEntity>(
+    kv,
+    attendance_ids.map((x) => ["attendance_present_user", group_id, x, user_id]),
+  );
+}
+
 export function get_attendance_present_users(
   group_id: Uuid,
   attendance_id: Uuid,

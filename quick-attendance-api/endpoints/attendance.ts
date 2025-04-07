@@ -5,11 +5,10 @@ import * as account_dal from "../dal/account.ts";
 import { get_jwt_payload } from "../main.ts";
 import { attendance_post_req } from "../models/attendance/attendance_post_req.ts";
 import { zValidator } from "npm:@hono/zod-validator";
-import { is_privileged_user_type, UserType } from "../models/user_type.ts";
+import { UserType } from "../models/user_type.ts";
 import { attendance_put_req } from "../models/attendance/attendance_put_req.ts";
 import { get_uuid_time, Uuid } from "../util/uuid.ts";
 import { get_public_account_models } from "../dal/account.ts";
-import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import HttpStatusCode from "../util/http_status_code.ts";
 import {
@@ -112,14 +111,19 @@ attendance.get(
 
     const attendance_data: AttendanceUserData[] = [];
     for (const group_id of unique_group_ids) {
+      // Get all attendance records for the given group
       const attendance_records = await dal.get_attendance_entities_for_week(
         group_id,
         req.year_num,
         req.month_num,
         req.week_num,
       );
-      // NOT FINISHED, need to look at all attendance records for the group
-      // dal.get_attendance_present_users()
+      const present_user_records = await dal.get_attendances_present_user(
+        group_id,
+        user_id,
+        attendance_records.map((x) => x.value.attendance_id),
+      );
+
       const group = await group_dal.get_group(group_id);
       attendance_data.push(
         {
@@ -127,10 +131,13 @@ attendance.get(
             group_name: group.value.group_name,
             group_id: group_id,
           },
-          attendance_records: attendance_records.map((x) => ({
-            attendance_id: x.value.attendance_id,
-            attendance_time: get_uuid_time(x.value.attendance_id),
-          })),
+          attendance_records: present_user_records.map((x) => (
+            {
+              attendance_id: x.key[2] as Uuid,
+              attendance_time: get_uuid_time(x.key[2] as Uuid),
+              present: x.value !== null,
+            }
+          )),
         },
       );
     }
