@@ -42,9 +42,6 @@ Deno.test(
         false,
       );
       //#endregion
-
-      //#region Create a user and attempt to double invite them
-      //#endregion
     });
 
     await cleanup_test_step(test_num, t, sp);
