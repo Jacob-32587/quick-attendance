@@ -151,7 +151,6 @@ Deno.test(
         null,
         async (body) => {
           const json = (await body.json()) as AttendanceGroupGetRes;
-          console.log(json);
           return json.attendance.length === 2 &&
             json.attendance[0].users.some((x) => x.user_id === henrik.account.user_id) &&
             json.attendance[0].users.some((x) => x.user_id === maeve.account.user_id) &&
@@ -169,7 +168,6 @@ Deno.test(
         null,
         async (body) => {
           const json = (await body.json()) as AttendanceUserGetRes;
-          console.log(json);
           return json.attendance.length === 1 &&
             json.attendance[0].attendance_records.length === 2 &&
             json.attendance[0].group.group_id === maeve.group.group_id &&
@@ -184,7 +182,6 @@ Deno.test(
         null,
         async (body) => {
           const json = (await body.json()) as AttendanceUserGetRes;
-          console.log(json);
           return json.attendance.length === 1 &&
             json.attendance[0].group.group_id === henrik.group.group_id &&
             json.attendance[0].group.group_id === maeve.group.group_id &&
