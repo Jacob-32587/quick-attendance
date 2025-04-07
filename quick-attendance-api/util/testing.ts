@@ -95,12 +95,13 @@ export async function test_fetch(
   err_on_not_ok: boolean = true,
 ): Promise<Response> {
   if (
-    consume_body === undefined || consume_body === null || maybe_check_fn === undefined
+    (maybe_check_fn !== undefined) && (consume_body === null || consume_body === undefined)
   ) {
-    consume_body = true;
-  } else if (consume_body === undefined) {
     consume_body = false;
+  } else if (consume_body === null || consume_body === undefined) {
+    consume_body = true;
   }
+
   const ret = await fetch(input, init);
   const check_fn = await (maybe_check_fn ?? ((_x, _y) => true))(ret, init) ?? false;
 
@@ -110,8 +111,7 @@ export async function test_fetch(
     console.log(ret);
     try {
       console.log(await ret.text());
-      // We don't care if this errors, just need to make sure resources are
-      // cleaned up
+      // We don't care if this errors, just need to make sure resources are cleaned up
       // deno-lint-ignore no-empty
     } catch {}
   }
@@ -122,9 +122,7 @@ export async function test_fetch(
   } finally {
     // Body is not being handled by the user or internally, cancel
     // any streaming that may be occuring
-    console.log(`Consume body ${consume_body} for ${ret.url}`);
-    if (consume_body) {
-      console.log("Canceling for ", ret.url);
+    if (consume_body && !ret.body?.locked) {
       await ret.body?.cancel();
     }
   }
