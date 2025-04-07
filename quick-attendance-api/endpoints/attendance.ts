@@ -1,18 +1,27 @@
 import { Hono } from "npm:hono";
 import * as dal from "../dal/attendance.ts";
 import * as group_dal from "../dal/group.ts";
+import * as account_dal from "../dal/account.ts";
 import { get_jwt_payload } from "../main.ts";
 import { attendance_post_req } from "../models/attendance/attendance_post_req.ts";
 import { zValidator } from "npm:@hono/zod-validator";
 import { is_privileged_user_type, UserType } from "../models/user_type.ts";
 import { attendance_put_req } from "../models/attendance/attendance_put_req.ts";
-import { attendance_get_req } from "../models/attendance/attedance_get_req.ts";
 import { get_uuid_time, Uuid } from "../util/uuid.ts";
-import { AttendanceGetRes } from "../models/attendance/attendance_get_res.ts";
 import { get_public_account_models } from "../dal/account.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import HttpStatusCode from "../util/http_status_code.ts";
+import {
+  AttendanceUserData,
+  AttendanceUserGetRes,
+} from "../models/attendance/attendance_user_get_res.ts";
+import {
+  AttendanceGroupGetData,
+  AttendanceGroupGetRes,
+} from "../models/attendance/attendance_group_get_res.ts";
+import { attendance_group_get_req } from "../models/attendance/attedance_group_get_req.ts";
+import { attendance_user_get_req } from "../models/attendance/attedance_user_get_req.ts";
 
 const attendance_base_path = "/attendance";
 const auth_attendance_base_path = `/auth${attendance_base_path}`;
@@ -22,7 +31,7 @@ const attendance = new Hono();
 //#region Query
 attendance.get(
   `${auth_attendance_base_path}/group`,
-  zValidator("query", attendance_get_req),
+  zValidator("query", attendance_group_get_req),
   async (ctx) => {
     const user_id = get_jwt_payload(ctx).user_id;
     const req = ctx.req.valid("query");
@@ -52,16 +61,12 @@ attendance.get(
       (await get_public_account_models(group_user_ids, req.group_id)).map((x) => [x.user_id, x]),
     );
 
-    const attedance_agg: {
-      attendance_id: Uuid;
-      time_recorded: Date;
-      users: PublicAccountGetModel[];
-    }[] = [];
+    const attedance_agg: AttendanceGroupGetData[] = [];
     let current_user;
     for (let i = 0; i < attedance_records.length; i++) {
       attedance_agg.push({
         attendance_id: attedance_records[i].value.attendance_id,
-        time_recorded: get_uuid_time(attedance_records[i].value.attendance_id),
+        attendance_time: get_uuid_time(attedance_records[i].value.attendance_id),
         users: [],
       });
 
@@ -80,27 +85,57 @@ attendance.get(
       }
     }
 
-    const ret: AttendanceGetRes = { attendance: attedance_agg };
+    const ret: AttendanceGroupGetRes = { attendance: attedance_agg };
     return ctx.json(ret);
   },
 );
 
 attendance.get(
   `${auth_attendance_base_path}/user`,
-  zValidator("query", attendance_get_req),
+  zValidator("query", attendance_user_get_req),
   async (ctx) => {
     const user_id = get_jwt_payload(ctx).user_id;
     const req = ctx.req.valid("query");
 
-    // Ensure that the user is privileged
-    await group_dal.get_group_and_verify_user_type(
-      req.group_id,
-      user_id,
-      [
-        UserType.Manager,
-        UserType.Owner,
-      ],
-    );
+    const account = await account_dal.get_account(user_id);
+    const unique_group_ids = new Set(
+      (account.value.fk_managed_group_ids
+        ?.keys()
+        .toArray() ?? [])
+        .concat(account.value.fk_member_group_ids?.keys().toArray() ?? []),
+    ).values().toArray();
+
+    if (unique_group_ids.length === 0) {
+      const ret: AttendanceGroupGetRes = { attendance: [] };
+      ctx.json(ret);
+    }
+
+    const attendance_data: AttendanceUserData[] = [];
+    for (const group_id of unique_group_ids) {
+      const attendance_records = await dal.get_attendance_entities_for_week(
+        group_id,
+        req.year_num,
+        req.month_num,
+        req.week_num,
+      );
+      // NOT FINISHED, need to look at all attendance records for the group
+      // dal.get_attendance_present_users()
+      const group = await group_dal.get_group(group_id);
+      attendance_data.push(
+        {
+          group: {
+            group_name: group.value.group_name,
+            group_id: group_id,
+          },
+          attendance_records: attendance_records.map((x) => ({
+            attendance_id: x.value.attendance_id,
+            attendance_time: get_uuid_time(x.value.attendance_id),
+          })),
+        },
+      );
+    }
+    const ret: AttendanceUserGetRes = { attendance: attendance_data };
+    return ctx.json(ret);
   },
 );
 //#endregion

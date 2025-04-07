@@ -12,9 +12,8 @@ import {
   URL,
 } from "./main_test.ts";
 import { GroupPutRequest } from "../models/group/group_unique_id_settings_get_req.ts";
-import { GroupGetReq } from "../models/group/group_get_req.ts";
-import { AttendanceGetReq } from "../models/attendance/attedance_get_req.ts";
-import { AttendanceGetRes } from "../models/attendance/attendance_get_res.ts";
+import { AttendanceGroupGetRes } from "../models/attendance/attendance_group_get_res.ts";
+import { AttendanceUserGetRes } from "../models/attendance/attendance_user_get_res.ts";
 
 Deno.test(
   "Creates a group and takes attendance",
@@ -121,11 +120,37 @@ Deno.test(
         indie.group.jwt,
         null,
         async (body) => {
-          const json = (await body.json()) as AttendanceGetRes;
+          const json = (await body.json()) as AttendanceGroupGetRes;
           console.log(json);
           return json.attendance.length === 1 &&
             json.attendance[0].users.some((x) => x.user_id === henrik.account.user_id) &&
             json.attendance[0].users.some((x) => x.user_id === maeve.account.user_id);
+        },
+      );
+      //#endregion
+      //#region Maeve and henrik check there attendance for the week
+      await test_fetch_json(
+        `${ATTENDANCE_AUTH_URL(test_num)}/user`,
+        "GET",
+        maeve.group.jwt,
+        null,
+        async (body) => {
+          const json = (await body.json()) as AttendanceUserGetRes;
+          console.log(json);
+          return json.attendance.length === 1 &&
+            json.attendance[0].group.group_id === maeve.group.group_id;
+        },
+      );
+      await test_fetch_json(
+        `${ATTENDANCE_AUTH_URL(test_num)}/user`,
+        "GET",
+        henrik.group.jwt,
+        null,
+        async (body) => {
+          const json = (await body.json()) as AttendanceUserGetRes;
+          console.log(json);
+          return json.attendance.length === 1 &&
+            json.attendance[0].group.group_id === henrik.group.group_id;
         },
       );
       //#endregion
