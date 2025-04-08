@@ -79,6 +79,7 @@ async function cleanup_test(
  * failing requests the body will always be consumed. This will default not true if a check function is not specified,
  * if one is then false. It is assumed that that check function will need to read the body, if
  * this is not the case this parameter can be set to true manually.
+ * @param err_on_not_ok - Specify that the function should not throw an assert error if the result is not ok
  * @returns Promise that will resolve with headers are sent back
  */
 export async function test_fetch(
@@ -91,37 +92,37 @@ export async function test_fetch(
     ) => Promise<boolean> | undefined)
     | null,
   consume_body?: boolean | null,
+  err_on_not_ok: boolean = true,
 ): Promise<Response> {
   if (
-    (consume_body === undefined || consume_body === null) &&
-    (maybe_check_fn === undefined || consume_body === null)
+    (maybe_check_fn !== undefined) && (consume_body === null || consume_body === undefined)
   ) {
-    consume_body = true;
-  } else {
     consume_body = false;
+  } else if (consume_body === null || consume_body === undefined) {
+    consume_body = true;
   }
-  const ret = await fetch(input, init);
-  const check_fn = await (maybe_check_fn ?? (() => true))(ret, init);
 
-  if (!ret.ok || !check_fn) {
+  const ret = await fetch(input, init);
+  const check_fn = await (maybe_check_fn ?? ((_x, _y) => true))(ret, init) ?? false;
+
+  if ((!ret.ok && err_on_not_ok) || !check_fn) {
     console.log("Request", init);
     // This could consume the body, in-case it doesn't attempt to anyway
     console.log(ret);
     try {
       console.log(await ret.text());
-      // We don't care if this errors, just need to make sure resources are
-      // cleaned up
+      // We don't care if this errors, just need to make sure resources are cleaned up
       // deno-lint-ignore no-empty
     } catch {}
   }
 
   try {
-    assert(ret.ok);
+    assert(ret.ok || !err_on_not_ok);
     assert(check_fn);
   } finally {
     // Body is not being handled by the user or internally, cancel
     // any streaming that may be occuring
-    if (consume_body && ret.ok && check_fn) {
+    if (consume_body && !ret.body?.locked) {
       await ret.body?.cancel();
     }
   }
@@ -141,7 +142,7 @@ export async function test_fetch(
  * failing requests the body will always be consumed. This will default not true if a check function is not specified,
  * if one is then false. It is assumed that that check function will need to read the body, if
  * this is not the case this parameter can be set to true manually.
- * @returns Promise that will resolve with headers are sent back
+ * @returns Promise that will resolve with the HTTP response
  */
 export async function test_fetch_json<T>(
   url: string,
@@ -155,6 +156,7 @@ export async function test_fetch_json<T>(
     ) => Promise<boolean> | undefined)
     | null,
   consume_body?: boolean | null,
+  err_on_not_ok: boolean = true,
 ): Promise<Response> {
   const headers = {} as { [key: string]: string };
 
@@ -177,6 +179,7 @@ export async function test_fetch_json<T>(
     req_init,
     maybe_check_fn,
     consume_body,
+    err_on_not_ok,
   );
 }
 

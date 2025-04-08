@@ -211,7 +211,6 @@ export async function create_users_and_group(test_num: number) {
     owner_jwt,
     null,
     null,
-    true,
   );
 
   const owner_group_list = (await owner_group_list_res.json()) as GroupListGetRes;

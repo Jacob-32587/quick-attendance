@@ -86,7 +86,7 @@ export async function get_accounts(user_ids: Uuid[]) {
 export async function get_public_account_models(
   user_ids: Uuid[] | null | undefined,
   group_id?: Uuid,
-) {
+): Promise<PublicAccountGetModel[]> {
   // Return nothing if given nothing
   if (user_ids === null || user_ids === undefined || user_ids.length === 0) {
     return [];
@@ -106,6 +106,7 @@ export async function get_public_account_models(
     }
     return null;
   };
+
   return (await get_accounts(user_ids)).map(
     (x) => {
       const user_type = group_id != undefined ? determine_user_type(x.value, group_id) : null;
@@ -116,7 +117,7 @@ export async function get_public_account_models(
         user_id: x.value.user_id,
         unique_id: maybe_unique_id(x.value, user_type),
         user_type: user_type,
-      } as PublicAccountGetModel;
+      };
     },
   );
 }

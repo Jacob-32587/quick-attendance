@@ -30,7 +30,7 @@ export function get_attendance_entities_for_week(
   month: number,
   week: number,
 ) {
-  return kv.list<AttendanceEntity[]>({
+  return KvHelper.kv_iter_to_array(kv.list<AttendanceEntity>({
     prefix: [
       "attendance",
       group_id,
@@ -38,7 +38,18 @@ export function get_attendance_entities_for_week(
       month,
       week,
     ],
-  }, { limit: 32, batchSize: 8 });
+  }, { limit: 128, batchSize: 128 }));
+}
+
+export function get_attendances_present_user(
+  group_id: Uuid,
+  user_id: Uuid,
+  attendance_ids: Uuid[],
+) {
+  return KvHelper.get_many_return_empty<AttendancePresentUserEntity>(
+    kv,
+    attendance_ids.map((x) => ["attendance_present_user", group_id, x, user_id]),
+  );
 }
 
 export function get_attendance_present_users(
