@@ -1,5 +1,7 @@
 import { assert, assertFalse } from "@std/assert";
 import { sleep } from "./sleep.ts";
+import { default as io } from "socket.io-client";
+import { Uuid } from "./uuid.ts";
 
 /**
  * @description This will spawn and instance of a self contained server with it's own database.
@@ -77,6 +79,7 @@ async function cleanup_test(
  * failing requests the body will always be consumed. This will default not true if a check function is not specified,
  * if one is then false. It is assumed that that check function will need to read the body, if
  * this is not the case this parameter can be set to true manually.
+ * @param err_on_not_ok - Specify that the function should not throw an assert error if the result is not ok
  * @returns Promise that will resolve with headers are sent back
  */
 export async function test_fetch(
@@ -89,37 +92,37 @@ export async function test_fetch(
     ) => Promise<boolean> | undefined)
     | null,
   consume_body?: boolean | null,
+  err_on_not_ok: boolean = true,
 ): Promise<Response> {
   if (
-    (consume_body === undefined || consume_body === null) &&
-    (maybe_check_fn === undefined || consume_body === null)
+    (maybe_check_fn !== undefined) && (consume_body === null || consume_body === undefined)
   ) {
-    consume_body = true;
-  } else {
     consume_body = false;
+  } else if (consume_body === null || consume_body === undefined) {
+    consume_body = true;
   }
-  const ret = await fetch(input, init);
-  const check_fn = await (maybe_check_fn ?? (() => true))(ret, init);
 
-  if (!ret.ok || !check_fn) {
+  const ret = await fetch(input, init);
+  const check_fn = await (maybe_check_fn ?? ((_x, _y) => true))(ret, init) ?? false;
+
+  if ((!ret.ok && err_on_not_ok) || !check_fn) {
     console.log("Request", init);
     // This could consume the body, in-case it doesn't attempt to anyway
     console.log(ret);
     try {
       console.log(await ret.text());
-      // We don't care if this errors, just need to make sure resources are
-      // cleaned up
+      // We don't care if this errors, just need to make sure resources are cleaned up
       // deno-lint-ignore no-empty
     } catch {}
   }
 
   try {
-    assert(ret.ok);
+    assert(ret.ok || !err_on_not_ok);
     assert(check_fn);
   } finally {
     // Body is not being handled by the user or internally, cancel
     // any streaming that may be occuring
-    if (consume_body && ret.ok && check_fn) {
+    if (consume_body && !ret.body?.locked) {
       await ret.body?.cancel();
     }
   }
@@ -139,7 +142,7 @@ export async function test_fetch(
  * failing requests the body will always be consumed. This will default not true if a check function is not specified,
  * if one is then false. It is assumed that that check function will need to read the body, if
  * this is not the case this parameter can be set to true manually.
- * @returns Promise that will resolve with headers are sent back
+ * @returns Promise that will resolve with the HTTP response
  */
 export async function test_fetch_json<T>(
   url: string,
@@ -153,6 +156,7 @@ export async function test_fetch_json<T>(
     ) => Promise<boolean> | undefined)
     | null,
   consume_body?: boolean | null,
+  err_on_not_ok: boolean = true,
 ): Promise<Response> {
   const headers = {} as { [key: string]: string };
 
@@ -175,6 +179,7 @@ export async function test_fetch_json<T>(
     req_init,
     maybe_check_fn,
     consume_body,
+    err_on_not_ok,
   );
 }
 
@@ -204,4 +209,49 @@ export const cleanup_test_step = async (
 
 export function assertNever(): never {
   throw 1;
+}
+
+/**
+ * @description Opens a websocket connection with the server and verifies
+ * that an connection is established. If no connection is made within the
+ * first 3 seconds this function will throw an assertion error.
+ * @returns Websocket connection
+ */
+export async function open_ws(domain_and_port: string, jwt: string, group_id: Uuid) {
+  const socket = io(`ws://${domain_and_port}?group_id=${group_id}`, {
+    auth(cb) {
+      cb({
+        token: jwt,
+      });
+    },
+  });
+
+  let connected = false;
+
+  socket.on("connect", () => {
+    console.log(socket.id);
+    connected = true;
+    console.log(`Client connect websocket: ${socket.id}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected websocket");
+  });
+
+  // Check if connected for 3 seconds, if no connection was established
+  // then fail.
+  let socket_check_cnt = 0;
+  while (socket.connected === false) {
+    if (socket_check_cnt === 30) {
+      assert(false, "Unable to establish websocket connection");
+    }
+    await sleep(100);
+    socket_check_cnt++;
+  }
+
+  // Ensure websocket receives connect data
+  await sleep(200);
+  assert(connected);
+
+  return socket;
 }
