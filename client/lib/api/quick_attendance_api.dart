@@ -9,13 +9,15 @@ import 'package:quick_attendance/models/user_model.dart';
 /// The client for sending requests to the Quick Attendance API
 class QuickAttendanceApi extends GetxService {
   /// The dynamic domain and port to support demo
-  final RxString domainAndPort = "localhost:8080".obs;
+  final RxString domainAndPort = "127.0.0.1:8080".obs;
   final apiClient = BaseApiClient("http://localhost:8080/quick-attendance-api");
 
   @override
   void onInit() {
     ever(domainAndPort, (newDomainAndPort) {
-      apiClient.baseUrl = "http://$newDomainAndPort/quick-attendance-api";
+      print("Updated address");
+      apiClient.httpClient.baseUrl =
+          "http://$newDomainAndPort/quick-attendance-api";
     });
 
     super.onInit();
