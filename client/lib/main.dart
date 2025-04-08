@@ -4,6 +4,7 @@ import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/home_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
+import 'package:quick_attendance/pages/attendance_group/attend_group_page.dart';
 import 'package:quick_attendance/pages/attendance_group/camera_page.dart';
 import 'package:quick_attendance/pages/attendance_group/group_page_auth.dart';
 import 'package:quick_attendance/pages/auth/login.dart';
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
           page: () => CameraPage(),
           middlewares: [],
         ),
+        GetPage(name: "/group/:groupId/attend", page: () => AttendGroupAuth()),
       ],
     );
   }
