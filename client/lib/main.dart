@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:quick_attendance/api/quick_attendance_websocket.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/home_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
@@ -17,6 +18,7 @@ void main() {
   Get.put(ProfileController());
   Get.put(HomeController());
   Get.put(QuickAttendanceApi());
+  Get.put(QuickAttendanceWebsocket());
   runApp(const MyApp());
 }
 
