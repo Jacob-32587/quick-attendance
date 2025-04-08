@@ -6,6 +6,7 @@ import { get_uuid_time, new_uuid, Uuid } from "../util/uuid.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
 import * as group_dal from "./group.ts";
 import * as account_dal from "./account.ts";
+import { ws } from "../main.ts";
 
 //#region Query
 export async function get_attendance_entity(group_id: Uuid, attendance_id: Uuid) {
@@ -29,7 +30,7 @@ export function get_attendance_entities_for_week(
   month: number,
   week: number,
 ) {
-  return kv.list<AttendanceEntity[]>({
+  return KvHelper.kv_iter_to_array(kv.list<AttendanceEntity>({
     prefix: [
       "attendance",
       group_id,
@@ -37,7 +38,31 @@ export function get_attendance_entities_for_week(
       month,
       week,
     ],
-  }, { limit: 8 });
+  }, { limit: 128, batchSize: 128 }));
+}
+
+export function get_attendances_present_user(
+  group_id: Uuid,
+  user_id: Uuid,
+  attendance_ids: Uuid[],
+) {
+  return KvHelper.get_many_return_empty<AttendancePresentUserEntity>(
+    kv,
+    attendance_ids.map((x) => ["attendance_present_user", group_id, x, user_id]),
+  );
+}
+
+export function get_attendance_present_users(
+  group_id: Uuid,
+  attendance_id: Uuid,
+) {
+  return KvHelper.kv_iter_to_array(kv.list<AttendancePresentUserEntity>({
+    prefix: [
+      "attendance_present_user",
+      group_id,
+      attendance_id,
+    ],
+  }, { limit: 128, batchSize: 128 }));
 }
 //#endregion
 
@@ -109,7 +134,12 @@ export async function add_users_to_attendance(
   );
 
   create_present_users_tran(present_users, tran);
-  await tran.commit();
+  DbErr.err_on_commit(await tran.commit(), "Unable to save user attendance");
+
+  // Notify users an attendance record has been created for them
+  for (let i = 0; i < present_users.length; i++) {
+    ws.to(`${group_id}:${present_users[i].user_id}`).emit("attendanceTaken");
+  }
 }
 
 /**
@@ -123,7 +153,7 @@ export function create_present_users_tran(
   tran: Deno.AtomicOperation,
 ) {
   for (let i = 0; i < entities.length; i++) {
-    create_present_member_tran(
+    create_present_user_tran(
       {
         group_id: entities[i].group_id,
         attendance_id: entities[i].attendance_id,
@@ -135,7 +165,7 @@ export function create_present_users_tran(
   return tran;
 }
 
-export function create_present_member_tran(
+export function create_present_user_tran(
   entity: AttendancePresentUserEntity,
   tran: Deno.AtomicOperation,
 ) {
