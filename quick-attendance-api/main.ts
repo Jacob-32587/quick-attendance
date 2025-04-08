@@ -180,5 +180,4 @@ if (port_num === 8080) {
 export const server = Deno.serve({
   hostname: "0.0.0.0",
   port: port_num,
-  hostname: "0.0.0.0",
 }, handler);
