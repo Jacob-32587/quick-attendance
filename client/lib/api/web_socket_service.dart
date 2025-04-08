@@ -26,21 +26,15 @@ abstract class WebSocketService extends GetxService {
           .build(),
     );
     socket.onConnect((_) {
-      isConnected.value = true;
-      isConnecting.value = false;
-      hasAttemptedConnection.value = true;
+      socketConnectionState.value = SocketConnectionState.connected;
       Get.log("Websocket connected");
     });
     socket.onConnectError((err) {
-      isConnected.value = false;
-      isConnecting.value = false;
-      hasAttemptedConnection.value = true;
+      socketConnectionState.value = SocketConnectionState.failedToConnect;
       Get.log("Websocket failed to connect");
     });
     socket.onDisconnect((_) {
-      isConnected.value = false;
-      isConnecting.value = false;
-      hasAttemptedConnection.value = true;
+      socketConnectionState.value = SocketConnectionState.disconnected;
       Get.log("Websocket disconnected");
     });
 
