@@ -1,12 +1,19 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:get/get.dart';
 
+enum SocketConnectionState {
+  notConnected,
+  isConnecting,
+  connected,
+  failedToConnect,
+  disconnected,
+}
+
 abstract class WebSocketService extends GetxService {
   late final io.Socket socket;
 
-  final RxBool isConnecting = false.obs;
-  final RxBool hasAttemptedConnection = false.obs;
-  final RxBool isConnected = false.obs;
+  final Rx<SocketConnectionState> socketConnectionState =
+      SocketConnectionState.notConnected.obs;
 
   void connectToServer({required String url}) {
     socket = io.io(
@@ -29,7 +36,7 @@ abstract class WebSocketService extends GetxService {
       isConnecting.value = false;
       hasAttemptedConnection.value = true;
       Get.log("Websocket failed to connect");
-    });``
+    });
     socket.onDisconnect((_) {
       isConnected.value = false;
       isConnecting.value = false;
@@ -38,11 +45,13 @@ abstract class WebSocketService extends GetxService {
     });
 
     // Register listeners before connecting the socket incase we get immediate events
-    _registerListeners();
+    registerListeners();
     socket.connect();
   }
 
-  void _registerListeners();
+  /// Register listeners to the socket. This method is invoked before the socket
+  /// attempts to connect. You can reference the socket in sub-classes using `socket`
+  void registerListeners();
 
   // Example request
   void sendMessage({required String groupCode}) {
