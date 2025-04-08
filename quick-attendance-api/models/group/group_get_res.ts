@@ -10,5 +10,6 @@ export interface GroupGetRes {
   group_name: string;
   group_description: string | null;
   current_attendance_id: Uuid | null;
+  last_attendance_date: Date | null;
   event_count: number;
 }
