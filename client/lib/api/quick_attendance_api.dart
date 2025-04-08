@@ -14,7 +14,7 @@ class QuickAttendanceApi extends GetxService {
 
   @override
   void onInit() {
-    ever(domainAndPort, (newDomainAndPort) => {
+    ever(domainAndPort, (newDomainAndPort) {
       apiClient.baseUrl = "http://$newDomainAndPort/quick-attendance-api";
     });
 
@@ -132,4 +132,28 @@ class QuickAttendanceApi extends GetxService {
     );
     return apiResponse;
   }
+
+  Future<ApiResponse<Null>> getWeeklyGroupAttendance({
+    required String? groupId,
+    required DateTime? date,
+  }) async {
+    final Response response = await apiClient.get(
+      "/auth/attendance/group",
+      query: {
+        "group_id": groupId,
+        "year_num": date?.year,
+        "month_num": date?.month,
+        "day_num": date?.day,
+      },
+    );
+
+    // TODO: Make a model for this response type and return it
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
+
+  // TODO: Make a route for getting the authenticated USER's weekly attendance.
 }
