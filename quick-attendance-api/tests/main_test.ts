@@ -58,10 +58,14 @@ export const user_array = [
   user_indie_conway,
 ];
 
-export async function create_and_login_test_users(test_num: number) {
+export async function create_and_login_test_users(
+  test_num: number,
+  user_array_override?: AccountPostReq[],
+) {
   const create_user_promises: Promise<Response>[] = [];
+  const users_to_create = user_array_override ?? user_array;
   // Create test user accounts
-  for (const user of user_array) {
+  for (const user of users_to_create) {
     create_user_promises.push(
       test_fetch(ACCOUNT_URL(test_num), {
         headers: {
@@ -78,7 +82,7 @@ export async function create_and_login_test_users(test_num: number) {
   // Login users
   const login_user_promises: Promise<Response>[] = [];
   const user_jwts = new Map<string, string>();
-  for (const user of user_array) {
+  for (const user of users_to_create) {
     login_user_promises.push(
       test_fetch(ACCOUNT_URL(test_num) + "/login", {
         headers: {
@@ -107,12 +111,11 @@ export async function create_and_login_test_users(test_num: number) {
 
   await Promise.all(login_user_promises);
 
-  return [
-    user_jwts.get(user_rocco_mason.email) ?? assertNever(),
-    user_jwts.get(user_maeve_berg.email) ?? assertNever(),
-    user_jwts.get(user_henrik_wright.email) ?? assertNever(),
-    user_jwts.get(user_indie_conway.email) ?? assertNever(),
-  ];
+  for()
+
+  user_jwts.entries().map((x, i) => users_to_create[i])
+
+  return user_jwts.values().toArray();
 }
 
 export async function get_users_accounts(jwts: string[], test_num: number) {
