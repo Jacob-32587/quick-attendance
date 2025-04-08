@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/public_user_model.dart';
 import 'package:quick_attendance/pages/attendance_group/components/display_users.dart';
-import 'package:quick_attendance/pages/attendance_group/components/group_page.dart';
 import 'package:quick_attendance/pages/attendance_group/components/group_scroll_view.dart';
 import 'package:quick_attendance/pages/attendance_group/components/invite_user_popup.dart';
+import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 
 class GroupAttendeesScreen extends StatelessWidget {
   late final GroupController _controller = Get.find();

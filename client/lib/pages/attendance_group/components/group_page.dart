@@ -1,61 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/api/_api_client.dart';
-import 'package:quick_attendance/api/quick_attendance_api.dart';
-import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/pages/attendance_group/attendance_session_screen.dart';
 import 'package:quick_attendance/pages/attendance_group/attendees_screen.dart';
+import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 import 'package:quick_attendance/pages/attendance_group/group_home_screen.dart';
-
-/// Handles the logic for retrieving group information
-class GroupController extends GetxController {
-  late final QuickAttendanceApi _api = Get.find();
-  late final GroupController groupController;
-  String? get groupId => group.value?.groupId.value;
-  final RxBool isLoadingGroup = RxBool(true);
-  final RxBool isEditingGroup = RxBool(false);
-  final RxBool hasLoadedGroup = RxBool(false);
-
-  /// The active group being accessed
-  final group = Rxn<GroupModel>();
-
-  /// Fetch group information for the provided group id
-  void fetchGroup(String? groupId) async {
-    if (groupId == null) {
-      isLoadingGroup.value = false;
-      return;
-    }
-    isLoadingGroup.value = true;
-    final group = await _api.getGroup(groupId: groupId);
-    if (group == null) {
-      this.group.value = null;
-    } else {
-      this.group.value = group;
-    }
-    hasLoadedGroup.value = true;
-    isLoadingGroup.value = false;
-  }
-
-  Future<ApiResponse<Null>?> inviteUserToGroup(
-    String username,
-    bool inviteAsManager,
-  ) async {
-    if (groupId == null) {
-      return null;
-    }
-    return await _api.inviteUserToGroup(
-      username: username,
-      groupId: groupId!,
-      inviteAsManager: inviteAsManager,
-    );
-  }
-}
 
 /// The parent page for attendance group pages which
 /// handles navigation between them.
-class GroupPage extends StatelessWidget {
-  late final GroupController _controller = Get.put(GroupController());
-
+class GroupPage extends UrlGroupPage {
   final RxInt _currentIndex = 1.obs;
 
   GroupPage({super.key});
@@ -74,13 +26,7 @@ class GroupPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final String? groupId = Get.parameters["groupId"];
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (groupId != _controller.groupId) {
-        _controller.fetchGroup(groupId);
-      }
-    });
+  Widget buildWithController(BuildContext context, GroupController controller) {
     return Obx(
       () => Scaffold(
         body: PageView(
@@ -89,11 +35,11 @@ class GroupPage extends StatelessWidget {
           children: [
             GroupAttendeesScreen(),
             GroupHomeScreen(),
-            GroupAttendanceSessionScreen(group: _controller.group),
+            GroupAttendanceSessionScreen(group: controller.group),
           ],
         ),
         bottomNavigationBar:
-            _controller.group.value == null
+            controller.group.value == null
                 ? null
                 : BottomNavigationBar(
                   currentIndex: _currentIndex.value,
