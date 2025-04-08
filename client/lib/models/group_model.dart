@@ -72,6 +72,7 @@ final class GroupModel extends BaseApiModel<GroupModel> {
       "group_id": groupId.value,
       "group_name": name.value,
       "group_description": description.value,
+      "current_attendance_id": currentAttendanceId.value,
     };
   }
 }
