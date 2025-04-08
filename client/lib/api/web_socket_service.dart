@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 abstract class WebSocketService extends GetxService {
   late final io.Socket socket;
 
+  final RxBool isConnecting = false.obs;
+  final RxBool hasAttemptedConnection = false.obs;
   final RxBool isConnected = false.obs;
 
   void connectToServer({required String url}) {
@@ -18,10 +20,20 @@ abstract class WebSocketService extends GetxService {
     );
     socket.onConnect((_) {
       isConnected.value = true;
+      isConnecting.value = false;
+      hasAttemptedConnection.value = true;
       Get.log("Websocket connected");
     });
+    socket.onConnectError((err) {
+      isConnected.value = false;
+      isConnecting.value = false;
+      hasAttemptedConnection.value = true;
+      Get.log("Websocket failed to connect");
+    });``
     socket.onDisconnect((_) {
       isConnected.value = false;
+      isConnecting.value = false;
+      hasAttemptedConnection.value = true;
       Get.log("Websocket disconnected");
     });
 
