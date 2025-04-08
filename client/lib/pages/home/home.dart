@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/instance_manager.dart';
 import 'package:get/state_manager.dart';
 import 'package:quick_attendance/controllers/home_controller.dart';
+import 'package:quick_attendance/pages/auth/auth_gate.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 import 'package:quick_attendance/pages/home/history_screen.dart';
 import 'package:quick_attendance/pages/home/home_screen.dart';
@@ -44,48 +45,50 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => Scaffold(
-        body: PageView(
-          controller: pageController,
-          onPageChanged: onPageChanged,
-          children: _pages,
-        ),
-        floatingActionButton:
-            _pages[controller.currentIndex.value] is HasFloatingActionButton
-                ? (_pages[controller.currentIndex.value]
-                        as HasFloatingActionButton)
-                    .buildFAB(context)
-                : null,
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: controller.currentIndex.value,
-          onTap: changePage,
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
-          unselectedItemColor: Theme.of(context).colorScheme.onSurface,
-          enableFeedback: true,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.history),
-              label: "History",
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.calendar_today_rounded),
-              label: "Attend",
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home),
-              label: "Home",
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.group),
-              label: "Manage",
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.person),
-              label: "Profile",
-            ),
-          ],
+    return AuthGate(
+      page: Obx(
+        () => Scaffold(
+          body: PageView(
+            controller: pageController,
+            onPageChanged: onPageChanged,
+            children: _pages,
+          ),
+          floatingActionButton:
+              _pages[controller.currentIndex.value] is HasFloatingActionButton
+                  ? (_pages[controller.currentIndex.value]
+                          as HasFloatingActionButton)
+                      .buildFAB(context)
+                  : null,
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: controller.currentIndex.value,
+            onTap: changePage,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            selectedItemColor: Theme.of(context).colorScheme.primary,
+            unselectedItemColor: Theme.of(context).colorScheme.onSurface,
+            enableFeedback: true,
+            items: [
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.history),
+                label: "History",
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.calendar_today_rounded),
+                label: "Attend",
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.home),
+                label: "Home",
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.group),
+                label: "Manage",
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.person),
+                label: "Profile",
+              ),
+            ],
+          ),
         ),
       ),
     );

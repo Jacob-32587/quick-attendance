@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
+import 'package:quick_attendance/pages/home/components/create_group_popup.dart';
 import 'package:quick_attendance/pages/home/components/display_groups.dart';
 import 'package:quick_attendance/pages/home/components/has_floating_action_button.dart';
 
@@ -24,7 +25,7 @@ class ManagedGroupsScreen extends StatelessWidget
   Widget buildFAB(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
-        _profileController.createGroup();
+        showCreateGroupPopup(context);
       },
       child: const Icon(Icons.add),
     );
