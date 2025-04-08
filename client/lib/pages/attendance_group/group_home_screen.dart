@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/components/binary_choice.dart';
+import 'package:quick_attendance/components/alert_button.dart';
+import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
-import 'package:quick_attendance/pages/attendance_group/components/group_page.dart';
 import 'package:quick_attendance/pages/attendance_group/components/group_scroll_view.dart';
+import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 
 class GroupHomeScreen extends StatelessWidget {
   late final GroupController _controller = Get.find();
@@ -104,6 +106,12 @@ class _GroupDetailsScreen extends StatelessWidget {
                         controller.group.value?.description.value ?? "",
                         style: TextStyle(fontSize: 16),
                       ),
+                    ),
+                    AlertButton(
+                      showAlert: true.obs,
+                      isLoading: true.obs,
+                      text: "Attend",
+                      onPressed: () {},
                     ),
                   ],
                 ),
