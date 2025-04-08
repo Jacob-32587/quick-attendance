@@ -3,10 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
-import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
-import 'package:quick_attendance/pages/attendance_group/components/group_page.dart';
+import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 
 /// Based on the width of the screen, shows a modal or popover
 /// which contains a form to join a group
