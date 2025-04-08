@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:quick_attendance/api/quick_attendance_websocket.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/home_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
-import 'package:quick_attendance/middleware/auth_middleware.dart';
+import 'package:quick_attendance/pages/attendance_group/attend_group_page.dart';
 import 'package:quick_attendance/pages/attendance_group/camera_page.dart';
-import 'package:quick_attendance/pages/attendance_group/group_page.dart';
+import 'package:quick_attendance/pages/attendance_group/group_page_auth.dart';
 import 'package:quick_attendance/pages/auth/login.dart';
 import 'package:quick_attendance/pages/auth/signup.dart';
 import 'package:quick_attendance/pages/home/home.dart';
@@ -17,6 +18,7 @@ void main() {
   Get.put(ProfileController());
   Get.put(HomeController());
   Get.put(QuickAttendanceApi());
+  Get.put(QuickAttendanceWebsocket());
   runApp(const MyApp());
 }
 
@@ -49,23 +51,16 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: "/",
       getPages: [
-        GetPage(
-          name: "/",
-          page: () => HomePage(),
-          middlewares: [AuthMiddleware()],
-        ),
+        GetPage(name: "/", page: () => HomePage()),
         GetPage(name: "/signup/", page: () => Signup()),
         GetPage(name: "/login/", page: () => Login()),
-        GetPage(
-          name: "/group/:groupId/",
-          page: () => GroupPage(),
-          middlewares: [AuthMiddleware()],
-        ),
+        GetPage(name: "/group/:groupId/", page: () => GroupPageAuth()),
         GetPage(
           name: "/capture-attendance",
           page: () => CameraPage(),
           middlewares: [],
         ),
+        GetPage(name: "/group/:groupId/attend", page: () => AttendGroupAuth()),
       ],
     );
   }

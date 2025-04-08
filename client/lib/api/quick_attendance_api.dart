@@ -2,12 +2,24 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
+import 'package:quick_attendance/models/group_settings_model.dart';
 import 'package:quick_attendance/models/responses/login_response.dart';
 import 'package:quick_attendance/models/user_model.dart';
 
-/// The client for sending requests to the Attenda Scan API
-class QuickAttendanceApi {
+/// The client for sending requests to the Quick Attendance API
+class QuickAttendanceApi extends GetxService {
+  /// The dynamic domain and port to support demo
+  final RxString domainAndPort = "localhost:8080".obs;
   final apiClient = BaseApiClient("http://localhost:8080/quick-attendance-api");
+
+  @override
+  void onInit() {
+    ever(domainAndPort, (newDomainAndPort) {
+      apiClient.baseUrl = "http://$newDomainAndPort/quick-attendance-api";
+    });
+
+    super.onInit();
+  }
 
   /// Example
   Future<Response> getData({required String groupCode}) async {
@@ -90,9 +102,12 @@ class QuickAttendanceApi {
   Future<ApiResponse<GroupModel>> createGroup({
     required String groupName,
     String? groupDescription,
+    GroupSettingsModel? settings,
   }) async {
     final Response response = await apiClient.post("/auth/group", {
       "group_name": groupName,
+      "group_description": groupDescription,
+      "unique_id_settings": settings?.toJson(),
     });
     final apiResponse = ApiResponse(
       statusCode: HttpStatusCode.from(response.statusCode),
@@ -100,4 +115,45 @@ class QuickAttendanceApi {
     );
     return apiResponse;
   }
+
+  Future<ApiResponse<Null>> inviteUserToGroup({
+    required String username,
+    required String groupId,
+    required bool inviteAsManager,
+  }) async {
+    final Response response = await apiClient.put("/auth/group/invite", {
+      "usernames": [username],
+      "group_id": groupId,
+      "is_manager_invite": inviteAsManager,
+    });
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
+
+  Future<ApiResponse<Null>> getWeeklyGroupAttendance({
+    required String? groupId,
+    required DateTime? date,
+  }) async {
+    final Response response = await apiClient.get(
+      "/auth/attendance/group",
+      query: {
+        "group_id": groupId,
+        "year_num": date?.year,
+        "month_num": date?.month,
+        "day_num": date?.day,
+      },
+    );
+
+    // TODO: Make a model for this response type and return it
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
+
+  // TODO: Make a route for getting the authenticated USER's weekly attendance.
 }

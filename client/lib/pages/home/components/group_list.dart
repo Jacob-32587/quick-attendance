@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/components/generic_list_widget.dart';
 import 'package:quick_attendance/models/group_model.dart';
 
 class GroupList extends StatelessWidget {
@@ -31,33 +32,16 @@ class GroupList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        isListView
-            ? Obx(
-              () => ListView.builder(
-                shrinkWrap: true,
-                itemCount: groupCount,
-                itemBuilder: (context, index) {
-                  final group = filteredGroups[index];
-                  return _GroupCard(group: group, isListView: isListView);
-                },
-              ),
-            )
-            : Obx(
-              () => GridView.builder(
-                shrinkWrap: true,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 3,
-                ),
-                itemCount: filteredGroups.length,
-                itemBuilder: (context, index) {
-                  final group = filteredGroups[index];
-                  return _GroupCard(group: group, isListView: isListView);
-                },
-              ),
-            ),
+        GenericListWidget(
+          isListView: isListView,
+          itemCount: groupCount,
+          buildListItem: (context, idx, isListView) {
+            return _GroupCard(
+              group: filteredGroups[idx],
+              isListView: isListView,
+            );
+          },
+        ),
         Obx(() {
           if (areGroupsHidden) {
             return TextButton(
