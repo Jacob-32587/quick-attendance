@@ -15,16 +15,25 @@ abstract class WebSocketService extends GetxService {
   final Rx<SocketConnectionState> socketConnectionState =
       SocketConnectionState.notConnected.obs;
 
-  void connectToServer({required String url}) {
-    socket = io.io(
-      url,
-      io.OptionBuilder()
-          .setTransports(["websocket"])
-          .setReconnectionAttempts(3)
-          .setReconnectionDelay(500)
-          .setTimeout(5000)
-          .build(),
-    );
+  /// Builds default socket options such as timeout and reconnect attempts.
+  /// Also adds socket listeners that manage the `socketConnectionState`.
+  /// Add your own listeners by overriding `registerListeners`.
+  void connectToServer({
+    required String url,
+
+    /// Override the default socket options
+    io.OptionBuilder Function(io.OptionBuilder defaultOptions)? optionBuilder,
+  }) {
+    io.OptionBuilder socketOptions = io.OptionBuilder()
+        .setTransports(["websocket"])
+        .setReconnectionAttempts(3)
+        .setReconnectionDelay(500)
+        .disableAutoConnect() // we will connect manually after adding listeners
+        .setTimeout(5000);
+    if (optionBuilder != null) {
+      socketOptions = optionBuilder(socketOptions);
+    }
+    socket = io.io(url, socketOptions.build());
     socket.onConnect((_) {
       socketConnectionState.value = SocketConnectionState.connected;
       Get.log("Websocket connected");
@@ -43,7 +52,7 @@ abstract class WebSocketService extends GetxService {
     socket.connect();
   }
 
-  /// Register listeners to the socket. This method is invoked before the socket
+  /// Add message listeners to the socket. This method is invoked before the socket
   /// attempts to connect. You can reference the socket in sub-classes using `socket`
   void registerListeners();
 
