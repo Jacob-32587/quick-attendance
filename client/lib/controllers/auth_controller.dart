@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:jwt_decode/jwt_decode.dart';
@@ -12,9 +13,12 @@ class AuthController extends GetxController {
   final jwt = Rxn<String>();
   final jwtPayload = Rxn<JwtModel>();
 
+  /// Loading state for retrieving the JWT from storage
+  final isLoadingJwt = false.obs;
+
   /// The user ID that is stored in the JWT.
   String? get userId => jwtPayload.value?.userId;
-  bool get isJwtExpired {
+  Future<bool> isJwtExpired() async {
     if (jwtPayload.value == null) {
       return true;
     }
@@ -29,8 +33,14 @@ class AuthController extends GetxController {
 
   /// Tries to get the JWT stored on the device and load it into memory.
   Future<void> _tryGetJwt() async {
-    jwt.value = await _storage.read(key: "jwt_token");
+    isLoadingJwt.value = true;
+    try {
+      jwt.value = await _storage.read(key: "jwt_token");
+    } catch (e) {
+      /// Ignore the exception
+    }
     _processSavedJwt();
+    isLoadingJwt.value = false;
   }
 
   void _processSavedJwt() {
@@ -47,15 +57,22 @@ class AuthController extends GetxController {
     } catch (e) {
       Get.snackbar(
         "Failed to Login",
-        "The response from the server was not processable.",
+        "The token was not processable.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
     }
   }
 
   Future<void> saveJwt(String? token) async {
     jwt.value = token;
-    await _storage.write(key: "jwt_token", value: token);
-    _processSavedJwt();
+    try {
+      await _storage.write(key: "jwt_token", value: token);
+      _processSavedJwt();
+    } catch (e) {
+      // Ignore the exception
+    }
   }
 
   void logout() {

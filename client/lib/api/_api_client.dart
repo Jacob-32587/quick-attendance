@@ -66,6 +66,7 @@ enum HttpStatusCode {
   unauthorized(401),
   forbidden(403),
   notFound(404),
+  conflict(409),
   internalServerError(500),
   unrecognizedResponseCode(-1);
 

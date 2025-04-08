@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer_list.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/group_model.dart';
-import 'package:quick_attendance/pages/home/components/group_header.dart';
+import 'package:quick_attendance/components/group_header.dart';
 import 'package:quick_attendance/pages/home/components/group_list.dart';
 
 /// Widget that combines several components to handle the rendering of groups,
@@ -33,7 +33,7 @@ class DisplayGroups extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GroupHeader(
+        ListHeader(
           title: title,
           children: [
             // Only display the list view preference button if there are groups
@@ -56,8 +56,7 @@ class DisplayGroups extends StatelessWidget {
           ],
         ),
         Obx(() {
-          if (_profileController.hasLoadedGroups.value &&
-              hasAnyGroups == false) {
+          if (hasLoaded.value && hasAnyGroups == false) {
             return Text(
               emptyMessage,
               textAlign: TextAlign.start,
@@ -71,7 +70,7 @@ class DisplayGroups extends StatelessWidget {
         }),
         Obx(
           () => SkeletonShimmerList(
-            isLoading: isLoading.value,
+            isLoading: isLoading,
             isListView: _profileController.prefersListView,
             widget: GroupList(
               groups: groups,
