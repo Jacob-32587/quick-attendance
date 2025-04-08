@@ -7,7 +7,7 @@ import 'package:quick_attendance/models/responses/login_response.dart';
 import 'package:quick_attendance/models/user_model.dart';
 
 /// The client for sending requests to the Attenda Scan API
-class QuickAttendanceApi {
+class QuickAttendanceApi extends GetxService {
   final apiClient = BaseApiClient("http://localhost:8080/quick-attendance-api");
 
   /// Example
