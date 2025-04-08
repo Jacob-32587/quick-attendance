@@ -13,15 +13,9 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container( 
-      decoration: BoxDecoration(
-      border: Border.all(
-        color: Colors.white, // Border color
-        width: 1, // Border width
-      ),
-      borderRadius: BorderRadius.circular(8),
-      ),
+      width: 500,
       padding: EdgeInsets.all(16.0),
-      child: Column(
+      child: Row(
         children: [
           CircleAvatar(
             radius: 40,
@@ -42,20 +36,14 @@ class ProfileHeader extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height:10),
+          SizedBox(width: 10),
           Text(
             name,
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 5),
+          SizedBox(width:10),
           Text(
-            "Username: $user",
-            textAlign: TextAlign.left,
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-          ),
-          SizedBox(height: 5),
-          Text(
-            "Email: $email",
+            "($user)",
             textAlign: TextAlign.left,
             style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),

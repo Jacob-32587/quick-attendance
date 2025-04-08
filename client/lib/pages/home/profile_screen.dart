@@ -4,6 +4,7 @@ import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/pages/home/components/profile_header.dart';
+import 'package:quick_attendance/pages/home/components/profile_info.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -37,7 +38,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 email: '${profileController.email}',
               ),
             ),
-          PrimaryButton(text: "Logout", onPressed: authController.logout),
+            Container(
+              padding: EdgeInsets.all(16.0),
+              alignment: Alignment.center,
+              child: ProfileInfo(
+                name: '${profileController.firstName} ${profileController.lastName}',
+                user: '${profileController.username}',
+                email: '${profileController.email}',
+              )
+            ),
+            PrimaryButton(text: "Logout", onPressed: authController.logout),
           ]
         ),
       );
