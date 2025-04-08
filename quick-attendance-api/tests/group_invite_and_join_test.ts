@@ -60,6 +60,94 @@ const user_grayson_patterson = {
   password: "Gr@ys0n#P@tt3r$on99!",
 };
 
+const user_jane_doe = {
+  username: "jane.doe789",
+  email: "jane.doe789@examplemail.com",
+  first_name: "Jane",
+  last_name: "Doe",
+  password: "password123!",
+};
+
+const user_john_smith = {
+  username: "john_smith_2024",
+  email: "john.smith2024@domainmail.com",
+  first_name: "John",
+  last_name: "Smith",
+  password: "securePass2025",
+};
+
+const user_mary_jones = {
+  username: "mary_jones_abc",
+  email: "mary_jones1234@mailservice.com",
+  first_name: "Mary",
+  last_name: "Jones",
+  password: "mypassword567",
+};
+
+const user_robert_johnson = {
+  username: "r.johnson_101",
+  email: "robert.johnson_101@webmail.com",
+  first_name: "Robert",
+  last_name: "Johnson",
+  password: "robert1234!",
+};
+
+const user_alice_williams = {
+  username: "alice_williams_2020",
+  email: "alice_w2020@outlook.com",
+  first_name: "Alice",
+  last_name: "Williams",
+  password: "alicepass987",
+};
+
+const user_emily_clark = {
+  username: "emily_clark93",
+  email: "emily.clark93@randommail.org",
+  first_name: "Emily",
+  last_name: "Clark",
+  password: "emilySecure@2023",
+};
+
+const user_michael_brown = {
+  username: "michael_brown_22",
+  email: "michael.brown22@mailbox.com",
+  first_name: "Michael",
+  last_name: "Brown",
+  password: "michael2025pass",
+};
+
+const user_lisa_martinez = {
+  username: "lisa_martinez_88",
+  email: "lisa.martinez88@mydomain.net",
+  first_name: "Lisa",
+  last_name: "Martinez",
+  password: "lisaSecret@88",
+};
+
+const user_nick_taylor = {
+  username: "nick_taylor_555",
+  email: "nick_taylor555@protonmail.com",
+  first_name: "Nick",
+  last_name: "Taylor",
+  password: "nickpassword555",
+};
+
+const user_katherine_lee = {
+  username: "katherine_lee_777",
+  email: "katherine.lee777@fastmail.com",
+  first_name: "Katherine",
+  last_name: "Lee",
+  password: "kathlee1234",
+};
+
+const user_oliver_garcia = {
+  username: "oliver.garcia_101",
+  email: "oliver_garcia101@yahoo.com",
+  first_name: "Oliver",
+  last_name: "Garcia",
+  password: "oliverGarcia@101",
+};
+
 export const user_array = [
   user_luca_richard,
   user_mabel_terrel,
@@ -68,6 +156,17 @@ export const user_array = [
   user_kylie_mccoy,
   user_selene_fernadez,
   user_grayson_patterson,
+  user_jane_doe,
+  user_john_smith,
+  user_mary_jones,
+  user_robert_johnson,
+  user_alice_williams,
+  user_emily_clark,
+  user_michael_brown,
+  user_lisa_martinez,
+  user_nick_taylor,
+  user_katherine_lee,
+  user_oliver_garcia,
 ];
 
 // Ensure users can be invited to groups and accept invites
@@ -107,11 +206,6 @@ Deno.test(
       //#endregion
 
       //#region Create more users, another group and invite and accept
-      // await test_fetch_json(GROUP_AUTH_URL(test_num), "POST", owner_jwt, {
-      //   "group_name": "Rocco's group of friends",
-      //   "group_description":
-      //     "Rocco's close group of friends, I want to track when I'm with my friends.",
-      // } as GroupPostReq);
       //#endregion
     });
 

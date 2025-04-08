@@ -162,10 +162,12 @@ if (port_num === 8080) {
   // Attempt and find the users ip addresss on their local network
   const address = Deno.networkInterfaces().find((x) =>
     (x.address.startsWith("192.168.") ||
-        x.address.startsWith("172.")) &&
+      x.address.startsWith("172.")) &&
+    (
       x.name.startsWith("en") ||
-    x.name.startsWith("wl") ||
-    x.name.startsWith("Wi-Fi")
+      x.name.startsWith("wl") ||
+      x.name.startsWith("Wi-Fi")
+    )
   )?.address;
 
   // If we are able to find an address print a QR code and the ip address to the command line
