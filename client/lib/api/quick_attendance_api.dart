@@ -152,8 +152,6 @@ class QuickAttendanceApi extends GetxService {
       query: query,
     );
 
-    print("Got attendance data (${response.statusCode})");
-
     final apiResponse = ApiResponse<GroupAttendanceResponse>(
       statusCode: HttpStatusCode.from(response.statusCode),
       body: GroupAttendanceResponse.fromJson(response.body),
