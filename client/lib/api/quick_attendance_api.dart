@@ -3,6 +3,7 @@ import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/models/group_settings_model.dart';
+import 'package:quick_attendance/models/responses/group_attendance_response.dart';
 import 'package:quick_attendance/models/responses/login_response.dart';
 import 'package:quick_attendance/models/user_model.dart';
 
@@ -15,7 +16,6 @@ class QuickAttendanceApi extends GetxService {
   @override
   void onInit() {
     ever(domainAndPort, (newDomainAndPort) {
-      print("Updated address");
       apiClient.httpClient.baseUrl =
           "http://$newDomainAndPort/quick-attendance-api";
     });
@@ -135,7 +135,7 @@ class QuickAttendanceApi extends GetxService {
     return apiResponse;
   }
 
-  Future<ApiResponse<Null>> getWeeklyGroupAttendance({
+  Future<ApiResponse<GroupAttendanceResponse>> getWeeklyGroupAttendance({
     required String? groupId,
     required DateTime? date,
   }) async {
@@ -143,16 +143,17 @@ class QuickAttendanceApi extends GetxService {
       "/auth/attendance/group",
       query: {
         "group_id": groupId,
-        "year_num": date?.year,
-        "month_num": date?.month,
-        "day_num": date?.day,
+        "year_num": date?.year.toString(),
+        "month_num": date?.month.toString(),
+        "day_num": date?.day.toString(),
       },
     );
 
-    // TODO: Make a model for this response type and return it
-    final apiResponse = ApiResponse<Null>(
+    print("Got attendance data (${response.statusCode})");
+
+    final apiResponse = ApiResponse<GroupAttendanceResponse>(
       statusCode: HttpStatusCode.from(response.statusCode),
-      body: null,
+      body: GroupAttendanceResponse.fromJson(response.body),
     );
     return apiResponse;
   }
