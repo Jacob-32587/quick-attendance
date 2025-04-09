@@ -6,5 +6,9 @@ export interface AttendanceUserGetRes {
 
 export interface AttendanceUserData {
   group: { group_id: Uuid; group_name: string };
-  attendance_records: ({ attendance_id: Uuid; attendance_time: Date; present: boolean })[];
+  attendance_records: ({
+    attendance_id: Uuid;
+    attendance_time: Date;
+    present: boolean;
+  })[];
 }
