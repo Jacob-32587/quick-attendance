@@ -3,12 +3,14 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/components/binary_choice.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
+import 'package:quick_attendance/models/group_attendance_view_model.dart';
 import 'package:quick_attendance/models/public_user_model.dart';
 import 'package:quick_attendance/models/responses/group_attendance_response.dart';
 import 'package:quick_attendance/pages/attendance_group/components/display_users.dart';
 import 'package:quick_attendance/pages/attendance_group/components/group_scroll_view.dart';
 import 'package:quick_attendance/pages/attendance_group/components/invite_user_popup.dart';
 import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
+import 'package:quick_attendance/util/time.dart';
 
 class GroupAttendeesScreen extends StatelessWidget {
   late final GroupController _controller = Get.find();
@@ -219,6 +221,12 @@ class _AttendanceSection extends StatelessWidget {
   final attendanceData = Rxn<GroupAttendanceResponse>();
   final RxBool failedToGetAttendance = false.obs;
 
+  GroupAttendanceViewModel? get activeAttendance =>
+      attendanceData.value?.attendance?[0];
+
+  DateTime? get activeDate => activeAttendance?.attendanceTime.value;
+  String get formattedDate => formatDate(activeDate);
+
   _AttendanceSection({required this.controller}) {
     getAttendance();
   }
@@ -240,11 +248,16 @@ class _AttendanceSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        DisplayUsers(
-          isLoading: controller.isLoadingAttendance,
-          hasLoaded: controller.hasLoadedAttendance,
-          emptyMessage: "No members attended this session.",
-          users: attendanceData.value?.attendance?[0].attendees,
+        Obx(
+          () => DisplayUsers(
+            title: "Attendees on $formattedDate",
+            isLoading: controller.isLoadingAttendance,
+            hasLoaded: controller.hasLoadedAttendance,
+            emptyMessage: "No members attended this session.",
+            users: attendanceData.value?.attendance?[0].attendees,
+            displayLoadingTitle: true,
+            displayAttended: true,
+          ),
         ),
       ],
     );
