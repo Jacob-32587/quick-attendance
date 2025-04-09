@@ -1,15 +1,19 @@
+import { AccountInviteActionPutReq } from "../models/account/account_invite_accept_put_req.ts";
 import { AccountPostReq } from "../models/account/account_post_req.ts";
 import { GroupInvitePutReq } from "../models/group/group_invite_put_req.ts";
 import HttpStatusCode from "../util/http_status_code.ts";
 import { cleanup_test_step, init_test_step, test_fetch_json } from "../util/testing.ts";
 import {
+  ACCOUNT_AUTH_URL,
   create_and_login_test_users,
   create_users_and_group,
+  get_users_accounts,
   get_users_groups_and_accounts,
   GROUP_AUTH_URL,
   URL,
 } from "./main_test.ts";
 
+//#region additonal users
 const user_luca_richard = {
   username: "luca_richard93",
   email: "luca.richard93@domain.com",
@@ -168,7 +172,7 @@ export const user_array = [
   user_katherine_lee,
   user_oliver_garcia,
 ];
-
+//#endregion
 // Ensure users can be invited to groups and accept invites
 Deno.test(
   "Creates a group",
@@ -178,6 +182,8 @@ Deno.test(
     await t.step("test", async (_) => {
       const create_group_ret = await create_users_and_group(test_num);
       const additonal_users = await create_and_login_test_users(test_num, user_array);
+      let additonal_user_accounts = await get_users_accounts(additonal_users, test_num);
+
       const [rocco, maeve, henrik, indie] = await get_users_groups_and_accounts(
         create_group_ret.user_jwts,
         create_group_ret.group_id,
@@ -204,8 +210,22 @@ Deno.test(
         false,
       );
       //#endregion
+      //#region Invite more membes to Rocco's group and they accept
 
-      //#region Create more users, another group and invite and accept
+      await test_fetch_json(GROUP_AUTH_URL(test_num) + "/invite", "PUT", rocco.group.jwt, {
+        "usernames": additonal_user_accounts.map((x) => x.username),
+        "group_id": rocco.group.group_id,
+        "is_manager_invite": false,
+      } as GroupInvitePutReq);
+
+      additonal_user_accounts = await get_users_accounts(additonal_users, test_num);
+
+      for (const user of additonal_user_accounts) {
+        await test_fetch_json(ACCOUNT_AUTH_URL(test_num) + "/invite", "PUT", user.jwt, {
+          account_invite_jwt: (user.fk_pending_group_ids ?? [])[0],
+          accept: true,
+        } as AccountInviteActionPutReq);
+      }
       //#endregion
     });
 

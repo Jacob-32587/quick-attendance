@@ -146,7 +146,8 @@ export function determine_user_type(entity: AccountEntity, group_id: Uuid) {
  */
 export async function get_accounts_by_usernames(user_names: string[]) {
   const account_keys = DbErr.err_on_any_empty_vals(
-    await kv.getMany<[string, Uuid][]>(
+    await KvHelper.get_many_return_empty<[string, Uuid]>(
+      kv,
       user_names.map((x) => ["account_by_username", x]),
     ),
     () => "A username was invalid",

@@ -111,11 +111,14 @@ export async function create_and_login_test_users(
 
   await Promise.all(login_user_promises);
 
-  for()
+  // Ensure JWT's are returned in the order users were specified
+  const ordered_jwts = [];
 
-  user_jwts.entries().map((x, i) => users_to_create[i])
+  for (let i = 0; i < users_to_create.length; i++) {
+    ordered_jwts.push(user_jwts.get(users_to_create[i].email) ?? assertNever());
+  }
 
-  return user_jwts.values().toArray();
+  return ordered_jwts;
 }
 
 export async function get_users_accounts(jwts: string[], test_num: number) {
