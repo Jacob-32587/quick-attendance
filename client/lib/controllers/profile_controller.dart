@@ -77,6 +77,26 @@ class ProfileController extends GetxController {
     user.value = UserModel();
   }
 
+  Future<void> updateUserAccount({
+    required String username,
+    required String email,
+    String? firstName,
+    String? lastName,
+  }) async {
+    final response = await _api.updateUserAccount({
+      'username': username,
+      'email': email,
+      'first_name': firstName,
+      'last_name': lastName,
+    });
+
+    if (response.statusCode == HttpStatusCode.ok) {
+      user.value = response.body;
+    } else {
+      // TODO: Show error message or log issue
+    }
+  }
+
   /// Get the groups the user owns, manages, or has joined from the server
   Future<void> fetchGroups() async {
     isLoadingGroups.value = true;

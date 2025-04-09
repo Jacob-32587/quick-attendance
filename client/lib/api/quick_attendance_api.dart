@@ -71,6 +71,15 @@ class QuickAttendanceApi extends GetxService {
     return apiResponse;
   }
 
+  Future<ApiResponse<UserModel>> updateUserAccount(Map<String, dynamic> data) async {
+    final Response response = await apiClient.put("/auth/account", data);
+    final apiResponse = ApiResponse<UserModel>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: UserModel.fromJson(response.body),
+    );
+    return apiResponse;
+}
+
   Future<GroupModel?> getGroup({required String groupId}) async {
     final Response response = await apiClient.get(
       "/auth/group",
