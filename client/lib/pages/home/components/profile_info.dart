@@ -20,7 +20,21 @@ class ProfileInfo extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       ),
       child: 
-        Text("Edit My Info"),
+        Column(
+          children: [
+            Text(
+              "Account Information",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Divider(
+              color: Colors.grey, // Line color
+              thickness: 1,       // Line thickness
+              indent: 5,         // Start padding
+              endIndent: 5,      // End padding
+            )
+          ]
+        ),
     );
   }
 }
