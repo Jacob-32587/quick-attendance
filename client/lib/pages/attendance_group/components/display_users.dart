@@ -14,7 +14,7 @@ class DisplayUsers extends StatelessWidget {
   final RxBool hasLoaded;
   final List<PublicUserModel>? users;
 
-  DisplayUsers({
+  const DisplayUsers({
     super.key,
     this.title = "",
     this.emptyMessage = "",
@@ -33,7 +33,9 @@ class DisplayUsers extends StatelessWidget {
       children: [
         ListHeader(title: title, children: []),
         Obx(() {
-          if (hasLoaded.value && hasAnyUsers == false) {
+          if (isLoading.value == false &&
+              hasLoaded.value &&
+              hasAnyUsers == false) {
             return Text(
               emptyMessage,
               textAlign: TextAlign.start,
