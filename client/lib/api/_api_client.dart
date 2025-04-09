@@ -8,7 +8,6 @@ class BaseApiClient extends GetConnect {
   BaseApiClient(String baseUrl) {
     this.baseUrl = baseUrl;
     defaultContentType = "application/json";
-
     httpClient.addRequestModifier<dynamic>((request) {
       request.headers["Authorization"] = "Bearer ${_authController.jwt.value}";
       return request;

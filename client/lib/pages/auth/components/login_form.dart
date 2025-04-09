@@ -55,9 +55,12 @@ class LoginForm extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              "Login",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            GestureDetector(
+              child: Text(
+                "Login",
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+              onLongPress: () => Get.toNamed("/manual-address"),
             ),
             SizedBox(height: 20),
             Obx(

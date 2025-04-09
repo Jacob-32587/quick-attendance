@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/api/_api_client.dart';
-import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
-import 'package:quick_attendance/models/responses/login_response.dart';
 import 'package:quick_attendance/pages/auth/components/login_form.dart';
 
 class Login extends StatefulWidget {

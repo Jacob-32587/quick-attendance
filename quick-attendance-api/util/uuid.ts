@@ -20,6 +20,13 @@ export function get_uuid_unix_time(uuid: Uuid) {
   );
 }
 
+export function get_maybe_uuid_time(uuid: Uuid | undefined | null) {
+  if (uuid === undefined || uuid === null) {
+    return uuid;
+  }
+  return get_uuid_time(uuid);
+}
+
 export function get_uuid_time(uuid: Uuid) {
   return new Date(get_uuid_unix_time(uuid));
 }
