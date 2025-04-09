@@ -24,6 +24,22 @@ export async function get_attendance_entity(group_id: Uuid, attendance_id: Uuid)
       `Unable to find attendance record with group_id = ${group_id}, attendance_id = ${attendance_id}`,
   );
 }
+
+export async function get_most_recent_attendance_entity(group_id: Uuid) {
+  return (await KvHelper.kv_iter_to_array(
+    kv.list<AttendanceEntity>({
+      prefix: [
+        "attendance",
+        group_id,
+      ],
+    }, {
+      reverse: true,
+      limit: 1,
+      batchSize: 1,
+    }),
+  )).at(0);
+}
+
 export function get_attendance_entities_for_week(
   group_id: Uuid,
   year: number,
