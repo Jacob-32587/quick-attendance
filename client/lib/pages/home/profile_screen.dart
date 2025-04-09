@@ -11,6 +11,7 @@ class ProfileScreen extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => _ProfileScreenState();
+  
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
@@ -22,7 +23,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Obx(() {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('My Profile'),
+          title: const Text(
+            'My Profile',
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+          ),
           elevation: 2.0,
           backgroundColor: Theme.of(context).colorScheme.surface,
           shadowColor: Theme.of(context).colorScheme.primary,
@@ -30,7 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         body: Column(
           children: [
             Container(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(10.0),
               alignment: Alignment.center,
               child: ProfileHeader(
                 name: '${profileController.firstName} ${profileController.lastName}',
@@ -39,14 +43,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             Container(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(10.0),
               alignment: Alignment.center,
               child: ProfileInfo(
-                name: '${profileController.firstName} ${profileController.lastName}',
+                firstName: '${profileController.firstName}',
+                lastName: '${profileController.lastName}',
                 user: '${profileController.username}',
                 email: '${profileController.email}',
+                groups: profileController.memberGroups
               )
             ),
+            SizedBox(height: 20),
             PrimaryButton(text: "Logout", onPressed: authController.logout),
           ]
         ),

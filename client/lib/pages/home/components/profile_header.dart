@@ -39,13 +39,13 @@ class ProfileHeader extends StatelessWidget {
           SizedBox(width: 10),
           Text(
             name,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
           ),
           SizedBox(width:10),
           Text(
             "($user)",
             textAlign: TextAlign.left,
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 22, color: Colors.grey[500]),
           ),
         ],
       )
