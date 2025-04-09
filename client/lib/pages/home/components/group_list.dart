@@ -32,15 +32,17 @@ class GroupList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GenericListWidget(
-          isListView: isListView,
-          itemCount: groupCount,
-          buildListItem: (context, idx, isListView) {
-            return _GroupCard(
-              group: filteredGroups[idx],
-              isListView: isListView,
-            );
-          },
+        Obx(
+          () => GenericListWidget(
+            isListView: isListView,
+            itemCount: groupCount,
+            buildListItem: (context, idx, isListView) {
+              return _GroupCard(
+                group: filteredGroups[idx],
+                isListView: isListView,
+              );
+            },
+          ),
         ),
         Obx(() {
           if (areGroupsHidden) {
