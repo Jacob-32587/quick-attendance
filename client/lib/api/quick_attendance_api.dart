@@ -6,6 +6,7 @@ import 'package:quick_attendance/models/group_settings_model.dart';
 import 'package:quick_attendance/models/responses/group_attendance_response.dart';
 import 'package:quick_attendance/models/responses/login_response.dart';
 import 'package:quick_attendance/models/user_model.dart';
+import 'package:quick_attendance/util/time.dart';
 
 /// The client for sending requests to the Quick Attendance API
 class QuickAttendanceApi extends GetxService {
@@ -139,14 +140,16 @@ class QuickAttendanceApi extends GetxService {
     required String? groupId,
     required DateTime? date,
   }) async {
+    Map<String, dynamic> query = {"group_id": groupId};
+    if (date != null) {
+      query["year_num"] = date.year.toString();
+      query["month_num"] = date.month.toString();
+      query["week_num"] = getWeekOfMonth(date);
+    }
+
     final Response response = await apiClient.get(
       "/auth/attendance/group",
-      query: {
-        "group_id": groupId,
-        "year_num": date?.year.toString(),
-        "month_num": date?.month.toString(),
-        "day_num": date?.day.toString(),
-      },
+      query: query,
     );
 
     print("Got attendance data (${response.statusCode})");
