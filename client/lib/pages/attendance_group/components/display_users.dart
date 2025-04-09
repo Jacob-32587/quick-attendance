@@ -12,7 +12,14 @@ class DisplayUsers extends StatelessWidget {
   final String emptyMessage;
   final RxBool isLoading;
   final RxBool hasLoaded;
+
+  /// Determines whether or not to show a shimmer on the title.
+  /// Useful if you are displaying information in the title that is loaded in.
+  final bool displayLoadingTitle;
   final List<PublicUserModel>? users;
+
+  /// Decides whether or not to add a tag saying they attended
+  final bool displayAttended;
 
   const DisplayUsers({
     super.key,
@@ -21,6 +28,8 @@ class DisplayUsers extends StatelessWidget {
     this.users,
     required this.isLoading,
     required this.hasLoaded,
+    this.displayAttended = false,
+    this.displayLoadingTitle = false,
   });
 
   bool get hasAnyUsers => users?.isEmpty == false;
@@ -31,7 +40,11 @@ class DisplayUsers extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        ListHeader(title: title, children: []),
+        ListHeader(
+          title: title,
+          isLoading: displayLoadingTitle ? isLoading : null,
+          children: [],
+        ),
         Obx(() {
           if (isLoading.value == false &&
               hasLoaded.value &&
