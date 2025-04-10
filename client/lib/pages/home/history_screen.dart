@@ -1,62 +1,102 @@
-import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
-import 'package:calendar_view/calendar_view.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer_list.dart';
+import 'package:infinite_calendar_view/infinite_calendar_view.dart';
 import 'package:quick_attendance/controllers/history_controller.dart';
+
+class _AttendanceEventData {
+  late String attendanceId;
+  late String groupId;
+  _AttendanceEventData({
+    required String attendanceId,
+    required String groupId,
+  }) {
+    this.attendanceId;
+    this.groupId;
+  }
+}
 
 class HistoryScreen extends StatelessWidget {
   final HistoryController _historyController = Get.find();
-  final EventController _calendarEventController = Get.find();
+  final EventsController _calendarEventController = Get.find();
 
   HistoryScreen({super.key});
 
   Future<void> onRefresh() async {
-    _historyController.attendanceHistory();
+    await _historyController.getAttendanceHistoryForWeek();
+    var events =
+        _historyController.attendanceHistory.value?.attendance
+            .map(
+              (x) => x.attendanceRecords.map(
+                (y) => _getCalendarEventData(
+                  x.groupName.value,
+                  x.groupId.value,
+                  y.attendanceTime.value,
+                  y.attendanceId.value,
+                ),
+              ),
+            )
+            .expand((e) => e)
+            .nonNulls
+            .toList() ??
+        [];
+    print(events);
+    _calendarEventController.updateCalendarData((z) {
+      var newEvents =
+          z.dayEvents.values
+              .expand((e) => e)
+              .where(
+                (x) =>
+                    events.any(
+                      (y) =>
+                          (y.data as _AttendanceEventData).attendanceId !=
+                          (x.data as _AttendanceEventData).attendanceId,
+                    ) !=
+                    true,
+              )
+              .toList();
+      if (newEvents.length <= 0) {
+        return;
+      }
+      return z.addEvents(newEvents);
+    });
+  }
+
+  Event? _getCalendarEventData(
+    String? groupName,
+    String? groupId,
+    DateTime? attendanceTime,
+    String? attendanceId,
+  ) {
+    if (groupName != null &&
+        attendanceTime != null &&
+        groupId != null &&
+        attendanceId != null) {
+      return Event(
+        title: groupName,
+        startTime: attendanceTime.toLocal(),
+        endTime: attendanceTime.add(const Duration(minutes: 60)).toLocal(),
+        data: _AttendanceEventData(
+          attendanceId: attendanceId,
+          groupId: groupId,
+        ),
+      );
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Attendance Calendar")),
-      body: SafeArea(
-        child: WeekView(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          headerStyle: HeaderStyle(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-            ),
+    onRefresh();
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: Scaffold(
+        appBar: AppBar(title: Text("Attendance Calendar")),
+        body: SafeArea(
+          child: EventsPlanner(
+            controller: _calendarEventController,
+            heightPerMinute: 0.9,
+            daysShowed: 3,
           ),
-          scrollPhysics: BouncingScrollPhysics(),
-          controller: _calendarEventController,
-          // showLiveTimeLineInAllDays:
-          //     true, // To display live time line in all pages in week view.
-          // // width: fl, // width of week view.
-          // minDay: DateTime(1990),
-          maxDay: DateTime.now(),
-          // initialDay: DateTime(2021),
-          heightPerMinute: 1, // height occupied by 1 minute time span.
-          // eventArranger:
-          //     SideEventArranger(), // To define how simultaneous events will be arranged.
-          // onEventTap: (events, date) => print(events),
-          // onEventDoubleTap: (events, date) => print(events),
-          // onDateLongPress: (date) => print(date),
-          // startDay: WeekDays.sunday, // To change the first day of the week.
-          // startHour: 5, // To set the first hour displayed (ex: 05:00)
-          // endHour: 20, // To set the end hour displayed
-          showVerticalLines: false, // Show the vertical line between days.
-          weekPageHeaderBuilder: WeekHeader.hidden, // To hide week header
-          showWeekDayAtBottom: false,
-          fullDayHeaderTitle: 'All day',
-          // fullDayHeaderTitle: 'All day', // To set full day events header title
-          // fullDayHeaderTextConfig: FullDayHeaderTextConfig(
-          //   textAlign: TextAlign.center,
-          //   textOverflow: TextOverflow.ellipsis,
-          //   maxLines: 2,
-          // ), // To set full day events header text config
-          // keepScrollOffset:
-          //     true, // To maintain scroll offset when the page changes
         ),
       ),
     );

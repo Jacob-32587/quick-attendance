@@ -161,6 +161,8 @@ class QuickAttendanceApi extends GetxService {
   Future<ApiResponse<AttendanceHistoryModel>> getWeeklyUserAttendance() async {
     final Response response = await apiClient.get("/auth/attendance/user");
 
+    print(response.body.toString());
+
     final apiResponse = ApiResponse<AttendanceHistoryModel>(
       statusCode: HttpStatusCode.from(response.statusCode),
       body: AttendanceHistoryModel.fromJson(response.body),

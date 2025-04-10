@@ -3,7 +3,7 @@ import 'package:quick_attendance/models/base_api_model.dart';
 
 final class AttendanceHistoryModel
     extends BaseApiModel<AttendanceHistoryModel> {
-  late final RxList<GroupData> attendance;
+  final attendance = RxList<GroupData>();
 
   AttendanceHistoryModel({List<GroupData>? attendance}) {
     this.attendance.addAll(attendance ?? []);
@@ -19,7 +19,7 @@ final class AttendanceHistoryModel
   factory AttendanceHistoryModel.fromJson(Map<String, dynamic>? json) {
     return AttendanceHistoryModel(
       attendance:
-          (json?["attendance_records"] as List<dynamic>?)
+          (json?["attendance"] as List<dynamic>?)
               ?.map((x) => GroupData.fromJson(x))
               .toList(),
     );
@@ -50,8 +50,8 @@ final class GroupData extends BaseApiModel<GroupData> {
 
   factory GroupData.fromJson(Map<String, dynamic>? json) {
     return GroupData(
-      groupId: json?["group_id"],
-      groupName: json?["group_name"],
+      groupId: json?["group"]["group_id"],
+      groupName: json?["group"]["group_name"],
       attendanceRecords:
           (json?["attendance_records"] as List<dynamic>?)
               ?.map((x) => AttendanceRecordData.fromJson(x))
@@ -62,12 +62,12 @@ final class GroupData extends BaseApiModel<GroupData> {
 
 final class AttendanceRecordData extends BaseApiModel<AttendanceRecordData> {
   final attendanceId = RxnString();
-  final attendanceTime = RxnString();
+  final attendanceTime = Rxn<DateTime>();
   final present = RxnBool();
 
   AttendanceRecordData({
     String? attendanceId,
-    String? attendanceTime,
+    DateTime? attendanceTime,
     bool? present,
   }) {
     this.attendanceId.value = attendanceId;
@@ -85,7 +85,7 @@ final class AttendanceRecordData extends BaseApiModel<AttendanceRecordData> {
   factory AttendanceRecordData.fromJson(Map<String, dynamic>? json) {
     return AttendanceRecordData(
       attendanceId: json?["attendance_id"],
-      attendanceTime: json?["attendanceTime"],
+      attendanceTime: DateTime.tryParse(json?["attendance_time"]),
       present: json?["present"],
     );
   }

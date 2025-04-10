@@ -24,7 +24,6 @@ class HistoryController extends GetxController {
     isLoadingHistory.value = true;
     final response = await _api.getWeeklyUserAttendance();
     if (response.statusCode == HttpStatusCode.ok) {
-      hasLoadedHistory.value = true;
       attendanceHistory.value = response.body;
     } else {
       // TODO: What should we do when this request fails

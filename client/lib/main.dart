@@ -1,6 +1,6 @@
-import 'package:calendar_view/calendar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:infinite_calendar_view/infinite_calendar_view.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/api/quick_attendance_websocket.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
@@ -23,7 +23,7 @@ void main() {
   Get.put(QuickAttendanceApi());
   Get.put(QuickAttendanceWebsocket());
   Get.put(HistoryController());
-  Get.put(EventController());
+  Get.put(EventsController());
   runApp(const MyApp());
 }
 
