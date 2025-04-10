@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:infinite_calendar_view/infinite_calendar_view.dart';
 import 'package:quick_attendance/controllers/history_controller.dart';
+import 'package:intl/intl.dart';
 
 class _AttendanceEventData {
   late String attendanceId;
@@ -10,14 +11,26 @@ class _AttendanceEventData {
     required String attendanceId,
     required String groupId,
   }) {
-    this.attendanceId;
-    this.groupId;
+    this.attendanceId = attendanceId;
+    this.groupId = groupId;
+  }
+
+  String getEventId() {
+    return attendanceId + groupId;
+  }
+
+  static _AttendanceEventData? castObj(Object? obj) {
+    if (obj == _AttendanceEventData) {
+      return obj as _AttendanceEventData;
+    }
+    return null;
   }
 }
 
 class HistoryScreen extends StatelessWidget {
   final HistoryController _historyController = Get.find();
   final EventsController _calendarEventController = Get.find();
+  final clearedData = RxBool(false);
 
   HistoryScreen({super.key});
 
@@ -32,6 +45,7 @@ class HistoryScreen extends StatelessWidget {
                   x.groupId.value,
                   y.attendanceTime.value,
                   y.attendanceId.value,
+                  y.present.value,
                 ),
               ),
             )
@@ -39,22 +53,23 @@ class HistoryScreen extends StatelessWidget {
             .nonNulls
             .toList() ??
         [];
-    print(events);
+
     _calendarEventController.updateCalendarData((z) {
+      var storedEventsIds = z.dayEvents.values
+          .expand((e) => e)
+          .map((x) => _AttendanceEventData.castObj(x.data)?.getEventId());
+
       var newEvents =
-          z.dayEvents.values
-              .expand((e) => e)
+          events
               .where(
                 (x) =>
-                    events.any(
-                      (y) =>
-                          (y.data as _AttendanceEventData).attendanceId !=
-                          (x.data as _AttendanceEventData).attendanceId,
-                    ) !=
-                    true,
+                    !storedEventsIds.contains(
+                      _AttendanceEventData.castObj(x.data)?.getEventId(),
+                    ),
               )
               .toList();
-      if (newEvents.length <= 0) {
+
+      if (newEvents.isEmpty) {
         return;
       }
       return z.addEvents(newEvents);
@@ -66,15 +81,18 @@ class HistoryScreen extends StatelessWidget {
     String? groupId,
     DateTime? attendanceTime,
     String? attendanceId,
+    bool? present,
   ) {
     if (groupName != null &&
         attendanceTime != null &&
         groupId != null &&
-        attendanceId != null) {
+        attendanceId != null &&
+        present != null) {
       return Event(
         title: groupName,
         startTime: attendanceTime.toLocal(),
         endTime: attendanceTime.add(const Duration(minutes: 60)).toLocal(),
+        color: present ? Colors.blue : Colors.red,
         data: _AttendanceEventData(
           attendanceId: attendanceId,
           groupId: groupId,
@@ -86,7 +104,10 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    onRefresh();
+    _calendarEventController.updateCalendarData((x) {
+      x.clearAll();
+      onRefresh();
+    });
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: Scaffold(
@@ -96,6 +117,14 @@ class HistoryScreen extends StatelessWidget {
             controller: _calendarEventController,
             heightPerMinute: 0.9,
             daysShowed: 3,
+            fullDayParam: FullDayParam(fullDayEventsBarVisibility: false),
+            daysHeaderParam: DaysHeaderParam(
+              dayHeaderBuilder: (day, isToday) {
+                return DefaultDayHeader(
+                  dayText: DateFormat("E d").format(day).toString(),
+                );
+              },
+            ),
           ),
         ),
       ),

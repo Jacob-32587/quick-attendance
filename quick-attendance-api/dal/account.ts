@@ -343,12 +343,14 @@ export async function update_account_from_req(user_id: Uuid, req: AccountPutReq)
   if (account_entity.value.username !== req.username) {
     tran
       .check({ key: ["account_by_username", req.username], versionstamp: null })
-      .set(["account_by_username", req.username], ["account", user_id]);
+      .set(["account_by_username", req.username], ["account", user_id])
+      .delete(["account_by_username", account_entity.value.username]);
   }
   if (account_entity.value.email !== req.email) {
     tran
       .check({ key: ["account_by_email", req.email], versionstamp: null })
-      .set(["account_by_email", req.email], ["account", user_id]);
+      .set(["account_by_email", req.email], ["account", user_id])
+      .delete(["account_by_email", account_entity.value.email]);
   }
 
   account_entity.value.username = req.username;
