@@ -56,7 +56,9 @@ class DisplayGroups extends StatelessWidget {
           ],
         ),
         Obx(() {
-          if (hasLoaded.value && hasAnyGroups == false) {
+          if (isLoading.value == false &&
+              hasLoaded.value &&
+              hasAnyGroups == false) {
             return Text(
               emptyMessage,
               textAlign: TextAlign.start,

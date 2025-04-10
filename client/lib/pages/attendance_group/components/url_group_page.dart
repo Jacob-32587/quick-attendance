@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/models/group_model.dart';
+import 'package:quick_attendance/models/responses/group_attendance_response.dart';
 
 /// Handles the logic for retrieving group information
 class GroupController extends GetxController {
