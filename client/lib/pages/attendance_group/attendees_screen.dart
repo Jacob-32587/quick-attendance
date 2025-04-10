@@ -10,6 +10,7 @@ import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.d
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer_list.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/group_attendance_view_model.dart';
+import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/models/public_user_model.dart';
 import 'package:quick_attendance/models/responses/group_attendance_response.dart';
 import 'package:quick_attendance/pages/attendance_group/components/display_users.dart';
@@ -18,14 +19,17 @@ import 'package:quick_attendance/pages/attendance_group/components/invite_user_p
 import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 import 'package:quick_attendance/util/time.dart';
 
-class GroupAttendeesScreen extends StatelessWidget {
+/// Controller for managing the state of the group attendees page
+/// Without a controller, this state would get lost whenever the widget disappears
+class GroupAttendeesController extends GetxController {
   late final GroupController _controller = Get.find();
   late final ProfileController _profileController = Get.find();
-
   String? get currentUserId => _profileController.user.value?.userId.value;
   bool get isOwnerOrManager {
     return isManager || isOwner;
   }
+
+  Rxn<GroupModel> get group => _controller.group;
 
   final RxBool showAttendance = false.obs;
 
@@ -51,7 +55,12 @@ class GroupAttendeesScreen extends StatelessWidget {
     }
     return false;
   }
+}
 
+class GroupAttendeesScreen extends StatelessWidget {
+  late final GroupAttendeesController _controller = Get.put(
+    GroupAttendeesController(),
+  );
   GroupAttendeesScreen({super.key});
 
   @override
@@ -62,15 +71,14 @@ class GroupAttendeesScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _ManagementSection(
-            controller: _controller,
-            isOwner: isOwner,
-            isOwnerOrManager: isOwnerOrManager,
-            onViewAttendance: () => showAttendance.toggle(),
+            isOwner: _controller.isOwner,
+            isOwnerOrManager: _controller.isOwnerOrManager,
+            showAttendance: _controller.showAttendance,
           ),
           const SizedBox(height: 64),
           Obx(
             () => BinaryChoice(
-              choice: showAttendance.value,
+              choice: _controller.showAttendance.value,
               widget1: _AttendanceSection(),
               widget2: _MembersSection(),
             ),
@@ -82,16 +90,15 @@ class GroupAttendeesScreen extends StatelessWidget {
 }
 
 class _ManagementSection extends StatelessWidget {
-  final GroupController controller;
+  late final GroupController controller = Get.find();
   final bool isOwner;
   final bool isOwnerOrManager;
-  final void Function() onViewAttendance;
+  final RxBool showAttendance;
 
-  const _ManagementSection({
-    required this.controller,
+  _ManagementSection({
     required this.isOwner,
     required this.isOwnerOrManager,
-    required this.onViewAttendance,
+    required this.showAttendance,
   });
 
   @override
@@ -114,15 +121,21 @@ class _ManagementSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               OutlinedButton.icon(
-                label: Text(
-                  "View Attendance Records",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
+                label: Obx(
+                  () => Text(
+                    showAttendance.value
+                        ? "View Members"
+                        : "View Attendance Records",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ),
-                icon: Icon(
-                  Icons.history,
-                  color: Theme.of(context).colorScheme.onSurface,
+                icon: Obx(
+                  () => Icon(
+                    showAttendance.value ? Icons.group : Icons.history,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(
@@ -133,7 +146,7 @@ class _ManagementSection extends StatelessWidget {
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 ),
-                onPressed: onViewAttendance,
+                onPressed: showAttendance.toggle,
               ),
               const SizedBox(width: 20),
               if (isOwner)
@@ -309,7 +322,7 @@ class _AttendanceSection extends StatelessWidget {
           () => EasyDateTimeLinePicker(
             focusedDate: _attendanceController.selectedDate.value,
             physics: BouncingScrollPhysics(),
-            firstDate: DateTime.fromMicrosecondsSinceEpoch(0),
+            firstDate: DateTime(2025, 1, 1),
             lastDate: DateTime.now(),
             selectionMode: SelectionMode.autoCenter(),
             onDateChange: (date) {
