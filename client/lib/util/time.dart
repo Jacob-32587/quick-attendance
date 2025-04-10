@@ -37,3 +37,12 @@ String _getDaySuffix(int day) {
       return 'th';
   }
 }
+
+/// Returns a 12hour AM PM string from the provided DateTime object. Returns blank if null.
+String displayTimeOfDateTime(DateTime? date) {
+  if (date == null) {
+    return "";
+  }
+  final DateFormat timeFormat = DateFormat('hh:mm a');
+  return timeFormat.format(date);
+}
