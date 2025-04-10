@@ -29,31 +29,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         shadowColor: Theme.of(context).colorScheme.primary,
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(10.0),
-            alignment: Alignment.center,
-            child: Obx ( () => ProfileHeader(
-              name: '${profileController.user.value?.firstName() ?? ""} ${profileController.user.value?.lastName() ?? ""}',
-              user: profileController.user.value?.username() ?? "",
-              email: profileController.user.value?.email() ?? "",
-            )),
-          ),
-          Container(
-            padding: EdgeInsets.all(10.0),
-            alignment: Alignment.center,
-            child: Obx( () => ProfileInfo(
-              firstName: profileController.user.value?.firstName() ?? "",
-              lastName: profileController.user.value?.lastName() ?? "",
-              user: profileController.user.value?.username() ?? "",
-              email: profileController.user.value?.email() ?? "",
-              groups: profileController.memberGroups
-            )),
-          ),
-          SizedBox(height: 20),
-          PrimaryButton(text: "Logout", onPressed: authController.logout),
-        ]
+      body: SingleChildScrollView (
+        padding: EdgeInsets.all(10.0),
+        child: Column(
+          children: [
+            Container(
+              alignment: Alignment.center,
+              child: Obx ( () => ProfileHeader(
+                name: '${profileController.user.value?.firstName() ?? ""} ${profileController.user.value?.lastName() ?? ""}',
+                user: profileController.user.value?.username() ?? "",
+                email: profileController.user.value?.email() ?? "",
+              )),
+            ),
+            Container(
+              padding: EdgeInsets.all(10.0),
+              alignment: Alignment.center,
+              child: Obx( () => ProfileInfo(
+                firstName: profileController.user.value?.firstName() ?? "",
+                lastName: profileController.user.value?.lastName() ?? "",
+                user: profileController.user.value?.username() ?? "",
+                email: profileController.user.value?.email() ?? "",
+                groups: profileController.memberGroups
+              )),
+            ),
+            SizedBox(height: 20),
+            PrimaryButton(text: "Logout", onPressed: authController.logout),
+          ]
+        )
       ),
     );
   }

@@ -40,13 +40,6 @@ class ProfileInfo extends StatelessWidget {
     return Container( 
       width: 500,
       padding: EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-      border: Border.all(
-        color: Colors.white, // Border color
-        width: 1, // Border width
-      ),
-      borderRadius: BorderRadius.circular(8),
-      ),
       child: Column(
         children: [
           Text(
@@ -63,8 +56,9 @@ class ProfileInfo extends StatelessWidget {
           Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+     
               children: [
+                SizedBox(height: 10),
                  TextFormField(
                     controller: _usernameController,
                     decoration: InputDecoration(labelText: 'Username'),
@@ -75,14 +69,17 @@ class ProfileInfo extends StatelessWidget {
                       return null;
                     },
                   ),
+                  SizedBox(height: 20),
                   TextFormField(
                     controller: _emailController,
                     decoration: InputDecoration(labelText: 'Email'),
                   ),
+                  SizedBox(height: 20),
                   TextFormField(
                     controller: _firstNameController,
                     decoration: InputDecoration(labelText: 'First Name'),
                   ),
+                  SizedBox(height: 20),
                   TextFormField(
                     controller: _lastNameController,
                     decoration: InputDecoration(labelText: 'Last Name'),
