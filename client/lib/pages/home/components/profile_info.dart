@@ -5,24 +5,27 @@ import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 
 class ProfileInfo extends StatelessWidget {
-  final String user;
-  final String email;
-  final String firstName;
-  final String lastName;
-  final List<GroupModel>? groups;
+  String user;
+   String email;
+   String firstName;
+   String lastName;
+  List<GroupModel>? groups;
   final _formKey = GlobalKey<FormState>();
 
-  ProfileInfo({required this.firstName, required this.lastName, required this.user, required this.email, required this.groups});
+  final ProfileController profileController = Get.find();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _usernameController = TextEditingController();
+  TextEditingController _firstNameController = TextEditingController();
+  TextEditingController _lastNameController = TextEditingController();
 
-  @override
-  Widget build(BuildContext context) {
-    final ProfileController profileController = Get.find();
-    final TextEditingController _emailController = TextEditingController(text: '$email');
-    final TextEditingController _usernameController = TextEditingController(text: '$user');
-    final TextEditingController _firstNameController = TextEditingController(text: '$firstName');
-    final TextEditingController _lastNameController = TextEditingController(text: '$lastName');
+  ProfileInfo({required this.firstName, required this.lastName, required this.user, required this.email, required this.groups}) {
+    _emailController = TextEditingController(text: '$email');
+    _usernameController = TextEditingController(text: '$user');
+    _firstNameController = TextEditingController(text: '$firstName');
+    _lastNameController = TextEditingController(text: '$lastName');
+  }
 
-    void updateInfo() async {
+  void updateInfo() async {
       if (_formKey.currentState!.validate() == false) {
         return;
       }
@@ -35,8 +38,10 @@ class ProfileInfo extends StatelessWidget {
       
       Get.snackbar("Success", "Profile updated successfully", snackPosition: SnackPosition.BOTTOM);
       // TODO: variable to trigger restart
-    }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Container( 
       width: 500,
       padding: EdgeInsets.all(16.0),
