@@ -1,39 +1,131 @@
-import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:infinite_calendar_view/infinite_calendar_view.dart';
+import 'package:quick_attendance/controllers/history_controller.dart';
+import 'package:intl/intl.dart';
 
-class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({super.key});
+class _AttendanceEventData {
+  late String attendanceId;
+  late String groupId;
+  _AttendanceEventData({
+    required String attendanceId,
+    required String groupId,
+  }) {
+    this.attendanceId = attendanceId;
+    this.groupId = groupId;
+  }
 
-  @override
-  State<StatefulWidget> createState() => _HistoryScreenState();
+  String getEventId() {
+    return attendanceId + groupId;
+  }
+
+  static _AttendanceEventData? castObj(Object? obj) {
+    if (obj == _AttendanceEventData) {
+      return obj as _AttendanceEventData;
+    }
+    return null;
+  }
 }
 
-class _HistoryScreenState extends State<HistoryScreen> {
-  var _selectedDate = DateTime.now();
+class HistoryScreen extends StatelessWidget {
+  final HistoryController _historyController = Get.find();
+  final EventsController _calendarEventController = Get.find();
+  final clearedData = RxBool(false);
+
+  HistoryScreen({super.key});
+
+  Future<void> onRefresh() async {
+    await _historyController.getAttendanceHistoryForWeek();
+    var events =
+        _historyController.attendanceHistory.value?.attendance
+            .map(
+              (x) => x.attendanceRecords.map(
+                (y) => _getCalendarEventData(
+                  x.groupName.value,
+                  x.groupId.value,
+                  y.attendanceTime.value,
+                  y.attendanceId.value,
+                  y.present.value,
+                ),
+              ),
+            )
+            .expand((e) => e)
+            .nonNulls
+            .toList() ??
+        [];
+
+    _calendarEventController.updateCalendarData((z) {
+      var storedEventsIds = z.dayEvents.values
+          .expand((e) => e)
+          .map((x) => _AttendanceEventData.castObj(x.data)?.getEventId());
+
+      var newEvents =
+          events
+              .where(
+                (x) =>
+                    !storedEventsIds.contains(
+                      _AttendanceEventData.castObj(x.data)?.getEventId(),
+                    ),
+              )
+              .toList();
+
+      if (newEvents.isEmpty) {
+        return;
+      }
+      return z.addEvents(newEvents);
+    });
+  }
+
+  Event? _getCalendarEventData(
+    String? groupName,
+    String? groupId,
+    DateTime? attendanceTime,
+    String? attendanceId,
+    bool? present,
+  ) {
+    if (groupName != null &&
+        attendanceTime != null &&
+        groupId != null &&
+        attendanceId != null &&
+        present != null) {
+      return Event(
+        title: groupName,
+        startTime: attendanceTime.toLocal(),
+        endTime: attendanceTime.add(const Duration(minutes: 60)).toLocal(),
+        color: present ? Colors.blue : Colors.red,
+        data: _AttendanceEventData(
+          attendanceId: attendanceId,
+          groupId: groupId,
+        ),
+      );
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Your Attendance History",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            EasyDateTimeLinePicker(
-              focusedDate: _selectedDate,
-              firstDate: DateTime.now().subtract(Duration(days: 7)),
-              lastDate: DateTime.now().add(Duration(days: 7)),
-              selectionMode: SelectionMode.autoCenter(),
-              onDateChange: (date) {
-                print("Seleted $date");
-                _selectedDate = date;
+    _calendarEventController.updateCalendarData((x) {
+      x.clearAll();
+      onRefresh();
+    });
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: Scaffold(
+        appBar: AppBar(title: Text("Attendance Calendar")),
+        body: SafeArea(
+          child: EventsPlanner(
+            controller: _calendarEventController,
+            heightPerMinute: 0.9,
+            daysShowed: 3,
+            fullDayParam: FullDayParam(fullDayEventsBarVisibility: false),
+            daysHeaderParam: DaysHeaderParam(
+              dayHeaderBuilder: (day, isToday) {
+                return DefaultDayHeader(
+                  dayText: DateFormat("E d").format(day).toString(),
+                );
               },
             ),
-          ],
+          ),
         ),
       ),
     );
