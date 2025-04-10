@@ -161,7 +161,7 @@ const port_num = parseInt(cli_flags["test-number"]) + 8080;
 if (port_num === 8080) {
   const address = Deno.networkInterfaces().find((x) => x.address.startsWith("192.168."))?.address;
   if (address != undefined) {
-    qrcode.generate();
+    qrcode.generate(address);
   }
 }
 
