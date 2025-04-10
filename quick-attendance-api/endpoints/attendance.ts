@@ -32,6 +32,7 @@ attendance.get(
   `${auth_attendance_base_path}/group`,
   zValidator("query", attendance_group_get_req),
   async (ctx) => {
+    console.log(ctx);
     const user_id = get_jwt_payload(ctx).user_id;
     const req = ctx.req.valid("query");
 

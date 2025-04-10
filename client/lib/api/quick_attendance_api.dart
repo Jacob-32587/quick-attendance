@@ -144,7 +144,7 @@ class QuickAttendanceApi extends GetxService {
     if (date != null) {
       query["year_num"] = date.year.toString();
       query["month_num"] = date.month.toString();
-      query["week_num"] = getWeekOfMonth(date);
+      query["week_num"] = getWeekOfMonth(date).toString();
     }
 
     final Response response = await apiClient.get(

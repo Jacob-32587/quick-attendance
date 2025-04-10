@@ -9,6 +9,7 @@ class UserList extends StatelessWidget {
   final bool isListView;
   final RxInt _shownUsers = RxInt(6);
   final RxString _searchTerm = RxString("");
+  final bool displayAttended;
 
   RxList<PublicUserModel> get filteredUsers {
     return RxList<PublicUserModel>.from(
@@ -29,7 +30,12 @@ class UserList extends StatelessWidget {
     );
   }
 
-  UserList({super.key, required this.users, required this.isListView});
+  UserList({
+    super.key,
+    required this.users,
+    required this.isListView,
+    this.displayAttended = false,
+  });
 
   int get userCount => filteredUsers.length;
   int get usersRemaining => (users?.length ?? 0) - _shownUsers.value;
@@ -44,7 +50,11 @@ class UserList extends StatelessWidget {
           isListView: isListView,
           itemCount: userCount,
           buildListItem: (context, idx, isListView) {
-            return UserCard(user: filteredUsers[idx], isListView: isListView);
+            return UserCard(
+              user: filteredUsers[idx],
+              isListView: isListView,
+              displayAttended: displayAttended,
+            );
           },
         ),
         Obx(() {
