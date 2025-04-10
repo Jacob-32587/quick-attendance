@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:quick_attendance/components/alert_card.dart';
 import 'package:quick_attendance/components/binary_choice.dart';
-import 'package:quick_attendance/components/generic_list_widget.dart';
+import 'package:quick_attendance/components/info_card.dart';
+import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
+import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer_list.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/group_attendance_view_model.dart';
 import 'package:quick_attendance/models/public_user_model.dart';
@@ -223,15 +226,9 @@ class _AttendanceController extends GetxController {
   late final GroupController _groupController = Get.find();
   final QuickAttendanceApi _api = Get.find();
   final attendanceData = Rxn<GroupAttendanceResponse>();
-  final RxBool failedToGetAttendance = false.obs;
-
-  GroupAttendanceViewModel? get activeAttendance =>
-      attendanceData.value?.attendance?[0];
-
-  DateTime? get activeDate => activeAttendance?.attendanceTime.value;
-  String get formattedDate => formatDate(activeDate);
 
   // Some state variables for viewing attendance
+  final RxBool failedToGetAttendance = false.obs;
   final RxBool isLoadingAttendance = false.obs;
   final RxBool hasLoadedAttendance = false.obs;
   final Rx<DateTime> attendanceDate = Rx<DateTime>(DateTime.now());
@@ -257,7 +254,7 @@ class _AttendanceController extends GetxController {
     hasLoadedAttendance.value = false;
     var response = await _api.getWeeklyGroupAttendance(
       groupId: _groupController.groupId,
-      date: selectedDate.value,
+      date: null,
     );
     if (response.statusCode != HttpStatusCode.ok) {
       failedToGetAttendance.value = true;
@@ -322,7 +319,45 @@ class _AttendanceSection extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         Obx(() {
+          var isLoading = _attendanceController.isLoadingAttendance.value;
+          var failedToRetrieve =
+              _attendanceController.failedToGetAttendance.value;
           final filteredList = _attendanceController.filteredAttendance;
+          if (isLoading) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonShimmer(
+                  isLoading: true.obs,
+                  skeletonHeight: 25,
+                  skeletonWidth: 250,
+                ),
+                const SizedBox(height: 12),
+                SkeletonShimmerList(
+                  isLoading: true.obs,
+                  skeletonWidth: 400,
+                  skeletonHeight: 65,
+                ),
+              ],
+            );
+          } else if (failedToRetrieve) {
+            return AlertCard(
+              child: Text(
+                "Sorry, we failed to retrieve attendance records from the server. Try again later.",
+                style: TextStyle(color: Colors.white),
+              ),
+            );
+          } else if (filteredList.isEmpty) {
+            return InfoCard(
+              child: Text(
+                "There were no sessions on this day",
+                style: TextStyle(color: Colors.white),
+              ),
+            );
+          }
+          // Display attendance records for the selected date
           return Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,17 +370,18 @@ class _AttendanceSection extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "Session $index",
+                    "Session ${index + 1} @ ${displayTimeOfDateTime(attendance.attendanceTime.value)}",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 2),
                   DisplayUsers(
                     isLoading: _attendanceController.isLoadingAttendance,
                     hasLoaded: _attendanceController.hasLoadedAttendance,
                     emptyMessage: "No members attended this session",
+                    displayAttended: true,
                     users: attendance.attendees,
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
                 ],
               );
             }),
