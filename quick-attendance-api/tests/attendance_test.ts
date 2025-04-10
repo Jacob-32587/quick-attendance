@@ -14,6 +14,8 @@ import {
 import { GroupPutRequest } from "../models/group/group_unique_id_settings_get_req.ts";
 import { AttendanceGroupGetRes } from "../models/attendance/attendance_group_get_res.ts";
 import { AttendanceUserGetRes } from "../models/attendance/attendance_user_get_res.ts";
+import { GroupGetRes } from "../models/group/group_get_res.ts";
+import { get_maybe_uuid_time, get_uuid_time, Uuid } from "../util/uuid.ts";
 
 Deno.test(
   "Creates a group and takes attendance",
@@ -161,6 +163,7 @@ Deno.test(
       //#endregion
 
       //#region Maeve and henrik check there attendance for the week
+      let most_recent_attendance_id: Uuid | null = null;
       await test_fetch_json(
         `${ATTENDANCE_AUTH_URL(test_num)}/user`,
         "GET",
@@ -182,11 +185,40 @@ Deno.test(
         null,
         async (body) => {
           const json = (await body.json()) as AttendanceUserGetRes;
+
+          if (
+            json.attendance[0].attendance_records[0].attendance_id >
+              json.attendance[0].attendance_records[1].attendance_id
+          ) {
+            most_recent_attendance_id = json.attendance[0].attendance_records[0].attendance_id;
+          } else {
+            most_recent_attendance_id = json.attendance[0].attendance_records[1].attendance_id;
+          }
           return json.attendance.length === 1 &&
             json.attendance[0].group.group_id === henrik.group.group_id &&
             json.attendance[0].group.group_id === maeve.group.group_id &&
             json.attendance[0].attendance_records[0].present === true &&
             json.attendance[0].attendance_records[1].present === false;
+        },
+      );
+      //#endregion
+
+      //#region Check the most recent attendance id
+      await test_fetch_json(
+        GROUP_AUTH_URL(test_num) +
+          `?group_id=${rocco.group.group_id}`,
+        "GET",
+        rocco.group.jwt,
+        null,
+        async (res) => {
+          const group = (await res.json()) as GroupGetRes;
+          const pass = group.last_attendance_date?.toString() ===
+            get_maybe_uuid_time(most_recent_attendance_id)?.toISOString();
+
+          if (!pass) {
+            console.log("Most recent attendance not correct: ", group);
+          }
+          return pass;
         },
       );
       //#endregion

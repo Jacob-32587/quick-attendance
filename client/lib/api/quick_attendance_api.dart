@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
+import 'package:quick_attendance/models/attendance_history_model.dart';
 import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/models/group_settings_model.dart';
@@ -159,5 +160,15 @@ class QuickAttendanceApi extends GetxService {
     return apiResponse;
   }
 
-  // TODO: Make a route for getting the authenticated USER's weekly attendance.
+  Future<ApiResponse<AttendanceHistoryModel>> getWeeklyUserAttendance() async {
+    final Response response = await apiClient.get("/auth/attendance/user");
+
+    print(response.body.toString());
+
+    final apiResponse = ApiResponse<AttendanceHistoryModel>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: AttendanceHistoryModel.fromJson(response.body),
+    );
+    return apiResponse;
+  }
 }
