@@ -63,7 +63,11 @@ class DisplayUsers extends StatelessWidget {
         SkeletonShimmerList(
           isLoading: isLoading,
           isListView: true,
-          widget: UserList(users: users, isListView: true),
+          widget: UserList(
+            users: users,
+            isListView: true,
+            displayAttended: displayAttended,
+          ),
         ),
       ],
     );

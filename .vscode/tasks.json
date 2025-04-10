@@ -27,6 +27,23 @@
 			"options": {
 				"cwd": "${workspaceFolder}/client"
 			}
+		},
+		{
+			"label": "Launch Tests",
+			"type": "shell",
+			"command": "deno test --allow-write --allow-read --allow-run --allow-net --trace-leaks --parallel --allow-env tests/",
+			"problemMatcher": [],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": true,
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/quick-attendance-api/"
+			}
 		}
 	]
 }

@@ -14,11 +14,6 @@ class GroupController extends GetxController {
   final RxBool isEditingGroup = RxBool(false);
   final RxBool hasLoadedGroup = RxBool(false);
 
-  // Some state variables for viewing member attendance
-  final RxBool isLoadingAttendance = false.obs;
-  final RxBool hasLoadedAttendance = false.obs;
-  final Rx<DateTime> attendanceDate = Rx<DateTime>(DateTime.now());
-
   /// The active group being accessed
   final group = Rxn<GroupModel>();
 
@@ -51,17 +46,6 @@ class GroupController extends GetxController {
       groupId: groupId!,
       inviteAsManager: inviteAsManager,
     );
-  }
-
-  /// Get the group's weekly attendance records.
-  Future<ApiResponse<GroupAttendanceResponse>>
-  getWeeklyGroupAttendance() async {
-    isLoadingAttendance.value = true;
-    ApiResponse<GroupAttendanceResponse> response = await _api
-        .getWeeklyGroupAttendance(groupId: groupId, date: null);
-    isLoadingAttendance.value = false;
-    hasLoadedAttendance.value = true;
-    return response;
   }
 }
 

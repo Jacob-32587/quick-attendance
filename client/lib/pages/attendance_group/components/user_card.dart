@@ -4,8 +4,14 @@ import 'package:quick_attendance/models/user_type.dart';
 
 class UserCard extends StatelessWidget {
   final bool isListView;
+  final bool displayAttended;
   final PublicUserModel user;
-  const UserCard({super.key, required this.user, required this.isListView});
+  const UserCard({
+    super.key,
+    required this.user,
+    required this.isListView,
+    required this.displayAttended,
+  });
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -22,7 +28,24 @@ class UserCard extends StatelessWidget {
                   "${user.firstName.value} ${user.lastName.value ?? ""}",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
+                if (displayAttended)
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.check,
+                        size: 16 * 0.6,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                if (displayAttended) const SizedBox(width: 10),
                 if (user.userType.value == UserType.owner ||
                     user.userType.value == UserType.manager)
                   Container(
@@ -56,6 +79,15 @@ class UserCard extends StatelessWidget {
                 color: Colors.grey[600]!.withAlpha(200),
               ),
             ),
+            if (user.uniqueId.value != null) const SizedBox(height: 2),
+            if (user.uniqueId.value != null)
+              Text(
+                user.uniqueId.value!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600]!.withAlpha(200),
+                ),
+              ),
           ],
         ),
         leading: CircleAvatar(
