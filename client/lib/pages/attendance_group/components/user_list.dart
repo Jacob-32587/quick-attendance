@@ -46,16 +46,18 @@ class UserList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GenericListWidget(
-          isListView: isListView,
-          itemCount: userCount,
-          buildListItem: (context, idx, isListView) {
-            return UserCard(
-              user: filteredUsers[idx],
-              isListView: isListView,
-              displayAttended: displayAttended,
-            );
-          },
+        Obx(
+          () => GenericListWidget(
+            isListView: isListView,
+            itemCount: userCount,
+            buildListItem: (context, idx, isListView) {
+              return UserCard(
+                user: filteredUsers[idx],
+                isListView: isListView,
+                displayAttended: displayAttended,
+              );
+            },
+          ),
         ),
         Obx(() {
           if (areUsersHidden) {
