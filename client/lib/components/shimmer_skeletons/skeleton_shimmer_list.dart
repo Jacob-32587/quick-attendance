@@ -11,16 +11,22 @@ class SkeletonShimmerList extends StatelessWidget {
   final RxBool isLoading;
 
   /// The widget to render when not in loading state.
-  final Widget widget;
+  late final Widget _widget;
   final int itemCount;
   final bool isListView;
-  const SkeletonShimmerList({
+  final double? skeletonWidth;
+  final double? skeletonHeight;
+  SkeletonShimmerList({
     super.key,
     required this.isLoading,
-    required this.widget,
+    Widget? widget,
     this.isListView = true,
     this.itemCount = 8,
-  });
+    this.skeletonWidth,
+    this.skeletonHeight,
+  }) {
+    _widget = widget ?? const SizedBox.shrink();
+  }
   @override
   Widget build(BuildContext context) {
     return Obx(
@@ -37,6 +43,8 @@ class SkeletonShimmerList extends StatelessWidget {
               ).colorScheme.onSurface.withAlpha(100),
               period: Duration(seconds: 1),
               child: Container(
+                width: skeletonWidth,
+                height: skeletonHeight,
                 padding: EdgeInsets.all(16.0),
                 margin: EdgeInsets.symmetric(vertical: 4),
                 decoration: BoxDecoration(
@@ -54,7 +62,7 @@ class SkeletonShimmerList extends StatelessWidget {
             );
           },
         ),
-        widget2: widget,
+        widget2: _widget,
       ),
     );
   }
