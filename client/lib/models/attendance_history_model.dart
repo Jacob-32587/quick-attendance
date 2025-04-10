@@ -1,13 +1,12 @@
 import 'package:get/get.dart';
 import 'package:quick_attendance/models/base_api_model.dart';
-import 'package:quick_attendance/models/user_type.dart';
 
 final class AttendanceHistoryModel
     extends BaseApiModel<AttendanceHistoryModel> {
-  late final RxList<_GroupData> attendance;
+  late final RxList<GroupData> attendance;
 
-  AttendanceHistoryModel({String? userId}) {
-    this.userId.value = userId;
+  AttendanceHistoryModel({List<GroupData>? attendance}) {
+    this.attendance.addAll(attendance ?? []);
   }
 
   @override
@@ -18,18 +17,28 @@ final class AttendanceHistoryModel
   }
 
   factory AttendanceHistoryModel.fromJson(Map<String, dynamic>? json) {
-    return AttendanceHistoryModel(userId: json?["user_id"]);
+    return AttendanceHistoryModel(
+      attendance:
+          (json?["attendance_records"] as List<dynamic>?)
+              ?.map((x) => GroupData.fromJson(x))
+              .toList(),
+    );
   }
 }
 
-final class _GroupData extends BaseApiModel<_GroupData> {
+final class GroupData extends BaseApiModel<GroupData> {
   final groupId = RxnString();
   final groupName = RxnString();
-  late final attendanceRecords = RxList<_AttendanceRecordData>();
+  final attendanceRecords = RxList<AttendanceRecordData>();
 
-  _GroupData({String? groupId, String? groupName}) {
+  GroupData({
+    String? groupId,
+    String? groupName,
+    List<AttendanceRecordData>? attendanceRecords,
+  }) {
     this.groupId.value = groupId;
     this.groupName.value = groupName;
+    this.attendanceRecords.addAll(attendanceRecords ?? []);
   }
 
   @override
@@ -39,17 +48,24 @@ final class _GroupData extends BaseApiModel<_GroupData> {
     return {};
   }
 
-  factory _GroupData.fromJson(Map<String, dynamic>? json) {
-    return _GroupData(userId: json?["user_id"]);
+  factory GroupData.fromJson(Map<String, dynamic>? json) {
+    return GroupData(
+      groupId: json?["group_id"],
+      groupName: json?["group_name"],
+      attendanceRecords:
+          (json?["attendance_records"] as List<dynamic>?)
+              ?.map((x) => AttendanceRecordData.fromJson(x))
+              .toList(),
+    );
   }
 }
 
-final class _AttendanceRecordData extends BaseApiModel<_AttendanceRecordData> {
+final class AttendanceRecordData extends BaseApiModel<AttendanceRecordData> {
   final attendanceId = RxnString();
   final attendanceTime = RxnString();
   final present = RxnBool();
 
-  _AttendanceRecordData({
+  AttendanceRecordData({
     String? attendanceId,
     String? attendanceTime,
     bool? present,
@@ -57,5 +73,20 @@ final class _AttendanceRecordData extends BaseApiModel<_AttendanceRecordData> {
     this.attendanceId.value = attendanceId;
     this.attendanceTime.value = attendanceTime;
     this.present.value = present;
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    // This object is not meant to be sent to the server
+    // It is for viewing purposes only
+    return {};
+  }
+
+  factory AttendanceRecordData.fromJson(Map<String, dynamic>? json) {
+    return AttendanceRecordData(
+      attendanceId: json?["attendance_id"],
+      attendanceTime: json?["attendanceTime"],
+      present: json?["present"],
+    );
   }
 }

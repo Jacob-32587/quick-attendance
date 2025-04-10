@@ -1,3 +1,4 @@
+import 'package:calendar_view/calendar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/instance_manager.dart';
 import 'package:get/state_manager.dart';
@@ -36,7 +37,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   final List<Widget> _pages = [
-    HistoryScreen(),
+    CalendarControllerProvider(controller: Get.find(), child: HistoryScreen()),
     JoinedGroupsScreen(),
     HomeScreen(),
     ManagedGroupsScreen(),
