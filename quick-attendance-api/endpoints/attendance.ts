@@ -110,6 +110,8 @@ attendance.get(
       ctx.json(ret);
     }
 
+    console.log(req);
+
     const attendance_data: AttendanceUserData[] = [];
     for (const group_id of unique_group_ids) {
       // Get all attendance records for the given group

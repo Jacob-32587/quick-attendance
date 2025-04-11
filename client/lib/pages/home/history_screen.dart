@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:infinite_calendar_view/infinite_calendar_view.dart';
 import 'package:quick_attendance/controllers/history_controller.dart';
 import 'package:intl/intl.dart';
+import 'package:quick_attendance/util/time.dart';
 
 class _AttendanceEventData {
   late String attendanceId;
@@ -31,11 +32,12 @@ class HistoryScreen extends StatelessWidget {
   final HistoryController _historyController = Get.find();
   final EventsController _calendarEventController = Get.find();
   final clearedData = RxBool(false);
+  final currentTime = Rx<DateTime>(DateTime.now());
 
   HistoryScreen({super.key});
 
   Future<void> onRefresh() async {
-    await _historyController.getAttendanceHistoryForWeek();
+    await _historyController.getAttendanceHistoryForWeek(currentTime.value);
     var events =
         _historyController.attendanceHistory.value?.attendance
             .map(
@@ -117,6 +119,10 @@ class HistoryScreen extends StatelessWidget {
             controller: _calendarEventController,
             heightPerMinute: 0.9,
             daysShowed: 3,
+            onAutomaticAdjustHorizontalScroll: (dateTime) {
+              currentTime.value = dateTime;
+              onRefresh();
+            },
             fullDayParam: FullDayParam(fullDayEventsBarVisibility: false),
             daysHeaderParam: DaysHeaderParam(
               dayHeaderBuilder: (day, isToday) {

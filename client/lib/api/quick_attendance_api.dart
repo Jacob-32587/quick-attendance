@@ -160,10 +160,27 @@ class QuickAttendanceApi extends GetxService {
     return apiResponse;
   }
 
-  Future<ApiResponse<AttendanceHistoryModel>> getWeeklyUserAttendance() async {
-    final Response response = await apiClient.get("/auth/attendance/user");
+  Future<ApiResponse<AttendanceHistoryModel>> getWeeklyUserAttendance(
+    int? year,
+    int? month,
+    int? weekOfMonth,
+  ) async {
+    Map<String, String> query = {};
+    if (year != null) {
+      query["year_num"] = year.toString();
+    }
+    if (month != null) {
+      query["month_num"] = month.toString();
+    }
+    if (weekOfMonth != null) {
+      query["week_num"] = weekOfMonth.toString();
+    }
+    final Response response = await apiClient.get(
+      "/auth/attendance/user",
+      query: query,
+    );
 
-    print(response.body.toString());
+    print("Body: ${response.body.toString()}");
 
     final apiResponse = ApiResponse<AttendanceHistoryModel>(
       statusCode: HttpStatusCode.from(response.statusCode),
