@@ -7,6 +7,7 @@ import { group_post_req } from "../models/group/group_post_req.ts";
 import { get_jwt_payload, ws } from "../main.ts";
 import HttpStatusCode from "../util/http_status_code.ts";
 import { group_invite_put_req } from "../models/group/group_invite_put_req.ts";
+import { group_modify_put_req } from "../models/group/group_modify_put_req.ts";
 import kv, { DbErr } from "../dal/db.ts";
 import { group_put_request } from "../models/group/group_unique_id_settings_get_req.ts";
 import { GroupPostRes } from "../models/group/group_post_res.ts";
@@ -16,6 +17,7 @@ import { GroupGetRes } from "../models/group/group_get_res.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { get_maybe_uuid_time, get_uuid_time } from "../util/uuid.ts";
+import { contextWith } from "effect/Sink";
 
 const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
@@ -130,6 +132,14 @@ group.post(
       HttpStatusCode.OK,
     );
   },
+);
+
+group.put(
+  `${auth_group_base_path}/modify`,
+  zValidator("json", group_modify_put_req),
+  async (ctx) => {
+    const req = ctx.req.valid("json");
+  }
 );
 
 group.put(

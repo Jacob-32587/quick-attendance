@@ -127,6 +127,7 @@ class _GroupDetailsScreen extends StatelessWidget {
 class _GroupEditScreen extends StatelessWidget {
   final GroupController controller;
 
+  late final _formKey = GlobalKey<FormState>();
   late final TextEditingController nameController;
   late final TextEditingController descriptionController;
   _GroupEditScreen({required this.controller}) {
@@ -140,36 +141,60 @@ class _GroupEditScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SkeletonShimmer(
-          isLoading: controller.isLoadingGroup,
-          widget: TextField(
-            controller: nameController,
-            maxLines: 1,
-            decoration: InputDecoration(
-              labelText: "Group Name",
-              border: OutlineInputBorder(),
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SkeletonShimmer(
+            isLoading: controller.isLoadingGroup,
+            widget: TextFormField(
+              controller: nameController,
+              maxLines: 1,
+              decoration: InputDecoration(
+                labelText: "Group Name",
+                border: OutlineInputBorder(),
+              ),
+              validator: (input) {
+                if (input == null || input.isEmpty) {
+                  return "Group name cannot be empty";
+                }
+                return null;
+              }
             ),
           ),
-        ),
-        SizedBox(height: 8),
-        SkeletonShimmer(
-          isLoading: controller.isLoadingGroup,
-          widget: TextField(
-            controller: descriptionController,
-            maxLines: 4,
-            decoration: InputDecoration(
-              labelText: "Group Description",
-              alignLabelWithHint: true,
-              border: OutlineInputBorder(),
+          SizedBox(height: 8),
+          SkeletonShimmer(
+            isLoading: controller.isLoadingGroup,
+            widget: TextFormField(
+              controller: descriptionController,
+              maxLines: 4,
+              decoration: InputDecoration(
+                labelText: "Group Description",
+                alignLabelWithHint: true,
+                border: OutlineInputBorder(),
+              ),
             ),
           ),
-        ),
-        SizedBox(height: 16),
-        SizedBox(height: 1000, width: 10),
-      ],
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: () {
+                if (_formKey.currentState!.validate()) {
+                  controller.modifyGroupDetails(
+                    nameController.value.text,
+                    descriptionController.value.text
+                  );
+                  Get.toNamed('/');
+                }
+              },
+              child: const Text('Save')
+            ),
+          ),
+          SizedBox(height: 16),
+          SizedBox(height: 1000, width: 10),
+        ],
+      )
     );
   }
 }

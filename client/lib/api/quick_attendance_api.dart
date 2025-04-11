@@ -118,6 +118,21 @@ class QuickAttendanceApi extends GetxService {
     return apiResponse;
   }
 
+  Future<ApiResponse<Null>> modifyGroupDetails (
+    String groupName,
+    String groupDescription
+  ) async {
+    final Response response = await apiClient.put("/auth/group/modify", {
+      "group_name": groupName,
+      "group_description": groupDescription,
+    });
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null
+    );
+    return apiResponse;
+  }
+
   Future<ApiResponse<Null>> inviteUserToGroup({
     required String username,
     required String groupId,

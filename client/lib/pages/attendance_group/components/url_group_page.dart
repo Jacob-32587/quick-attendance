@@ -46,6 +46,19 @@ class GroupController extends GetxController {
       inviteAsManager: inviteAsManager,
     );
   }
+
+  Future<ApiResponse<Null>> modifyGroupDetails (String groupName, String groupDescription) async {
+    if (groupName.isEmpty) {
+      return ApiResponse<Null>(
+        statusCode: HttpStatusCode.badRequest,
+        body: null
+      );
+    }
+    return await _api.modifyGroupDetails(
+      groupName,
+      groupDescription
+    );
+  }
 }
 
 /// A basic class for retrieving a :groupId from the route
