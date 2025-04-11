@@ -170,7 +170,8 @@ class QuickAttendanceApi extends GetxService {
       query["year_num"] = year.toString();
     }
     if (month != null) {
-      query["month_num"] = month.toString();
+      // Javascript months start from 0
+      query["month_num"] = (month - 1).toString();
     }
     if (weekOfMonth != null) {
       query["week_num"] = weekOfMonth.toString();

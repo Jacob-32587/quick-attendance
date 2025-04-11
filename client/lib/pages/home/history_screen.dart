@@ -120,8 +120,14 @@ class HistoryScreen extends StatelessWidget {
             heightPerMinute: 0.9,
             daysShowed: 3,
             onAutomaticAdjustHorizontalScroll: (dateTime) {
+              // If the dates year, month, of week of month has changed do another get request
+              if (getWeekOfMonth(currentTime.value) !=
+                      getWeekOfMonth(dateTime) ||
+                  currentTime.value.month != dateTime.month ||
+                  currentTime.value.year != dateTime.year) {
+                onRefresh();
+              }
               currentTime.value = dateTime;
-              onRefresh();
             },
             fullDayParam: FullDayParam(fullDayEventsBarVisibility: false),
             daysHeaderParam: DaysHeaderParam(
