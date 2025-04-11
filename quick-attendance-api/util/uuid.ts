@@ -3,8 +3,8 @@ import { z } from "zod";
 export type Uuid = string & { __uuid: void };
 
 // Create a new version 7 Uuid
-export function new_uuid() {
-  return uuidv7.generate() as Uuid;
+export function new_uuid(timestamp?: number) {
+  return uuidv7.generate(timestamp) as Uuid;
 }
 
 // Validate uuid as version 7

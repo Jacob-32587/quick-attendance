@@ -86,9 +86,12 @@ export function get_attendance_present_users(
 export function create_attendance(
   group_id: Uuid,
   group_kv_entity: Deno.KvEntry<GroupEntity>,
+  time_spoof_minute_offset: number | null = null,
 ) {
   const tran = kv.atomic();
-  const attendance_id = new_uuid();
+  const attendance_id = new_uuid(
+    time_spoof_minute_offset ? Date.now() - (time_spoof_minute_offset * 60000) : undefined,
+  );
   const time = get_uuid_time(attendance_id);
 
   group_kv_entity.value.current_attendance_id = attendance_id;
@@ -100,6 +103,7 @@ export function create_attendance(
     month: time.getUTCMonth(),
     week: get_week_num_of_month(time),
     attendance_id: attendance_id,
+    end_time_utc: null,
     present_member_ids: new Set(),
     codes_taken: new Map(),
     user_codes: new Map(),
@@ -107,6 +111,13 @@ export function create_attendance(
 
   group_dal.update_group_tran(group_kv_entity, tran);
   return DbErr.err_on_commit_async(tran.commit(), "Unable to create attendance record");
+}
+
+export function set_attendance_tran(
+  entity: Deno.KvEntry<AttendanceEntity>,
+  tran: Deno.AtomicOperation,
+) {
+  tran.check({ key: entity.key, versionstamp: entity.versionstamp }).set(entity.key, entity.value);
 }
 
 export function create_attendance_entity_tran(

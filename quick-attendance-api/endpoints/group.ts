@@ -203,9 +203,24 @@ group.put(
       }
       ws.in(rooms).disconnectSockets(true);
 
+      // ? Date.now() - (time_spoof_minute_offset * 60000) : undefined,
+      const tran = kv.atomic();
+
+      const attendance_entity = await attendance_dal.get_attendance_entity(
+        req.group_id,
+        group.value.current_attendance_id,
+      );
+
+      attendance_entity.value.end_time_utc = new Date(
+        Date.now() - ((req.time_spoof_minute_offset ?? 0) * 60000),
+      );
+      attendance_dal.set_attendance_tran(attendance_entity, tran);
+
       group.value.current_attendance_id = null;
 
-      dal.update_group(group);
+      dal.update_group_tran(group, tran);
+
+      DbErr.err_on_commit_async(tran.commit(), "Unable to stop attendance");
     }
 
     // Do not allow the manager to edit any details about the group

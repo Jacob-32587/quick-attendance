@@ -6,4 +6,5 @@ export interface AttendanceEntity {
   month: number;
   week: number;
   attendance_id: Uuid;
+  end_time_utc: Date | null;
 }

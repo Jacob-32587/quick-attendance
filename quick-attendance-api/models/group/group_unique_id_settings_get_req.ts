@@ -6,6 +6,7 @@ export const group_put_request = z.object({
   group_name: z.string().min(4).max(64),
   group_description: z.string().max(4096).nullable().default(null),
   current_attendance_id: val_uuid_zod().nullable().default(null),
+  time_spoof_minute_offset: z.number().int().nullable().default(null),
 });
 
 export type GroupPutRequest = z.infer<typeof group_put_request>;

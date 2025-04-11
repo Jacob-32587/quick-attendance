@@ -110,8 +110,6 @@ attendance.get(
       ctx.json(ret);
     }
 
-    console.log(req);
-
     const attendance_data: AttendanceUserData[] = [];
     for (const group_id of unique_group_ids) {
       // Get all attendance records for the given group
@@ -126,6 +124,10 @@ attendance.get(
         user_id,
         attendance_records.map((x) => x.value.attendance_id),
       );
+
+      if (present_user_records.length <= 0) {
+        continue;
+      }
 
       const group = await group_dal.get_group(group_id);
       attendance_data.push(
@@ -160,7 +162,7 @@ attendance.post(auth_attendance_base_path, zValidator("json", attendance_post_re
     [UserType.Owner, UserType.Manager],
   );
 
-  await dal.create_attendance(req.group_id, group_entity);
+  await dal.create_attendance(req.group_id, group_entity, req.time_spoof_minute_offset);
 
   return ctx.text("");
 });
