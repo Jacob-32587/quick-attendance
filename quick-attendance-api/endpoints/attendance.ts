@@ -66,7 +66,8 @@ attendance.get(
     for (let i = 0; i < attedance_records.length; i++) {
       attedance_agg.push({
         attendance_id: attedance_records[i].value.attendance_id,
-        attendance_time: get_uuid_time(attedance_records[i].value.attendance_id),
+        attendance_start_time: get_uuid_time(attedance_records[i].value.attendance_id),
+        attendance_end_time: attedance_records[i].value.end_time_utc,
         users: [],
       });
 
@@ -119,6 +120,9 @@ attendance.get(
         req.month_num,
         req.week_num,
       );
+      const attendance_record_lookup = new Map(
+        attendance_records.map((x) => [x.value.attendance_id, x]),
+      );
       const present_user_records = await dal.get_attendances_present_user(
         group_id,
         user_id,
@@ -139,7 +143,9 @@ attendance.get(
           attendance_records: present_user_records.map((x) => (
             {
               attendance_id: x.key[2] as Uuid,
-              attendance_time: get_uuid_time(x.key[2] as Uuid),
+              attendance_start_time: get_uuid_time(x.key[2] as Uuid),
+              attendance_end_time:
+                attendance_record_lookup.get(x.key[2] as Uuid)?.value.end_time_utc ?? null,
               present: x.value !== null,
             }
           )),
