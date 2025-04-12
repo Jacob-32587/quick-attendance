@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:get/get.dart';
 
@@ -10,7 +11,7 @@ enum SocketConnectionState {
 }
 
 abstract class WebSocketService extends GetxService {
-  late final io.Socket socket;
+  io.Socket? socket;
 
   final Rx<SocketConnectionState> socketConnectionState =
       SocketConnectionState.notConnected.obs;
@@ -23,6 +24,10 @@ abstract class WebSocketService extends GetxService {
 
     /// Override the default socket options
     io.OptionBuilder Function(io.OptionBuilder defaultOptions)? optionBuilder,
+
+    void Function()? onConnect,
+    void Function()? onConnectError,
+    void Function()? onDisconnect,
   }) {
     io.OptionBuilder socketOptions = io.OptionBuilder()
         .setTransports(["websocket"])
@@ -33,23 +38,32 @@ abstract class WebSocketService extends GetxService {
     if (optionBuilder != null) {
       socketOptions = optionBuilder(socketOptions);
     }
-    socket = io.io(url, socketOptions.build());
-    socket.onConnect((_) {
+    socket ??= io.io(url, socketOptions.build());
+    socket!.onConnect((_) {
       socketConnectionState.value = SocketConnectionState.connected;
       Get.log("Websocket connected");
+      if (onConnect != null) {
+        onConnect();
+      }
     });
-    socket.onConnectError((err) {
+    socket!.onConnectError((err) {
       socketConnectionState.value = SocketConnectionState.failedToConnect;
       Get.log("Websocket failed to connect");
+      if (onConnectError != null) {
+        onConnectError();
+      }
     });
-    socket.onDisconnect((_) {
+    socket!.onDisconnect((_) {
       socketConnectionState.value = SocketConnectionState.disconnected;
       Get.log("Websocket disconnected");
+      if (onDisconnect != null) {
+        onDisconnect();
+      }
     });
 
     // Register listeners before connecting the socket incase we get immediate events
     registerListeners();
-    socket.connect();
+    socket!.connect();
   }
 
   /// Add message listeners to the socket. This method is invoked before the socket
@@ -58,11 +72,23 @@ abstract class WebSocketService extends GetxService {
 
   // Example request
   void sendMessage({required String groupCode}) {
-    socket.emit("joinGroup", {"groupCode": groupCode});
+    socket?.emit("joinGroup", {"groupCode": groupCode});
   }
 
   void disconnect() {
-    socket.clearListeners();
-    socket.disconnect();
+    socket?.dispose();
+    Get.snackbar(
+      "Attendance",
+      "Disconnected from attendance session",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.blue.shade700,
+      colorText: Colors.blue.shade50,
+    );
+  }
+
+  @override
+  void onClose() {
+    disconnect();
+    super.onClose();
   }
 }
