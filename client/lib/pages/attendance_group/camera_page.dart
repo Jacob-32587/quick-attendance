@@ -26,9 +26,14 @@ class _CameraPageController extends GetxController {
       if (content == null) {
         continue;
       }
-      detectedBarcodes.add(content);
+      var newId = detectedBarcodes.add(content);
+      if (newId) {
+        scans.add(content);
+      }
     }
-    _api.putAttendedUsers(groupId, scans);
+    if (scans.isNotEmpty) {
+      _api.putAttendedUsers(groupId, scans);
+    }
   }
 
   @override
