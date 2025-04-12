@@ -171,4 +171,16 @@ class QuickAttendanceApi extends GetxService {
     );
     return apiResponse;
   }
+
+  Future<ApiResponse<Null>> updateGroup(GroupModel group) async {
+    final Response response = await apiClient.put(
+      "/auth/group",
+      group.toJson(),
+    );
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
 }
