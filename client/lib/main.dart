@@ -59,11 +59,6 @@ class MyApp extends StatelessWidget {
         GetPage(name: "/signup/", page: () => Signup()),
         GetPage(name: "/login/", page: () => Login()),
         GetPage(name: "/group/:groupId/", page: () => GroupPageAuth()),
-        GetPage(
-          name: "/capture-attendance",
-          page: () => CameraPage(),
-          middlewares: [],
-        ),
         GetPage(name: "/manual-address", page: () => ApiAddress()),
       ],
     );
