@@ -48,6 +48,8 @@ class ProfileController extends GetxController {
   // Get the user's email or empty string
   String get email => user()?.email() ?? "";
 
+  String? get userId => user()?.userId();
+
   @override
   void onInit() {
     super.onInit();
