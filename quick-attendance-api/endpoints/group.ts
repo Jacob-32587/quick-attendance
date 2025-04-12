@@ -16,6 +16,7 @@ import { GroupGetRes } from "../models/group/group_get_res.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { get_maybe_uuid_time, get_uuid_time } from "../util/uuid.ts";
+import { date_add } from "../util/time.ts";
 
 const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
@@ -203,9 +204,29 @@ group.put(
       }
       ws.in(rooms).disconnectSockets(true);
 
+      const tran = kv.atomic();
+
+      const attendance_entity = await attendance_dal.get_attendance_entity(
+        req.group_id,
+        group.value.current_attendance_id,
+      );
+
+      attendance_entity.value.end_time_utc = new Date();
+      if (req.time_spoof_minute_offset != null) {
+        attendance_entity.value.end_time_utc = date_add(
+          attendance_entity.value.end_time_utc,
+          "minute",
+          req.time_spoof_minute_offset,
+        );
+      }
+
+      attendance_dal.set_attendance_tran(attendance_entity, tran);
+
       group.value.current_attendance_id = null;
 
-      dal.update_group(group);
+      dal.update_group_tran(group, tran);
+
+      await DbErr.err_on_commit_async(tran.commit(), "Unable to stop attendance");
     }
 
     // Do not allow the manager to edit any details about the group
@@ -218,7 +239,7 @@ group.put(
     group_entity.value.group_name = req.group_name;
     group_entity.value.group_description = req.group_description;
 
-    dal.update_group(group_entity);
+    await dal.update_group(group_entity);
 
     return ctx.text("", HttpStatusCode.OK);
   },

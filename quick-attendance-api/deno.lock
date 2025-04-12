@@ -1,7 +1,6 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@babia/uuid-v7@0.2": "0.2.0",
     "jsr:@hono/hono@^4.7.2": "4.7.2",
     "jsr:@nur/client-socket-io@0.1": "0.1.0",
     "jsr:@std/assert@1": "1.0.11",
@@ -20,13 +19,11 @@
     "npm:effect@^3.13.4": "3.13.4",
     "npm:hono@*": "4.7.2",
     "npm:socket.io-client@^4.8.1": "4.8.1",
+    "npm:uuidv7@^1.0.2": "1.0.2",
     "npm:zod@*": "3.24.2",
     "npm:zod@^3.24.2": "3.24.2"
   },
   "jsr": {
-    "@babia/uuid-v7@0.2.0": {
-      "integrity": "d911b42ce9ede1b579269a25d44cecad1eb1fccd2bdef95960809fc3a5aaa3b6"
-    },
     "@hono/hono@4.7.2": {
       "integrity": "73466a24bd6eb3b527cde18e59ca5543890ddacb4312fc0bc7504d28a7e57a38"
     },
@@ -166,6 +163,9 @@
         "@socket.io/component-emitter",
         "debug"
       ]
+    },
+    "uuidv7@1.0.2": {
+      "integrity": "sha512-8JQkH4ooXnm1JCIhqTMbtmdnYEn6oKukBxHn1Ic9878jMkL7daTI7anTExfY18VRCX7tcdn5quzvCb6EWrR8PA=="
     },
     "ws@8.17.1": {
       "integrity": "sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ=="
@@ -311,7 +311,6 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@babia/uuid-v7@0.2",
       "jsr:@hono/hono@^4.7.2",
       "jsr:@nur/client-socket-io@0.1",
       "jsr:@std/assert@1",
@@ -320,6 +319,7 @@
       "jsr:@std/uuid@^1.0.4",
       "npm:effect@^3.13.4",
       "npm:socket.io-client@^4.8.1",
+      "npm:uuidv7@^1.0.2",
       "npm:zod@^3.24.2"
     ]
   }

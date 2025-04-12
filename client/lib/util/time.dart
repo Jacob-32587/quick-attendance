@@ -1,5 +1,12 @@
 import 'package:intl/intl.dart';
 
+int? getWeekOfMonthNullable(DateTime? date) {
+  if (date == null) {
+    return null;
+  }
+  return getWeekOfMonth(date);
+}
+
 int getWeekOfMonth(DateTime date) {
   final int month = date.month;
   final int year = date.year;
