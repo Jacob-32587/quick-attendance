@@ -87,6 +87,15 @@ Deno.test(
       await test_fetch_json(
         ATTENDANCE_AUTH_URL(test_num),
         "PUT",
+        rocco.group.jwt,
+        {
+          group_id: rocco.group.group_id,
+          user_ids: [maeve.account.user_id],
+        } as AttendancePutReq,
+      );
+      await test_fetch_json(
+        ATTENDANCE_AUTH_URL(test_num),
+        "PUT",
         indie.group.jwt,
         {
           group_id: indie.group.group_id,

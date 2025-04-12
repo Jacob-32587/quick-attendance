@@ -7,6 +7,7 @@ final class UserModel extends BaseApiModel<UserModel> {
   late final RxString username;
   late final RxString firstName;
   late final RxString lastName;
+  late RxList<String> pendingGroupJwts;
 
   UserModel({
     String? userId,
@@ -14,12 +15,15 @@ final class UserModel extends BaseApiModel<UserModel> {
     String? username = "",
     String? firstName = "",
     String? lastName = "",
+    List<String>? pendingGroupJwts,
   }) {
     this.email = (email ?? "").obs;
     this.username = (username ?? "").obs;
     this.firstName = (firstName ?? "").obs;
     this.lastName = (lastName ?? "").obs;
     this.userId = RxnString(userId);
+    this.pendingGroupJwts =
+        pendingGroupJwts != null ? RxList.from(pendingGroupJwts) : RxList();
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
