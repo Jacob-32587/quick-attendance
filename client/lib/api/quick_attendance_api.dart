@@ -183,4 +183,30 @@ class QuickAttendanceApi extends GetxService {
     );
     return apiResponse;
   }
+
+  Future<ApiResponse<Null>> startAttendanceSession(String? groupId) async {
+    final Response response = await apiClient.post("/auth/attendance", {
+      "group_id": groupId,
+    });
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
+
+  Future<ApiResponse<Null>> putAttendedUsers(
+    String? groupId,
+    List<String> userIds,
+  ) async {
+    final Response response = await apiClient.put("/auth/attendance", {
+      "group_id": groupId,
+      "user_ids": userIds,
+    });
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
 }
