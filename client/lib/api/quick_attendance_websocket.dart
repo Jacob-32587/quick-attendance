@@ -18,6 +18,7 @@ class QuickAttendanceWebsocket extends WebSocketService {
     }
     socket.on("attendanceTaken", (_) {
       var handler = attendanceTakenHandler;
+      print("Attendance Taken");
       if (handler != null) {
         handler();
       }
