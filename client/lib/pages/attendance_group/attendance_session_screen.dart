@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/_api_client.dart';
+import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:quick_attendance/api/quick_attendance_websocket.dart';
+import 'package:quick_attendance/api/web_socket_service.dart';
+import 'package:quick_attendance/components/binary_choice.dart';
+import 'package:quick_attendance/components/flat_button.dart';
 import 'package:quick_attendance/components/info_card.dart';
-import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
+import 'package:quick_attendance/components/success_card.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/group_model.dart';
+import 'package:quick_attendance/pages/attendance_group/camera_page.dart';
 import 'package:quick_attendance/pages/attendance_group/components/qr-code-view.dart';
 import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 
 class GroupAttendanceSessionController extends GetxController {
   late final GroupController _groupController = Get.find();
   late final ProfileController _profileController = Get.find();
+  late final QuickAttendanceApi _api = Get.find();
+  late final QuickAttendanceWebsocket _websocketService = Get.find();
 
   /// Loading state
   final RxBool isStartingSession = false.obs;
@@ -18,11 +27,107 @@ class GroupAttendanceSessionController extends GetxController {
   /// Loading state
   final RxBool isEndingSession = false.obs;
 
+  // User types
+  bool get isOwner => _groupController.isOwner;
+  bool get isManager => _groupController.isManager;
+  bool get isOwnerOrManager => _groupController.isOwnerOrManager;
+
+  // Socket state
+  bool get isConnectedToSession =>
+      _websocketService.socketConnectionState.value ==
+      SocketConnectionState.connected;
+  bool get failedToConnect =>
+      _websocketService.socketConnectionState.value ==
+      SocketConnectionState.failedToConnect;
+  bool get isConnecting =>
+      _websocketService.socketConnectionState.value ==
+      SocketConnectionState.isConnecting;
+
   String? get activeSessionId =>
       _groupController.group.value?.currentAttendanceId.value;
 
   Future<void> onRefresh() async {
     await _groupController.fetchGroup(_groupController.groupId);
+  }
+
+  Future<void> startAttendance() async {
+    final String? groupId = _groupController.groupId;
+    if (groupId == null) {
+      return;
+    }
+    isStartingSession.value = true;
+    ApiResponse<Null> response = await _api.startAttendanceSession(groupId);
+    if (response.statusCode == HttpStatusCode.ok) {
+      await onRefresh(); // Reload the group to update reactive UI
+    } else {
+      Get.snackbar(
+        "Failed",
+        "The server could not start an attendance session. Please try again later.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+    isStartingSession.value = false;
+  }
+
+  Future<void> joinAttendance() async {
+    String? groupId = _groupController.groupId;
+    if (groupId == null) {
+      return; // this should never happen
+    }
+    _websocketService.connectToGroupAttendance(
+      groupId: groupId,
+      onConnect: () {
+        print("Connected");
+      },
+      onConnectError: () {
+        print("Failed to connect");
+      },
+      onDisconnect: () {
+        print("Disconnected");
+      },
+    );
+  }
+
+  Future<void> endAttendance() async {
+    var group = _groupController.group.value;
+    if (group == null || _groupController.currentAttendanceId == null) {
+      return; // There is no attendance to stop
+    }
+    isEndingSession.value = true;
+    group.currentAttendanceId.value = null;
+    ApiResponse<Null> response = await _api.updateGroup(group);
+    if (response.statusCode == HttpStatusCode.ok) {
+      Get.snackbar(
+        "Success",
+        "Ended attendance session successfully!",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.shade800,
+        colorText: Colors.green.shade50,
+      );
+    }
+    isEndingSession.value = false;
+  }
+
+  void leaveAttendanceSession() {
+    _websocketService.disconnect();
+  }
+
+  void attendanceTakenHandler() {}
+
+  /// Handles what happens when the user presses "take attendance"
+  void onTakeAttendance() {
+    Get.to(
+      () => CameraPage(groupId: _groupController.groupId),
+      fullscreenDialog: true,
+    );
+  }
+
+  @override
+  void onInit() {
+    _websocketService.attendanceTakenHandler = attendanceTakenHandler;
+    super.onInit();
   }
 }
 
@@ -44,31 +149,41 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.all(8),
           children: [
-            Text(
-              "Attend",
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            ),
             const SizedBox(height: 32),
             SkeletonShimmer(
               isLoading: _controller._groupController.isLoadingGroup,
               skeletonHeight: 40,
-              widget: InfoCard(
-                child: Obx(() {
-                  final activeSessionId = _controller.activeSessionId;
-                  if (activeSessionId == null) {
-                    return Text("No active session");
-                  } else {
-                    return Text("There is an active session!");
-                  }
-                }),
-              ),
+              widget: Obx(() {
+                final activeSessionId = _controller.activeSessionId;
+                final isOwner = _controller.isOwner;
+                if (isOwner) {
+                  // Owners can't connect to the group's session
+                  return SizedBox.shrink();
+                }
+                if (activeSessionId == null) {
+                  return InfoCard(
+                    child: Text("No active session. Swipe down to refresh."),
+                  );
+                } else if (_controller.isConnectedToSession == false) {
+                  return SuccessCard(
+                    child: Text(
+                      "This group is currently taking attendance, join now!",
+                    ),
+                  );
+                } else {
+                  return InfoCard(
+                    child: Text("You are connected to the session"),
+                  );
+                }
+              }),
             ),
             const SizedBox(height: 16),
             Obx(() {
               final userId = _controller._profileController.userId;
               if (userId == null) {
-                return SizedBox.shrink();
+                return SizedBox.shrink(); // This should never happen
               }
+              double qrSize = MediaQuery.of(context).size.width * 0.8;
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -76,39 +191,84 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
                   children: [
                     Card(
                       elevation: 8,
-                      child: QrCodeView(
-                        code: userId,
-                        size: MediaQuery.of(context).size.width * 0.5,
-                      ),
+                      child:
+                          _controller.isConnectedToSession
+                              ? QrCodeView(code: userId, size: qrSize)
+                              : Container(
+                                height: qrSize,
+                                width: qrSize,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest,
+                              ),
                     ),
-                    Text(
-                      "Waiting for connection",
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
+                    Obx(() {
+                      String status = "Waiting for connection";
+                      if (_controller.isConnecting) {
+                        status = "Connecting...";
+                      } else if (_controller.isConnectedToSession) {
+                        status = "Waiting to be scanned...";
+                      }
+                      return Text(
+                        status,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      );
+                    }),
                   ],
                 ),
               );
             }),
-            Obx(
-              () => PrimaryButton(
-                text: "Start Session",
-                isLoading: _controller.isStartingSession.value,
-                onPressed: _controller.onRefresh,
-              ),
+            const SizedBox(height: 32),
+            Divider(color: Theme.of(context).colorScheme.onSurface),
+            const SizedBox(height: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Obx(() {
+                  if (_controller.isConnectedToSession) {
+                    return FlatButton(
+                      onPressed: _controller.leaveAttendanceSession,
+                      child: Text("Disconnect"),
+                    );
+                  } else {
+                    return FlatButton(
+                      onPressed: _controller.joinAttendance,
+                      child: Text("Join Attendance"),
+                    );
+                  }
+                }),
+                Obx(
+                  () => BinaryChoice(
+                    choice:
+                        _controller.isOwnerOrManager &&
+                        _controller.activeSessionId != null,
+                    widget1: FlatButton(
+                      onPressed: _controller.onTakeAttendance,
+                      child: Text("Take Attendance"),
+                    ),
+                  ),
+                ),
+                Obx(() {
+                  final activeSessionId = _controller.activeSessionId;
+                  if (activeSessionId == null) {
+                    return FlatButton(
+                      onPressed: _controller.startAttendance,
+                      child: Text("Start Attendance"),
+                    );
+                  } else {
+                    return FlatButton(
+                      onPressed: _controller.endAttendance,
+                      child: Text("End Session"),
+                    );
+                  }
+                }),
+              ],
             ),
-            Obx(() {
-              final activeSessionId = _controller.activeSessionId;
-              if (activeSessionId == null) {
-                return SizedBox.shrink();
-              } else {
-                return PrimaryButton(
-                  text: "End Attendance",
-                  isLoading: _controller.isEndingSession.value,
-                );
-              }
-            }),
           ],
         ),
       ),
