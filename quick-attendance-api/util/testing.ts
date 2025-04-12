@@ -61,7 +61,7 @@ async function cleanup_test(
   test_num: number,
   server_process: Deno.ChildProcess | null,
 ) {
-  Deno.remove(`./test-${test_num}`, { recursive: true });
+  // Deno.remove(`./test-${test_num}`, { recursive: true });
 
   // If there is a server process kill it and wait for it to end
   if (server_process != null) {
@@ -229,9 +229,7 @@ export async function open_ws(domain_and_port: string, jwt: string, group_id: Uu
   let connected = false;
 
   socket.on("connect", () => {
-    console.log(socket.id);
     connected = true;
-    console.log(`Client connect websocket: ${socket.id}`);
   });
 
   socket.on("disconnect", () => {

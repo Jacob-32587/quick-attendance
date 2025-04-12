@@ -1,36 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:infinite_calendar_view/infinite_calendar_view.dart';
+import 'package:kalender/kalender.dart';
 import 'package:quick_attendance/controllers/history_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:quick_attendance/util/time.dart';
 
-class _AttendanceEventData {
+class AttendanceEventData {
   late String attendanceId;
   late String groupId;
-  _AttendanceEventData({
+  late String groupName;
+
+  AttendanceEventData({
     required String attendanceId,
     required String groupId,
+    required String groupName,
   }) {
     this.attendanceId = attendanceId;
     this.groupId = groupId;
+    this.groupName = groupName;
   }
 
   String getEventId() {
     return attendanceId + groupId;
   }
 
-  static _AttendanceEventData? castObj(Object? obj) {
-    if (obj == _AttendanceEventData) {
-      return obj as _AttendanceEventData;
+  static AttendanceEventData? castObj(Object? obj) {
+    if (obj == AttendanceEventData) {
+      return obj as AttendanceEventData;
     }
     return null;
+  }
+
+  @override
+  String toString() {
+    return groupName;
   }
 }
 
 class HistoryScreen extends StatelessWidget {
   final HistoryController _historyController = Get.find();
-  final EventsController _calendarEventController = EventsController();
+  final DefaultEventsController<AttendanceEventData> _calendarEventController =
+      Get.find();
+  final CalendarController<AttendanceEventData> _calendarController =
+      Get.find();
   final clearedData = RxBool(false);
   final currentTime = Rx<DateTime>(DateTime.now());
 
@@ -57,29 +69,22 @@ class HistoryScreen extends StatelessWidget {
             .toList() ??
         [];
 
-    _calendarEventController.updateCalendarData((z) {
-      var storedEventsIds = z.dayEvents.values
-          .expand((e) => e)
-          .map((x) => _AttendanceEventData.castObj(x.data)?.getEventId());
+    var storedEventIds = _calendarEventController.dateMap.events.nonNulls.map(
+      (x) => x.data?.getEventId(),
+    );
 
-      var newEvents =
-          events
-              .where(
-                (x) =>
-                    !storedEventsIds.contains(
-                      _AttendanceEventData.castObj(x.data)?.getEventId(),
-                    ),
-              )
-              .toList();
+    var newEvents =
+        events
+            .where((x) => !storedEventIds.contains(x.data?.getEventId()))
+            .toList();
 
-      if (newEvents.isEmpty) {
-        return;
-      }
-      return z.addEvents(newEvents);
-    });
+    if (newEvents.isEmpty) {
+      return;
+    }
+    _calendarEventController.addEvents(newEvents);
   }
 
-  Event? _getCalendarEventData(
+  CalendarEvent<AttendanceEventData>? _getCalendarEventData(
     String? groupName,
     String? groupId,
     DateTime? attendanceStartTime,
@@ -93,14 +98,16 @@ class HistoryScreen extends StatelessWidget {
         groupId != null &&
         attendanceId != null &&
         present != null) {
-      return Event(
-        title: groupName,
-        startTime: attendanceStartTime.toLocal(),
-        endTime: attendanceStartTime.add(const Duration(minutes: 60)).toLocal(),
-        color: present ? Colors.blue : Colors.red,
-        data: _AttendanceEventData(
+      return CalendarEvent<AttendanceEventData>(
+        canModify: false,
+        dateTimeRange: DateTimeRange(
+          start: attendanceStartTime.toLocal(),
+          end: attendanceEndTime.toLocal(),
+        ),
+        data: AttendanceEventData(
           attendanceId: attendanceId,
           groupId: groupId,
+          groupName: groupName,
         ),
       );
     }
@@ -109,35 +116,18 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _calendarEventController.updateCalendarData((x) {
-      x.clearAll();
-      onRefresh();
-    });
+    _calendarEventController.clearEvents();
+    onRefresh();
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: Scaffold(
         appBar: AppBar(title: Text("Attendance Calendar")),
         body: SafeArea(
-          child: EventsPlanner(
-            controller: _calendarEventController,
-            heightPerMinute: 0.9,
-            daysShowed: 3,
-            onAutomaticAdjustHorizontalScroll: (dateTime) {
-              if (getWeekOfMonth(currentTime.value) !=
-                      getWeekOfMonth(dateTime) ||
-                  currentTime.value.month != dateTime.month ||
-                  currentTime.value.year != dateTime.year) {
-                onRefresh();
-              }
-              currentTime.value = dateTime;
-            },
-            fullDayParam: FullDayParam(fullDayEventsBarVisibility: false),
-            daysHeaderParam: DaysHeaderParam(
-              dayHeaderBuilder: (day, isToday) {
-                return DefaultDayHeader(
-                  dayText: DateFormat("E d").format(day).toString(),
-                );
-              },
+          child: CalendarView(
+            eventsController: _calendarEventController,
+            calendarController: _calendarController,
+            viewConfiguration: MultiDayViewConfiguration.custom(
+              numberOfDays: 3,
             ),
           ),
         ),

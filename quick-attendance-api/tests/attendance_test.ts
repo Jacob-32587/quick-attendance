@@ -4,12 +4,16 @@ import { AttendancePutReq } from "../models/attendance/attendance_put_req.ts";
 import { sleep } from "../util/sleep.ts";
 import { cleanup_test_step, init_test_step, open_ws, test_fetch_json } from "../util/testing.ts";
 import {
+  additonal_user_array,
   ATTENDANCE_AUTH_URL,
   create_users_and_group,
   DOMAIN_AND_PORT,
+  get_users_groups,
   get_users_groups_and_accounts,
   GROUP_AUTH_URL,
+  invite_additonal_users,
   URL,
+  user_array,
 } from "./main_test.ts";
 import { GroupPutRequest } from "../models/group/group_unique_id_settings_get_req.ts";
 import { AttendanceGroupGetRes } from "../models/attendance/attendance_group_get_res.ts";
@@ -97,7 +101,7 @@ Deno.test(
       assert(maeve_attendance_taken);
       assert(henrik_attendance_taken);
 
-      //#region Indie stops attendance taking for the group and ensure
+      //#region Indie stops attendance taking for the group and ensures
       // users are disconnected
       await test_fetch_json(
         GROUP_AUTH_URL(test_num),
@@ -108,11 +112,22 @@ Deno.test(
           group_name: indie.group.group_name,
           group_description: indie.group.group_description,
           current_attendance_id: null,
+          time_spoof_minute_offset: 60,
         } as GroupPutRequest,
       );
       await sleep(100);
       assert(maeve_disconnect);
       assert(henrik_disconnect);
+
+      {
+        const updated_group = await get_users_groups(
+          [indie.group.jwt],
+          indie.group.group_id,
+          test_num,
+        );
+        assert(updated_group[0].current_attendance_id === null);
+      }
+
       //#endregion
 
       //#region Start taking attendance again but henrik is not present and no users connect to the websocket
@@ -120,7 +135,7 @@ Deno.test(
         ATTENDANCE_AUTH_URL(test_num),
         "POST",
         rocco.account.jwt,
-        { group_id: rocco.group.group_id } as AttendancePostReq,
+        { group_id: rocco.group.group_id, time_spoof_minute_offset: 120 } as AttendancePostReq,
       );
       await test_fetch_json(
         ATTENDANCE_AUTH_URL(test_num),
@@ -141,6 +156,7 @@ Deno.test(
           group_name: rocco.group.group_name,
           group_description: rocco.group.group_description,
           current_attendance_id: null,
+          time_spoof_minute_offset: 180,
         } as GroupPutRequest,
       );
       //#endregion
@@ -160,6 +176,15 @@ Deno.test(
             json.attendance[1].users.some((x) => x.user_id === maeve.account.user_id);
         },
       );
+
+      {
+        const updated_group = await get_users_groups(
+          [indie.group.jwt],
+          indie.group.group_id,
+          test_num,
+        );
+        assert(updated_group[0].current_attendance_id === null);
+      }
       //#endregion
 
       //#region Maeve and henrik check there attendance for the week
@@ -222,7 +247,93 @@ Deno.test(
         },
       );
       //#endregion
+
+      // Invite more users to the group and take attendance for the group at random spoof intervals,
+      // with each user choosing to attend or not randomly
+      const additonal_users = await invite_additonal_users(
+        test_num,
+        rocco.account.jwt,
+        rocco.group.group_id,
+      );
+
+      additonal_users.push(henrik.account);
+      additonal_users.push(maeve.account);
+
+      let users = pair_array(additonal_users);
+
+      for (let i = 1; i <= 20; i++) {
+        // Shuffle order of users
+        users = users.map((value) => ({ value, sort: Math.random() }))
+          .sort((a, b) => a.sort - b.sort)
+          .map(({ value }) => value);
+
+        const rand_start_time_offset = rand_int_from_interval(1, 360) * i * -1;
+        const rand_end_time_offest = rand_start_time_offset + rand_int_from_interval(20, 90);
+
+        // Start attendance
+        await test_fetch_json(
+          ATTENDANCE_AUTH_URL(test_num),
+          "POST",
+          rocco.account.jwt,
+          {
+            group_id: rocco.group.group_id,
+            time_spoof_minute_offset: rand_start_time_offset,
+          } as AttendancePostReq,
+        );
+
+        // Choose 50/50 that the user will attend, both rocco
+        // and indie will be taking attendance
+        for (const user of users) {
+          if (Math.round(Math.random()) === 1) {
+            await test_fetch_json(
+              ATTENDANCE_AUTH_URL(test_num),
+              "PUT",
+              rocco.group.jwt,
+              {
+                group_id: rocco.group.group_id,
+                user_ids: [user[0]?.user_id ?? ""],
+              } as AttendancePutReq,
+            );
+          }
+          if (Math.round(Math.random()) === 1) {
+            await test_fetch_json(
+              ATTENDANCE_AUTH_URL(test_num),
+              "PUT",
+              rocco.group.jwt,
+              {
+                group_id: rocco.group.group_id,
+                user_ids: [user[1]?.user_id ?? ""],
+              } as AttendancePutReq,
+            );
+          }
+        }
+
+        await test_fetch_json(
+          GROUP_AUTH_URL(test_num),
+          "PUT",
+          rocco.group.jwt,
+          {
+            group_id: rocco.group.group_id,
+            group_name: rocco.group.group_name,
+            group_description: rocco.group.group_description,
+            current_attendance_id: null,
+            time_spoof_minute_offset: rand_end_time_offest,
+          } as GroupPutRequest,
+        );
+      }
     });
+
+    function rand_int_from_interval(min: number, max: number) { // min and max included
+      return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
+    function pair_array<T>(arr: T[]) {
+      const res = [];
+      for (let i = 0; i < arr.length; i += 2) {
+        res.push([arr[i], arr[i + 1] ?? null]);
+      }
+      return res;
+    }
 
     await cleanup_test_step(test_num, t, sp);
   },

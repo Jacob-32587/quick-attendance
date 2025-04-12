@@ -3,6 +3,7 @@ import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/models/attendance_history_model.dart';
+import 'package:quick_attendance/util/time.dart';
 
 class HistoryController extends GetxController {
   late final QuickAttendanceApi _api = Get.find();
@@ -20,9 +21,13 @@ class HistoryController extends GetxController {
   // }
 
   /// Get the groups the user owns, manages, or has joined from the server
-  Future<void> getAttendanceHistoryForWeek() async {
+  Future<void> getAttendanceHistoryForWeek(DateTime? time) async {
     isLoadingHistory.value = true;
-    final response = await _api.getWeeklyUserAttendance();
+    final response = await _api.getWeeklyUserAttendance(
+      time?.year,
+      time?.month,
+      getWeekOfMonthNullable(time),
+    );
     if (response.statusCode == HttpStatusCode.ok) {
       attendanceHistory.value = response.body;
     } else {
