@@ -215,11 +215,6 @@ group.put(
 
       await DbErr.err_on_commit_async(tran.commit(), "Unable to stop attendance");
 
-      // If no users were marked as present no need to disconnect websockets
-      if (group_users.length <= 0) {
-        return ctx.text("", HttpStatusCode.OK);
-      }
-
       // Get all rooms for the users and disconnect sockets
       const rooms = [];
       for (let i = 0; i < group_users.length; i++) {
