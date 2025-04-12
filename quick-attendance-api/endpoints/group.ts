@@ -192,18 +192,6 @@ group.put(
         group.value.current_attendance_id,
       );
 
-      // If no users were marked as present no need to disconnect websockets
-      if (users.length <= 0) {
-        return ctx.text("", HttpStatusCode.OK);
-      }
-
-      // Get all rooms for the users and disconnect sockets
-      const rooms = [];
-      for (let i = 0; i < users.length; i++) {
-        rooms.push(`${req.group_id}:${users[i].value.user_id}`);
-      }
-      ws.in(rooms).disconnectSockets(true);
-
       const tran = kv.atomic();
 
       const attendance_entity = await attendance_dal.get_attendance_entity(
@@ -227,6 +215,18 @@ group.put(
       dal.update_group_tran(group, tran);
 
       await DbErr.err_on_commit_async(tran.commit(), "Unable to stop attendance");
+
+      // If no users were marked as present no need to disconnect websockets
+      if (users.length <= 0) {
+        return ctx.text("", HttpStatusCode.OK);
+      }
+
+      // Get all rooms for the users and disconnect sockets
+      const rooms = [];
+      for (let i = 0; i < users.length; i++) {
+        rooms.push(`${req.group_id}:${users[i].value.user_id}`);
+      }
+      ws.in(rooms).disconnectSockets(true);
     }
 
     // Do not allow the manager to edit any details about the group
