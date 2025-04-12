@@ -1,11 +1,8 @@
-import 'package:calendar_view/calendar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/api/_api_client.dart';
-import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:infinite_calendar_view/infinite_calendar_view.dart';
 import 'package:quick_attendance/controllers/history_controller.dart';
 import 'package:intl/intl.dart';
-import 'package:quick_attendance/models/attendance_history_model.dart';
 import 'package:quick_attendance/util/time.dart';
 
 class _AttendanceEventData {
@@ -32,30 +29,12 @@ class _AttendanceEventData {
 }
 
 class HistoryScreen extends StatelessWidget {
-  late final HistoryController _historyController = Get.find();
-  final EventController _calendarEventController = EventController();
+  final HistoryController _historyController = Get.find();
+  final EventsController _calendarEventController = EventsController();
   final clearedData = RxBool(false);
   final currentTime = Rx<DateTime>(DateTime.now());
 
-  late final QuickAttendanceApi _api = Get.find();
-  final attendanceHistory = Rxn<AttendanceHistoryModel>();
-
   HistoryScreen({super.key});
-
-  Future<void> getAttendanceHistoryForWeek(DateTime? time) async {
-    // isLoadingHistory.value = true;
-    final response = await _api.getWeeklyUserAttendance(
-      time?.year,
-      time?.month,
-      getWeekOfMonthNullable(time),
-    );
-    if (response.statusCode == HttpStatusCode.ok) {
-      attendanceHistory.value = response.body;
-    } else {
-      // TODO: What should we do when this request fails
-    }
-    // isLoadingHistory.value = false;
-  }
 
   Future<void> onRefresh() async {
     await _historyController.getAttendanceHistoryForWeek(currentTime.value);
@@ -78,29 +57,29 @@ class HistoryScreen extends StatelessWidget {
             .toList() ??
         [];
 
-    // _calendarEventController.updateCalendarData((z) {
-    //   var storedEventsIds = z.dayEvents.values
-    //       .expand((e) => e)
-    //       .map((x) => _AttendanceEventData.castObj(x.data)?.getEventId());
+    _calendarEventController.updateCalendarData((z) {
+      var storedEventsIds = z.dayEvents.values
+          .expand((e) => e)
+          .map((x) => _AttendanceEventData.castObj(x.data)?.getEventId());
 
-    // var newEvents =
-    //     events
-    //         .where(
-    //           (x) =>
-    //               !storedEventsIds.contains(
-    //                 _AttendanceEventData.castObj(x.data)?.getEventId(),
-    //               ),
-    //         )
-    //         .toList();
+      var newEvents =
+          events
+              .where(
+                (x) =>
+                    !storedEventsIds.contains(
+                      _AttendanceEventData.castObj(x.data)?.getEventId(),
+                    ),
+              )
+              .toList();
 
-    // if (newEvents.isEmpty) {
-    //   return;
-    // }
-    // return z.addEvents(newEvents);
-    // });
+      if (newEvents.isEmpty) {
+        return;
+      }
+      return z.addEvents(newEvents);
+    });
   }
 
-  CalendarEventData? _getCalendarEventData(
+  Event? _getCalendarEventData(
     String? groupName,
     String? groupId,
     DateTime? attendanceStartTime,
@@ -114,13 +93,12 @@ class HistoryScreen extends StatelessWidget {
         groupId != null &&
         attendanceId != null &&
         present != null) {
-      return CalendarEventData(
+      return Event(
         title: groupName,
-        date: attendanceStartTime.toLocal(),
         startTime: attendanceStartTime.toLocal(),
-        endTime: attendanceEndTime.toLocal(),
+        endTime: attendanceStartTime.add(const Duration(minutes: 60)).toLocal(),
         color: present ? Colors.blue : Colors.red,
-        event: _AttendanceEventData(
+        data: _AttendanceEventData(
           attendanceId: attendanceId,
           groupId: groupId,
         ),
@@ -131,28 +109,36 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // _calendarEventController.updateCalendarData((x) {
-    //   x.clearAll();
-    //   onRefresh();
-    // });
+    _calendarEventController.updateCalendarData((x) {
+      x.clearAll();
+      onRefresh();
+    });
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: Scaffold(
         appBar: AppBar(title: Text("Attendance Calendar")),
         body: SafeArea(
-          child: DayView(
+          child: EventsPlanner(
             controller: _calendarEventController,
             heightPerMinute: 0.9,
-            // onAutomaticAdjustHorizontalScroll: (dateTime) {
-            //   // If the dates year, month, of week of month has changed do another get request
-            //   if (getWeekOfMonth(currentTime.value) !=
-            //           getWeekOfMonth(dateTime) ||
-            //       currentTime.value.month != dateTime.month ||
-            //       currentTime.value.year != dateTime.year) {
-            //     onRefresh();
-            //   }
-            //   currentTime.value = dateTime;
-            // },
+            daysShowed: 3,
+            onAutomaticAdjustHorizontalScroll: (dateTime) {
+              if (getWeekOfMonth(currentTime.value) !=
+                      getWeekOfMonth(dateTime) ||
+                  currentTime.value.month != dateTime.month ||
+                  currentTime.value.year != dateTime.year) {
+                onRefresh();
+              }
+              currentTime.value = dateTime;
+            },
+            fullDayParam: FullDayParam(fullDayEventsBarVisibility: false),
+            daysHeaderParam: DaysHeaderParam(
+              dayHeaderBuilder: (day, isToday) {
+                return DefaultDayHeader(
+                  dayText: DateFormat("E d").format(day).toString(),
+                );
+              },
+            ),
           ),
         ),
       ),
