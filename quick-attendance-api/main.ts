@@ -119,17 +119,20 @@ ws.on("connection", async (socket) => {
 
   // Validate the the given group id exists and is valid
   if (group_id === null || !val_uuid(group_id)) {
-    throw "Must provide a valid group id to join";
+    socket.disconnect(true);
+    return;
   }
 
   // Validate the the given auth_header is given and valid
   if (auth_header === null || typeof auth_header !== "string" || auth_header === undefined) {
-    throw "JWT header invalid";
+    socket.disconnect(true);
+    return;
   }
   const not_validated_jwt = (await verify(auth_header, jwt_secret, jwt_alg)) as unknown;
   const jwt = auth_jwt_payload.safeParse(not_validated_jwt);
   if (jwt.error) {
-    throw "Given JWT is not allowed for authorization";
+    socket.disconnect(true);
+    return;
   }
 
   // Verify the user belongs to the group
