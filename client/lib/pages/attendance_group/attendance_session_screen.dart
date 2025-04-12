@@ -1,54 +1,117 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/components/info_card.dart';
 import 'package:quick_attendance/components/primary_button.dart';
+import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/pages/attendance_group/components/qr-code-view.dart';
+import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 
-class GroupAttendanceSessionScreen extends StatelessWidget {
+class GroupAttendanceSessionController extends GetxController {
+  late final GroupController _groupController = Get.find();
   late final ProfileController _profileController = Get.find();
+
+  /// Loading state
+  final RxBool isStartingSession = false.obs;
+
+  /// Loading state
+  final RxBool isEndingSession = false.obs;
+
+  String? get activeSessionId =>
+      _groupController.group.value?.currentAttendanceId.value;
+
+  Future<void> onRefresh() async {
+    await _groupController.fetchGroup(_groupController.groupId);
+  }
+}
+
+/// Handles joining and managing the group's attendance session
+class GroupAttendanceSessionScreen extends StatelessWidget {
+  late final GroupAttendanceSessionController _controller = Get.put(
+    GroupAttendanceSessionController(),
+  );
   final Rxn<GroupModel> group;
   GroupAttendanceSessionScreen({super.key, required this.group});
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Obx(() {
-        String? activeAccountId = _profileController.user()?.userId();
-        // TODO: Change this display to handle when the group
-        // does not have an active attendance session
-        // And if it does have an active session, get a generated ID
-        // to store in the code
-        if (activeAccountId == null) {
-          // User is not logged in
-          return Center(
-            child: Column(
-              children: [
-                Text(
-                  "You must be logged in to use this feature.",
-                  style: TextStyle(fontSize: 18),
-                ),
-                PrimaryButton(
-                  onPressed: () => Get.toNamed("/login"),
-                  text: "Login",
-                ),
-              ],
+      child: RefreshIndicator(
+        onRefresh: _controller.onRefresh,
+        child: ListView(
+          // forces the layout to be scrollable even if there isn't enough content to do so
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.all(8),
+          children: [
+            Text(
+              "Attend",
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
-          );
-        } else {
-          // User is logged in
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Text("SCAN ME", style: TextStyle(fontSize: 36)),
-                QrCodeView(code: activeAccountId),
-              ],
+            const SizedBox(height: 32),
+            SkeletonShimmer(
+              isLoading: _controller._groupController.isLoadingGroup,
+              skeletonHeight: 40,
+              widget: InfoCard(
+                child: Obx(() {
+                  final activeSessionId = _controller.activeSessionId;
+                  if (activeSessionId == null) {
+                    return Text("No active session");
+                  } else {
+                    return Text("There is an active session!");
+                  }
+                }),
+              ),
             ),
-          );
-        }
-      }),
+            const SizedBox(height: 16),
+            Obx(() {
+              final userId = _controller._profileController.userId;
+              if (userId == null) {
+                return SizedBox.shrink();
+              }
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Card(
+                      elevation: 8,
+                      child: QrCodeView(
+                        code: userId,
+                        size: MediaQuery.of(context).size.width * 0.5,
+                      ),
+                    ),
+                    Text(
+                      "Waiting for connection",
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            Obx(
+              () => PrimaryButton(
+                text: "Start Session",
+                isLoading: _controller.isStartingSession.value,
+                onPressed: _controller.onRefresh,
+              ),
+            ),
+            Obx(() {
+              final activeSessionId = _controller.activeSessionId;
+              if (activeSessionId == null) {
+                return SizedBox.shrink();
+              } else {
+                return PrimaryButton(
+                  text: "End Attendance",
+                  isLoading: _controller.isEndingSession.value,
+                );
+              }
+            }),
+          ],
+        ),
+      ),
     );
   }
 }
