@@ -24,37 +24,15 @@ import 'package:quick_attendance/util/time.dart';
 class GroupAttendeesController extends GetxController {
   late final GroupController _controller = Get.find();
   late final ProfileController _profileController = Get.find();
-  String? get currentUserId => _profileController.user.value?.userId.value;
-  bool get isOwnerOrManager {
-    return isManager || isOwner;
-  }
+  String? get currentUserId => _profileController.userId;
+
+  bool get isOwner => _controller.isOwner;
+  bool get isManager => _controller.isManager;
+  bool get isOwnerOrManager => _controller.isOwnerOrManager;
 
   Rxn<GroupModel> get group => _controller.group;
 
   final RxBool showAttendance = false.obs;
-
-  bool get isManager {
-    final group = _controller.group.value;
-    if (group == null || currentUserId == null) {
-      return false;
-    }
-    if (group.managers?.any((user) => user.userId.value == currentUserId) ==
-        true) {
-      return true;
-    }
-    return false;
-  }
-
-  bool get isOwner {
-    final group = _controller.group.value;
-    if (group == null || currentUserId == null) {
-      return false;
-    }
-    if (group.owner.value?.userId.value == currentUserId) {
-      return true;
-    }
-    return false;
-  }
 }
 
 class GroupAttendeesScreen extends StatelessWidget {

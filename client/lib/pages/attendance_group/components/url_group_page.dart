@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/group_model.dart';
-import 'package:quick_attendance/models/responses/group_attendance_response.dart';
 
 /// Handles the logic for retrieving group information
 class GroupController extends GetxController {
   late final QuickAttendanceApi _api = Get.find();
-  late final GroupController groupController;
+  late final ProfileController _profileController = Get.find();
   String? get groupId => group.value?.groupId.value;
   final RxBool isLoadingGroup = RxBool(true);
   final RxBool isEditingGroup = RxBool(false);
@@ -16,6 +16,39 @@ class GroupController extends GetxController {
 
   /// The active group being accessed
   final group = Rxn<GroupModel>();
+
+  String? get currentAttendanceId => group.value?.currentAttendanceId.value;
+
+  /// Checks if the authenticated user is the owner of this group
+  bool get isOwner {
+    final group = this.group.value;
+    if (group == null || _profileController.userId == null) {
+      return false;
+    }
+    if (group.owner.value?.userId.value == _profileController.userId) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Checks if the authenticated user is a manager of this group
+  bool get isManager {
+    final group = this.group.value;
+    if (group == null || _profileController.userId == null) {
+      return false;
+    }
+    if (group.managers?.any(
+          (user) => user.userId.value == _profileController.userId,
+        ) ==
+        true) {
+      return true;
+    }
+    return false;
+  }
+
+  bool get isOwnerOrManager {
+    return isManager || isOwner;
+  }
 
   /// Fetch group information for the provided group id
   Future<void> fetchGroup(String? groupId) async {
