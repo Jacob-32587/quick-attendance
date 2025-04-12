@@ -204,7 +204,6 @@ export function create_present_user_tran(
     entity.user_id,
   ];
   tran
-    .check({ key: key, versionstamp: null })
     .set(key, {
       group_id: entity.group_id,
       attendance_id: entity.attendance_id,
