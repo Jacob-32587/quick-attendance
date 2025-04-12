@@ -187,9 +187,8 @@ group.put(
 
     // The client needs to stop attedance, disconnect all connected websockets
     if (req.current_attendance_id === null && group.value.current_attendance_id !== null) {
-      const users = await attendance_dal.get_attendance_present_users(
+      const group_users = await dal.get_group_users(
         req.group_id,
-        group.value.current_attendance_id,
       );
 
       const tran = kv.atomic();
@@ -217,14 +216,14 @@ group.put(
       await DbErr.err_on_commit_async(tran.commit(), "Unable to stop attendance");
 
       // If no users were marked as present no need to disconnect websockets
-      if (users.length <= 0) {
+      if (group_users.length <= 0) {
         return ctx.text("", HttpStatusCode.OK);
       }
 
       // Get all rooms for the users and disconnect sockets
       const rooms = [];
-      for (let i = 0; i < users.length; i++) {
-        rooms.push(`${req.group_id}:${users[i].value.user_id}`);
+      for (let i = 0; i < group_users.length; i++) {
+        rooms.push(`${req.group_id}:${group_users[i].value.user_id}`);
       }
       ws.in(rooms).disconnectSockets(true);
     }
