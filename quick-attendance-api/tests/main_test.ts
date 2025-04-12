@@ -58,6 +58,167 @@ export const user_array = [
   user_indie_conway,
 ];
 
+//#region additonal users
+export const user_luca_richard = {
+  username: "luca_richard93",
+  email: "luca.richard93@domain.com",
+  first_name: "Luca",
+  last_name: "Richard",
+  password: "Luca#2023Rich@rd!",
+};
+export const user_mabel_terrel = {
+  username: "mabel_terrell88",
+  email: "mabel_terrell88@randommail.net",
+  first_name: "Mabel",
+  last_name: "Terrell",
+  password: "M@belT3rrell$88!",
+};
+export const user_rayden_garrett = {
+  username: "rayden.garrett7",
+  email: "rayden.garrett7@service.org",
+  first_name: "Rayden",
+  last_name: "Garrett",
+  password: "R@ydEn_7G@rrett2024!",
+};
+export const user_nola_lozano = {
+  username: "nola.lozano_19",
+  email: "nola.lozano_19@mailbox.com",
+  first_name: "Nola",
+  last_name: "Lozano",
+  password: "Nola19#Loz@no2024!",
+};
+export const user_kylie_mccoy = {
+  username: "kylie.mccoy_22",
+  email: "kylie.mccoy_22@outlook.co.uk",
+  first_name: "Kylie",
+  last_name: "McCoy",
+  password: "Kylie!22M@cC0y$",
+};
+export const user_selene_fernadez = {
+  username: "selene_fernandez93",
+  email: "selene_fernandez93@provider.biz",
+  first_name: "Selene",
+  last_name: "Fernandez",
+  password: "S3l3n3@F3rn@nd3z93!",
+};
+export const user_grayson_patterson = {
+  username: "grayson.patterson99",
+  email: "grayson.patterson99@domain.io",
+  first_name: "Grayson",
+  last_name: "Patterson",
+  password: "Gr@ys0n#P@tt3r$on99!",
+};
+
+export const user_jane_doe = {
+  username: "jane.doe789",
+  email: "jane.doe789@examplemail.com",
+  first_name: "Jane",
+  last_name: "Doe",
+  password: "password123!",
+};
+
+export const user_john_smith = {
+  username: "john_smith_2024",
+  email: "john.smith2024@domainmail.com",
+  first_name: "John",
+  last_name: "Smith",
+  password: "securePass2025",
+};
+
+export const user_mary_jones = {
+  username: "mary_jones_abc",
+  email: "mary_jones1234@mailservice.com",
+  first_name: "Mary",
+  last_name: "Jones",
+  password: "mypassword567",
+};
+
+export const user_robert_johnson = {
+  username: "r.johnson_101",
+  email: "robert.johnson_101@webmail.com",
+  first_name: "Robert",
+  last_name: "Johnson",
+  password: "robert1234!",
+};
+
+export const user_alice_williams = {
+  username: "alice_williams_2020",
+  email: "alice_w2020@outlook.com",
+  first_name: "Alice",
+  last_name: "Williams",
+  password: "alicepass987",
+};
+
+export const user_emily_clark = {
+  username: "emily_clark93",
+  email: "emily.clark93@randommail.org",
+  first_name: "Emily",
+  last_name: "Clark",
+  password: "emilySecure@2023",
+};
+
+export const user_michael_brown = {
+  username: "michael_brown_22",
+  email: "michael.brown22@mailbox.com",
+  first_name: "Michael",
+  last_name: "Brown",
+  password: "michael2025pass",
+};
+
+export const user_lisa_martinez = {
+  username: "lisa_martinez_88",
+  email: "lisa.martinez88@mydomain.net",
+  first_name: "Lisa",
+  last_name: "Martinez",
+  password: "lisaSecret@88",
+};
+
+export const user_nick_taylor = {
+  username: "nick_taylor_555",
+  email: "nick_taylor555@protonmail.com",
+  first_name: "Nick",
+  last_name: "Taylor",
+  password: "nickpassword555",
+};
+
+export const user_katherine_lee = {
+  username: "katherine_lee_777",
+  email: "katherine.lee777@fastmail.com",
+  first_name: "Katherine",
+  last_name: "Lee",
+  password: "kathlee1234",
+};
+
+export const user_oliver_garcia = {
+  username: "oliver.garcia_101",
+  email: "oliver_garcia101@yahoo.com",
+  first_name: "Oliver",
+  last_name: "Garcia",
+  password: "oliverGarcia@101",
+};
+
+export const additonal_user_array = [
+  user_luca_richard,
+  user_mabel_terrel,
+  user_rayden_garrett,
+  user_nola_lozano,
+  user_kylie_mccoy,
+  user_selene_fernadez,
+  user_grayson_patterson,
+  user_jane_doe,
+  user_john_smith,
+  user_mary_jones,
+  user_robert_johnson,
+  user_alice_williams,
+  user_emily_clark,
+  user_michael_brown,
+  user_lisa_martinez,
+  user_nick_taylor,
+  user_katherine_lee,
+  user_oliver_garcia,
+];
+//#endregion
+
 export async function create_and_login_test_users(
   test_num: number,
   user_array_override?: AccountPostReq[],
@@ -376,4 +537,24 @@ export async function create_users_and_group(test_num: number) {
     user_jwts: [rocco_jwt, maeve_jwt, henrik_jwt, indie_jwt],
     group_id: owner_group_list.owned_groups[0].group_id,
   };
+}
+
+export async function invite_additonal_users(test_num: number, owner_jwt: string, group_id: Uuid) {
+  const additonal_users = await create_and_login_test_users(test_num, additonal_user_array);
+  let additonal_user_accounts = await get_users_accounts(additonal_users, test_num);
+  await test_fetch_json(GROUP_AUTH_URL(test_num) + "/invite", "PUT", owner_jwt, {
+    "usernames": additonal_user_accounts.map((x) => x.username),
+    "group_id": group_id,
+    "is_manager_invite": false,
+  } as GroupInvitePutReq);
+
+  additonal_user_accounts = await get_users_accounts(additonal_users, test_num);
+
+  for (const user of additonal_user_accounts) {
+    await test_fetch_json(ACCOUNT_AUTH_URL(test_num) + "/invite", "PUT", user.jwt, {
+      account_invite_jwt: (user.fk_pending_group_ids ?? [])[0],
+      accept: true,
+    } as AccountInviteActionPutReq);
+  }
+  return additonal_user_accounts;
 }

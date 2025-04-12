@@ -1,7 +1,7 @@
 import { AttendanceEntity } from "../entities/attendance_entity.ts";
 import { AttendancePresentMemberEntity as AttendancePresentUserEntity } from "../entities/attendance_present_member_entity.ts";
 import { GroupEntity } from "../entities/group_entity.ts";
-import { get_week_num_of_month } from "../util/time.ts";
+import { date_add, get_week_num_of_month } from "../util/time.ts";
 import { get_uuid_time, new_uuid, Uuid } from "../util/uuid.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
 import * as group_dal from "./group.ts";
@@ -89,8 +89,9 @@ export function create_attendance(
   time_spoof_minute_offset: number | null = null,
 ) {
   const tran = kv.atomic();
+  const calc_epoch = date_add(new Date(), "minute", time_spoof_minute_offset ?? 0).getTime();
   const attendance_id = new_uuid(
-    time_spoof_minute_offset ? Date.now() - (time_spoof_minute_offset * 60000) : undefined,
+    time_spoof_minute_offset ? calc_epoch : undefined,
   );
   const time = get_uuid_time(attendance_id);
 
