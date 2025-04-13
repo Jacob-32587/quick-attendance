@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/api/web_socket_service.dart';
@@ -25,12 +26,28 @@ class QuickAttendanceWebsocket extends WebSocketService {
     });
   }
 
-  void connectToGroupAttendance({
-    required String? groupId,
-    void Function()? onConnect,
-    void Function()? onConnectError,
-    void Function()? onDisconnect,
-  }) {
+  @override
+  void onDisconnect() {
+    Get.snackbar(
+      "Attendance",
+      "Disconnected from attendance session",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.blue.shade700,
+      colorText: Colors.blue.shade50,
+    );
+  }
+
+  @override
+  void onConnect() {
+    // TODO: implement onConnect
+  }
+
+  @override
+  void onConnectFailure() {
+    // TODO: implement onConnectFailure
+  }
+
+  void connectToGroupAttendance({required String? groupId}) {
     var domainAndPort = _api.domainAndPort.value;
     super.connectToServer(
       url: "ws://$domainAndPort",
@@ -38,9 +55,6 @@ class QuickAttendanceWebsocket extends WebSocketService {
           (defaultOptions) => defaultOptions
               .setQuery({"group_id": groupId})
               .setAuth({"token": _auth.jwt.value}),
-      onConnect: onConnect,
-      onConnectError: onConnectError,
-      onDisconnect: onDisconnect,
     );
   }
 }
