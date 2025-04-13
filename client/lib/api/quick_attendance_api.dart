@@ -64,6 +64,7 @@ class QuickAttendanceApi extends GetxService {
   Future<ApiResponse<UserModel>> getUser() async {
     // Get the authenticated user's profile
     final Response response = await apiClient.get("/auth/account");
+    print(response.body.toString());
     final UserModel parsedBody = UserModel.fromJson(response.body);
     final apiResponse = ApiResponse(
       statusCode: HttpStatusCode.from(response.statusCode),

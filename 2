@@ -44,10 +44,14 @@ class JoinedGroupsScreen extends StatelessWidget {
             ),
             SizedBox(height: 24),
 
+            // New UI Section for Strings with Accept/Deny buttons
             Obx(() {
               final jwts =
                   _profileController.pendingGroupJwts; // <-- RxList<String>
-              if (jwts == null || jwts.isEmpty) {
+              if (jwts == null) {
+                return Column();
+              }
+              if (jwts.isEmpty) {
                 return Text(
                   "No pending invites",
                   style: TextStyle(color: Colors.grey),

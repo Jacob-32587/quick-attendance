@@ -23,6 +23,8 @@ class ProfileController extends GetxController {
       _groupListResponse.value?.managedGroups;
   RxList<GroupModel>? get ownedGroups => _groupListResponse.value?.ownedGroups;
 
+  RxList<String>? get pendingGroupJwts => user()?.pendingGroupJwts;
+
   /// Loading state for creating a group
   final RxBool isCreatingGroup = false.obs;
 

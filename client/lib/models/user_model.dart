@@ -33,6 +33,11 @@ final class UserModel extends BaseApiModel<UserModel> {
       username: json["username"],
       firstName: json["first_name"],
       lastName: json["last_name"],
+      pendingGroupJwts:
+          (json["fk_pending_group_ids"] as List<dynamic>?)
+              ?.map((x) => x as String?)
+              .nonNulls
+              .toList(),
     );
   }
 
