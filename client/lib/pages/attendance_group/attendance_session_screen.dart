@@ -1,17 +1,22 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/api/quick_attendance_websocket.dart';
 import 'package:quick_attendance/api/web_socket_service.dart';
+import 'package:quick_attendance/components/animated_check.dart';
 import 'package:quick_attendance/components/binary_choice.dart';
 import 'package:quick_attendance/components/flat_button.dart';
 import 'package:quick_attendance/components/info_card.dart';
+import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
 import 'package:quick_attendance/components/success_card.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/pages/attendance_group/camera_page.dart';
+import 'package:quick_attendance/pages/attendance_group/components/glowing_card.dart';
 import 'package:quick_attendance/pages/attendance_group/components/qr-code-view.dart';
 import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 
@@ -26,6 +31,9 @@ class GroupAttendanceSessionController extends GetxController {
 
   /// Loading state
   final RxBool isEndingSession = false.obs;
+
+  /// Page state
+  final RxBool showAttendanceTaken = true.obs;
 
   // User types
   bool get isOwner => _groupController.isOwner;
@@ -76,18 +84,9 @@ class GroupAttendanceSessionController extends GetxController {
     if (groupId == null) {
       return; // this should never happen
     }
-    _websocketService.connectToGroupAttendance(
-      groupId: groupId,
-      onConnect: () {
-        print("Connected");
-      },
-      onConnectError: () {
-        print("Failed to connect");
-      },
-      onDisconnect: () {
-        print("Disconnected");
-      },
-    );
+    _websocketService.connectToGroupAttendance(groupId: groupId);
+    await Future.delayed(Duration(seconds: 3));
+    _api.putAttendedUsers(groupId, [_profileController.userId!]);
   }
 
   Future<void> endAttendance() async {
@@ -111,10 +110,13 @@ class GroupAttendanceSessionController extends GetxController {
   }
 
   void leaveAttendanceSession() {
+    showAttendanceTaken.value = false;
     _websocketService.disconnect();
   }
 
-  void attendanceTakenHandler() {}
+  void attendanceTakenHandler() {
+    showAttendanceTaken.value = true;
+  }
 
   /// Handles what happens when the user presses "take attendance"
   void onTakeAttendance() {
@@ -141,6 +143,7 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double qrSize = MediaQuery.of(context).size.width * 0.8;
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: _controller.onRefresh,
@@ -149,7 +152,6 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.all(8),
           children: [
-            const SizedBox(height: 32),
             SkeletonShimmer(
               isLoading: _controller._groupController.isLoadingGroup,
               skeletonHeight: 40,
@@ -178,49 +180,7 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
               }),
             ),
             const SizedBox(height: 16),
-            Obx(() {
-              final userId = _controller._profileController.userId;
-              if (userId == null) {
-                return SizedBox.shrink(); // This should never happen
-              }
-              double qrSize = MediaQuery.of(context).size.width * 0.8;
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Card(
-                      elevation: 8,
-                      child:
-                          _controller.isConnectedToSession
-                              ? QrCodeView(code: userId, size: qrSize)
-                              : Container(
-                                height: qrSize,
-                                width: qrSize,
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).colorScheme.surfaceContainerHighest,
-                              ),
-                    ),
-                    Obx(() {
-                      String status = "Waiting for connection";
-                      if (_controller.isConnecting) {
-                        status = "Connecting...";
-                      } else if (_controller.isConnectedToSession) {
-                        status = "Waiting to be scanned...";
-                      }
-                      return Text(
-                        status,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              );
-            }),
+            QrAttendanceView(qrSize: qrSize),
             const SizedBox(height: 32),
             Divider(color: Theme.of(context).colorScheme.onSurface),
             const SizedBox(height: 16),
@@ -249,7 +209,7 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
                         _controller.activeSessionId != null,
                     widget1: FlatButton(
                       onPressed: _controller.onTakeAttendance,
-                      child: Text("Take Attendance"),
+                      text: "Take Attendance",
                     ),
                   ),
                 ),
@@ -258,12 +218,14 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
                   if (activeSessionId == null) {
                     return FlatButton(
                       onPressed: _controller.startAttendance,
-                      child: Text("Start Attendance"),
+                      text: "Start Attendance",
+                      isLoading: _controller.isStartingSession.value,
                     );
                   } else {
                     return FlatButton(
                       onPressed: _controller.endAttendance,
-                      child: Text("End Session"),
+                      text: "End Attendance Session",
+                      isLoading: _controller.isEndingSession.value,
                     );
                   }
                 }),
@@ -272,6 +234,111 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class QrAttendanceView extends StatelessWidget {
+  final GroupAttendanceSessionController _controller = Get.find();
+
+  final double qrSize;
+
+  QrAttendanceView({required this.qrSize});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.antiAlias,
+          children: [
+            Obx(() {
+              final userId = _controller._profileController.userId;
+              if (userId == null) {
+                return SizedBox.shrink(); // This should never happen
+              }
+              // Display the QR code, centered, with rounded corners.
+              return Center(
+                child: Card(
+                  elevation: 8,
+                  child:
+                      _controller.isConnectedToSession
+                          ? AnimatedGlowBox(
+                            child: QrCodeView(code: userId, size: qrSize),
+                          )
+                          : Container(
+                            height: qrSize,
+                            width: qrSize,
+                            color:
+                                Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
+                          ),
+                ),
+              );
+            }),
+
+            // Black transparent blurred background
+            Obx(
+              () => BinaryChoice(
+                choice: _controller.showAttendanceTaken.value,
+                widget1: Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                      child: Container(color: Colors.black.withAlpha(50)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Display disconnect option and green checkmark when attended
+            Obx(
+              () => BinaryChoice(
+                choice: _controller.showAttendanceTaken.value,
+                widget1: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        AnimatedCheck(),
+                        const SizedBox(height: 16),
+                        Text(
+                          "You have been marked as attended!",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        PrimaryButton(
+                          text: "Disconnect",
+                          onPressed: _controller.leaveAttendanceSession,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        Obx(() {
+          String status = "Waiting for connection";
+          if (_controller.isConnecting) {
+            status = "Connecting...";
+          } else if (_controller.isConnectedToSession) {
+            status = "Waiting to be scanned...";
+          }
+          return Text(
+            status,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          );
+        }),
+      ],
     );
   }
 }
