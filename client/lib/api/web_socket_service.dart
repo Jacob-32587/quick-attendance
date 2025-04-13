@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:get/get.dart';
 
@@ -24,10 +23,6 @@ abstract class WebSocketService extends GetxService {
 
     /// Override the default socket options
     io.OptionBuilder Function(io.OptionBuilder defaultOptions)? optionBuilder,
-
-    void Function()? onConnect,
-    void Function()? onConnectError,
-    void Function()? onDisconnect,
   }) {
     io.OptionBuilder socketOptions = io.OptionBuilder()
         .setTransports(["websocket"])
@@ -49,16 +44,12 @@ abstract class WebSocketService extends GetxService {
     socket!.onConnectError((err) {
       socketConnectionState.value = SocketConnectionState.failedToConnect;
       Get.log("Websocket failed to connect");
-      if (onConnectError != null) {
-        onConnectError();
-      }
+      onConnectFailure();
     });
     socket!.onDisconnect((_) {
       socketConnectionState.value = SocketConnectionState.disconnected;
       Get.log("Websocket disconnected");
-      if (onDisconnect != null) {
-        onDisconnect();
-      }
+      onDisconnect();
     });
 
     // Register listeners before connecting the socket incase we get immediate events
@@ -70,6 +61,15 @@ abstract class WebSocketService extends GetxService {
   /// attempts to connect. You can reference the socket in sub-classes using `socket`
   void registerListeners();
 
+  /// Perform some action when the client disconnects from the socket
+  void onDisconnect();
+
+  /// Perform some action when the client fails to connect to the socket
+  void onConnectFailure();
+
+  /// Perform some action when the client successfully connects to the socket
+  void onConnect();
+
   // Example request
   void sendMessage({required String groupCode}) {
     socket?.emit("joinGroup", {"groupCode": groupCode});
@@ -77,13 +77,7 @@ abstract class WebSocketService extends GetxService {
 
   void disconnect() {
     socket?.dispose();
-    Get.snackbar(
-      "Attendance",
-      "Disconnected from attendance session",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue.shade700,
-      colorText: Colors.blue.shade50,
-    );
+    onDisconnect();
   }
 
   @override
