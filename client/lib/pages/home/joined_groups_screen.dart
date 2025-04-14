@@ -42,6 +42,17 @@ class JoinedGroupsScreen extends StatelessWidget {
     return "${jwtModel.groupName} is inviting you as a ${jwtModel.isManagerInvite ? "manager" : "member"}$uniqueIdMessage";
   }
 
+  bool uniqueIdRequired(PendingInviteJwtModel jwtModel) {
+    if (jwtModel.uniqueIdSettings != null) {
+      if ((jwtModel.uniqueIdSettings?.requiredForManager ?? false) &&
+          jwtModel.isManagerInvite) {
+        return true;
+      }
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(

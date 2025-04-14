@@ -95,6 +95,7 @@ interface ServerToClientEvents {
 
 interface ClientToServerEvents {
   attendanceTaken: () => void;
+  error: (msg: string) => void;
 }
 
 interface InterServerEvents {
@@ -113,39 +114,51 @@ export const ws = new Server<
 >();
 
 ws.on("connection", async (socket) => {
-  // JWT authorization for user
-  const auth_header = socket.handshake.auth.token;
-  const group_id = socket.handshake.query.get("group_id");
+  try {
+    // JWT authorization for user
+    const auth_header = socket.handshake.auth.token;
+    const group_id = socket.handshake.query.get("group_id");
 
-  // Validate the the given group id exists and is valid
-  if (group_id === null || !val_uuid(group_id)) {
-    socket.disconnect(true);
-    return;
+    // Validate the given group id exists and is valid
+    if (group_id === null || !val_uuid(group_id)) {
+      socket.emit("error", "received malformed uuid");
+      socket.disconnect(true);
+      return;
+    }
+
+    // Validate the given auth header is given and valid
+    if (auth_header === null || typeof auth_header !== "string" || auth_header === undefined) {
+      socket.emit("error", "jwt header was the wrong type or not present");
+      socket.disconnect(true);
+      return;
+    }
+    const not_validated_jwt = (await verify(auth_header, jwt_secret, jwt_alg)) as unknown;
+    const jwt = auth_jwt_payload.safeParse(not_validated_jwt);
+    if (jwt.error) {
+      socket.disconnect(true);
+      socket.emit("error", "received malformed/expired jwt");
+      return;
+    }
+
+    // Verify the user belongs to the group
+    await get_group_and_verify_user_type(group_id, jwt.data.user_id, [
+      UserType.Member,
+      UserType.Manager,
+    ]);
+
+    socket.join(`${group_id}:${jwt.data.user_id}`);
+
+    // Attach relevant data to the socket
+    socket.data.auth_data = jwt.data;
+    socket.data.group_id = group_id;
+  } catch (e) {
+    if (e instanceof HTTPException) {
+      socket.emit("error", e.message);
+    }
+    if (socket.connected) {
+      socket.disconnect();
+    }
   }
-
-  // Validate the the given auth_header is given and valid
-  if (auth_header === null || typeof auth_header !== "string" || auth_header === undefined) {
-    socket.disconnect(true);
-    return;
-  }
-  const not_validated_jwt = (await verify(auth_header, jwt_secret, jwt_alg)) as unknown;
-  const jwt = auth_jwt_payload.safeParse(not_validated_jwt);
-  if (jwt.error) {
-    socket.disconnect(true);
-    return;
-  }
-
-  // Verify the user belongs to the group
-  await get_group_and_verify_user_type(group_id, jwt.data.user_id, [
-    UserType.Member,
-    UserType.Manager,
-  ]);
-
-  socket.join(`${group_id}:${jwt.data.user_id}`);
-
-  // Attach relevant data to the socket
-  socket.data.auth_data = jwt.data;
-  socket.data.group_id = group_id;
 });
 
 app.get("/", (ctx: Context) => {
