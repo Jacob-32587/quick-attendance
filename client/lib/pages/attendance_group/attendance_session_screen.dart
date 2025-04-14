@@ -19,6 +19,7 @@ import 'package:quick_attendance/pages/attendance_group/camera_page.dart';
 import 'package:quick_attendance/pages/attendance_group/components/glowing_card.dart';
 import 'package:quick_attendance/pages/attendance_group/components/qr-code-view.dart';
 import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
+import 'package:vibration/vibration.dart';
 
 class GroupAttendanceSessionController extends GetxController {
   late final GroupController _groupController = Get.find();
@@ -32,8 +33,8 @@ class GroupAttendanceSessionController extends GetxController {
   /// Loading state
   final RxBool isEndingSession = false.obs;
 
-  /// Page state
-  final RxBool showAttendanceTaken = true.obs;
+  /// Page state for when attendance has been taken
+  final RxBool showAttendanceTaken = false.obs;
 
   /// Page state which allows MANAGERS to automatically become attended after a delay
   /// This was really only added for debug purposes, but may be used for the demo.
@@ -129,8 +130,11 @@ class GroupAttendanceSessionController extends GetxController {
     _websocketService.disconnect();
   }
 
-  void attendanceTakenHandler() {
+  void attendanceTakenHandler() async {
     showAttendanceTaken.value = true;
+    if (await Vibration.hasVibrator()) {
+      Vibration.vibrate(duration: 300);
+    }
   }
 
   /// Handles what happens when the user presses "take attendance"
