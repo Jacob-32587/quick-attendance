@@ -13,51 +13,50 @@ class ProfileScreen extends StatefulWidget {
   State<StatefulWidget> createState() => _ProfileScreenState();
   
 }
-
 class _ProfileScreenState extends State<ProfileScreen> {
   final ProfileController profileController = Get.find();
   final AuthController authController = Get.find();
   
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'My Profile',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-          ),
-          elevation: 2.0,
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          shadowColor: Theme.of(context).colorScheme.primary,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'My Profile',
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
         ),
-        body: Column(
+        elevation: 2.0,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shadowColor: Theme.of(context).colorScheme.primary,
+      ),
+      body: SingleChildScrollView (
+        padding: EdgeInsets.all(10.0),
+        child: Column(
           children: [
             Container(
-              padding: EdgeInsets.all(10.0),
               alignment: Alignment.center,
-              child: ProfileHeader(
-                name: '${profileController.firstName} ${profileController.lastName}',
-                user: '${profileController.username}',
-                email: '${profileController.email}',
-              ),
+              child: Obx ( () => ProfileHeader(
+                name: '${profileController.user.value?.firstName() ?? ""} ${profileController.user.value?.lastName() ?? ""}',
+                user: profileController.user.value?.username() ?? "",
+                email: profileController.user.value?.email() ?? "",
+              )),
             ),
             Container(
               padding: EdgeInsets.all(10.0),
               alignment: Alignment.center,
-              child: ProfileInfo(
-                firstName: '${profileController.firstName}',
-                lastName: '${profileController.lastName}',
-                user: '${profileController.username}',
-                email: '${profileController.email}',
+              child: Obx( () => ProfileInfo(
+                firstName: profileController.user.value?.firstName() ?? "",
+                lastName: profileController.user.value?.lastName() ?? "",
+                user: profileController.user.value?.username() ?? "",
+                email: profileController.user.value?.email() ?? "",
                 groups: profileController.memberGroups
-              )
+              )),
             ),
             SizedBox(height: 20),
             PrimaryButton(text: "Logout", onPressed: authController.logout),
           ]
-        ),
-      );
-    });
+        )
+      ),
+    );
   }
 }
