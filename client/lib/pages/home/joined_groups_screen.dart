@@ -119,17 +119,65 @@ class JoinedGroupsScreen extends StatelessWidget {
                               children: [
                                 TextButton(
                                   onPressed: () async {
-                                    await _profileController.respondToInvite(
-                                      groupInviteJwt: jwtModel.jwt,
-                                      uniqueId: null,
-                                      accept: true,
-                                    );
+                                    if (uniqueIdRequired(jwtModel)) {
+                                      final TextEditingController
+                                      _uniqueIdController =
+                                          TextEditingController();
+                                      final result = await showDialog<String?>(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: Text('Enter Unique ID'),
+                                            content: TextField(
+                                              controller: _uniqueIdController,
+                                              decoration: InputDecoration(
+                                                hintText: 'Unique ID',
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.of(
+                                                      context,
+                                                    ).pop(null),
+                                                child: Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop(
+                                                    _uniqueIdController.text
+                                                        .trim(),
+                                                  );
+                                                },
+                                                child: Text('Submit'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+
+                                      if (result != null && result.isNotEmpty) {
+                                        await _profileController
+                                            .respondToInvite(
+                                              groupInviteJwt: jwtModel.jwt,
+                                              uniqueId: result,
+                                              accept: true,
+                                            );
+                                      }
+                                    } else {
+                                      await _profileController.respondToInvite(
+                                        groupInviteJwt: jwtModel.jwt,
+                                        uniqueId: null,
+                                        accept: true,
+                                      );
+                                    }
                                   },
                                   child: Text("Accept"),
                                   style: TextButton.styleFrom(
                                     foregroundColor: Colors.green,
                                   ),
                                 ),
+
                                 TextButton(
                                   onPressed: () async {
                                     await _profileController.respondToInvite(
