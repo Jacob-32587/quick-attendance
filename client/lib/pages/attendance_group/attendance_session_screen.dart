@@ -35,6 +35,10 @@ class GroupAttendanceSessionController extends GetxController {
   /// Page state
   final RxBool showAttendanceTaken = true.obs;
 
+  /// Page state which allows MANAGERS to automatically become attended after a delay
+  /// This was really only added for debug purposes, but may be used for the demo.
+  final RxBool bypassAttendance = false.obs;
+
   // User types
   bool get isOwner => _groupController.isOwner;
   bool get isManager => _groupController.isManager;
@@ -67,6 +71,15 @@ class GroupAttendanceSessionController extends GetxController {
     ApiResponse<Null> response = await _api.startAttendanceSession(groupId);
     if (response.statusCode == HttpStatusCode.ok) {
       await onRefresh(); // Reload the group to update reactive UI
+      if (activeSessionId != null) {
+        Get.snackbar(
+          "Success",
+          "You started a new attendance session!",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.shade800,
+          colorText: Colors.green.shade50,
+        );
+      }
     } else {
       Get.snackbar(
         "Failed",
@@ -85,8 +98,10 @@ class GroupAttendanceSessionController extends GetxController {
       return; // this should never happen
     }
     _websocketService.connectToGroupAttendance(groupId: groupId);
-    await Future.delayed(Duration(seconds: 3));
-    _api.putAttendedUsers(groupId, [_profileController.userId!]);
+    if (bypassAttendance.value) {
+      await Future.delayed(Duration(seconds: 3));
+      _api.putAttendedUsers(groupId, [_profileController.userId!]);
+    }
   }
 
   Future<void> endAttendance() async {
@@ -229,6 +244,20 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
                     );
                   }
                 }),
+                Obx(
+                  () => BinaryChoice(
+                    choice: _controller.isManager,
+                    widget1: Obx(
+                      () => FlatButton(
+                        text:
+                            _controller.bypassAttendance.value
+                                ? "Disable Attendance Bypass"
+                                : "Enable Attendance Bypass",
+                        onPressed: _controller.bypassAttendance.toggle,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ],
@@ -271,10 +300,13 @@ class QrAttendanceView extends StatelessWidget {
                           : Container(
                             height: qrSize,
                             width: qrSize,
-                            color:
-                                Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerHighest,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
+                            ),
                           ),
                 ),
               );
