@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/api/quick_attendance_websocket.dart';
+import 'package:quick_attendance/api/web_socket_service.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
 import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 
 class GroupPageContainer extends StatelessWidget {
   late final GroupController _controller = Get.find();
+  late final QuickAttendanceWebsocket _websocketService = Get.find();
   final backgroundImageUrl =
       'https://cdn.pixabay.com/photo/2016/06/02/02/33/triangles-1430105_1280.png';
   final Widget? content;
@@ -12,6 +15,14 @@ class GroupPageContainer extends StatelessWidget {
 
   Future<void> onRefresh() async {
     await _controller.fetchGroup(_controller.groupId);
+  }
+
+  void onLeaveGroupPage() {
+    if (_websocketService.socketConnectionState.value ==
+        SocketConnectionState.connected) {
+      _websocketService.disconnect();
+    }
+    Get.toNamed("/"); // Navigate to home page
   }
 
   GroupPageContainer({super.key, required this.title, this.content});
@@ -32,9 +43,7 @@ class GroupPageContainer extends StatelessWidget {
             elevation: 4, // initial elevation
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                Get.toNamed("/");
-              },
+              onPressed: onLeaveGroupPage,
             ),
             actions: [
               Obx(

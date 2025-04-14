@@ -5,17 +5,30 @@ import 'package:qr_flutter/qr_flutter.dart';
 /// has minimum error correction
 class QrCodeView extends StatelessWidget {
   final String code;
+  final double? size;
 
-  const QrCodeView({super.key, required this.code});
+  const QrCodeView({super.key, required this.code, this.size});
 
   @override
   Widget build(BuildContext context) {
-    return QrImageView(
-      data: code,
-      version: QrVersions.auto,
-      backgroundColor: Colors.white,
-      size: MediaQuery.of(context).size.width * 0.9,
-      errorCorrectionLevel: QrErrorCorrectLevel.L, // minimum
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: QrImageView(
+          data: code,
+          version: QrVersions.auto,
+          padding: EdgeInsets.all(8),
+          backgroundColor: Colors.white,
+          eyeStyle: QrEyeStyle(
+            eyeShape: QrEyeShape.square,
+            color: Colors.black,
+          ),
+          size: size,
+          errorCorrectionLevel: QrErrorCorrectLevel.L, // minimum
+        ),
+      ),
     );
   }
 }

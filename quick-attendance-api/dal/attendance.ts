@@ -1,7 +1,7 @@
 import { AttendanceEntity } from "../entities/attendance_entity.ts";
 import { AttendancePresentMemberEntity as AttendancePresentUserEntity } from "../entities/attendance_present_member_entity.ts";
 import { GroupEntity } from "../entities/group_entity.ts";
-import { get_week_num_of_month } from "../util/time.ts";
+import { date_add, get_week_num_of_month } from "../util/time.ts";
 import { get_uuid_time, new_uuid, Uuid } from "../util/uuid.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
 import * as group_dal from "./group.ts";
@@ -86,9 +86,13 @@ export function get_attendance_present_users(
 export function create_attendance(
   group_id: Uuid,
   group_kv_entity: Deno.KvEntry<GroupEntity>,
+  time_spoof_minute_offset: number | null = null,
 ) {
   const tran = kv.atomic();
-  const attendance_id = new_uuid();
+  const calc_epoch = date_add(new Date(), "minute", time_spoof_minute_offset ?? 0).getTime();
+  const attendance_id = new_uuid(
+    time_spoof_minute_offset ? calc_epoch : undefined,
+  );
   const time = get_uuid_time(attendance_id);
 
   group_kv_entity.value.current_attendance_id = attendance_id;
@@ -100,6 +104,7 @@ export function create_attendance(
     month: time.getUTCMonth(),
     week: get_week_num_of_month(time),
     attendance_id: attendance_id,
+    end_time_utc: null,
     present_member_ids: new Set(),
     codes_taken: new Map(),
     user_codes: new Map(),
@@ -107,6 +112,13 @@ export function create_attendance(
 
   group_dal.update_group_tran(group_kv_entity, tran);
   return DbErr.err_on_commit_async(tran.commit(), "Unable to create attendance record");
+}
+
+export function set_attendance_tran(
+  entity: Deno.KvEntry<AttendanceEntity>,
+  tran: Deno.AtomicOperation,
+) {
+  tran.check({ key: entity.key, versionstamp: entity.versionstamp }).set(entity.key, entity.value);
 }
 
 export function create_attendance_entity_tran(
@@ -192,7 +204,6 @@ export function create_present_user_tran(
     entity.user_id,
   ];
   tran
-    .check({ key: key, versionstamp: null })
     .set(key, {
       group_id: entity.group_id,
       attendance_id: entity.attendance_id,

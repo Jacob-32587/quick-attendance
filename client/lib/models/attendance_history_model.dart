@@ -62,16 +62,19 @@ final class GroupData extends BaseApiModel<GroupData> {
 
 final class AttendanceRecordData extends BaseApiModel<AttendanceRecordData> {
   final attendanceId = RxnString();
-  final attendanceTime = Rxn<DateTime>();
+  final attendanceStartTime = Rxn<DateTime>();
+  final attendanceEndTime = Rxn<DateTime>();
   final present = RxnBool();
 
   AttendanceRecordData({
     String? attendanceId,
-    DateTime? attendanceTime,
+    DateTime? attendanceStartTime,
+    DateTime? attendanceEndTime,
     bool? present,
   }) {
     this.attendanceId.value = attendanceId;
-    this.attendanceTime.value = attendanceTime;
+    this.attendanceStartTime.value = attendanceStartTime;
+    this.attendanceEndTime.value = attendanceEndTime;
     this.present.value = present;
   }
 
@@ -85,7 +88,8 @@ final class AttendanceRecordData extends BaseApiModel<AttendanceRecordData> {
   factory AttendanceRecordData.fromJson(Map<String, dynamic>? json) {
     return AttendanceRecordData(
       attendanceId: json?["attendance_id"],
-      attendanceTime: DateTime.tryParse(json?["attendance_time"]),
+      attendanceStartTime: DateTime.tryParse(json?["attendance_start_time"]),
+      attendanceEndTime: DateTime.tryParse(json?["attendance_end_time"]),
       present: json?["present"],
     );
   }

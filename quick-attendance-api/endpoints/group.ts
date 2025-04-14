@@ -16,6 +16,7 @@ import { GroupGetRes } from "../models/group/group_get_res.ts";
 import { PublicAccountGetModel } from "../models/account/public_account_get_model.ts";
 import { HTTPException } from "@hono/hono/http-exception";
 import { get_maybe_uuid_time, get_uuid_time } from "../util/uuid.ts";
+import { date_add } from "../util/time.ts";
 
 const group_base_path = "/group";
 const auth_group_base_path = `/auth${group_base_path}`;
@@ -155,6 +156,7 @@ group.put(
       group_entity.value.group_name,
       owner_entity.value.user_id,
       req.is_manager_invite,
+      group_entity.value.unique_id_settings,
       account_entities,
       tran,
     );
@@ -186,26 +188,40 @@ group.put(
 
     // The client needs to stop attedance, disconnect all connected websockets
     if (req.current_attendance_id === null && group.value.current_attendance_id !== null) {
-      const users = await attendance_dal.get_attendance_present_users(
+      const group_users = await dal.get_group_users(
+        req.group_id,
+      );
+
+      const tran = kv.atomic();
+
+      const attendance_entity = await attendance_dal.get_attendance_entity(
         req.group_id,
         group.value.current_attendance_id,
       );
 
-      // If no users were marked as present no need to disconnect websockets
-      if (users.length <= 0) {
-        return ctx.text("", HttpStatusCode.OK);
+      attendance_entity.value.end_time_utc = new Date();
+      if (req.time_spoof_minute_offset != null) {
+        attendance_entity.value.end_time_utc = date_add(
+          attendance_entity.value.end_time_utc,
+          "minute",
+          req.time_spoof_minute_offset,
+        );
       }
 
-      // Get all rooms for the users and disconnect sockets
-      const rooms = [];
-      for (let i = 0; i < users.length; i++) {
-        rooms.push(`${req.group_id}:${users[i].value.user_id}`);
-      }
-      ws.in(rooms).disconnectSockets(true);
+      attendance_dal.set_attendance_tran(attendance_entity, tran);
 
       group.value.current_attendance_id = null;
 
-      dal.update_group(group);
+      dal.update_group_tran(group, tran);
+
+      await DbErr.err_on_commit_async(tran.commit(), "Unable to stop attendance");
+
+      // Get all rooms for the users and disconnect sockets
+      const rooms = [];
+      for (let i = 0; i < group_users.length; i++) {
+        rooms.push(`${req.group_id}:${group_users[i].value.user_id}`);
+      }
+      ws.in(rooms).disconnectSockets(true);
     }
 
     // Do not allow the manager to edit any details about the group
@@ -218,7 +234,7 @@ group.put(
     group_entity.value.group_name = req.group_name;
     group_entity.value.group_description = req.group_description;
 
-    dal.update_group(group_entity);
+    await dal.update_group(group_entity);
 
     return ctx.text("", HttpStatusCode.OK);
   },

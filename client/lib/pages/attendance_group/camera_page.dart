@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:quick_attendance/api/quick_attendance_api.dart';
 
-class CameraPage extends StatelessWidget {
-  final RxList<Barcode> detectedBarcodes = <Barcode>[].obs;
+class _CameraPageController extends GetxController {
+  final QuickAttendanceApi _api = Get.find();
+  final RxSet<String> detectedBarcodes = RxSet();
 
-  final MobileScannerController controller = MobileScannerController(
+  final String? groupId;
+
+  _CameraPageController({required this.groupId});
+
+  final MobileScannerController cameraController = MobileScannerController(
     autoStart: true,
     cameraResolution: Size(1920, 1080),
     detectionSpeed: DetectionSpeed.normal,
@@ -13,14 +19,42 @@ class CameraPage extends StatelessWidget {
     detectionTimeoutMs: 250,
   );
 
-  CameraPage({super.key}) {}
-
   void _handleBarcode(BarcodeCapture barcodes) {
+    List<String> scans = [];
     for (Barcode barcode in barcodes.barcodes) {
-      print(barcode.displayValue);
+      String? content = barcode.displayValue;
+      if (content == null) {
+        continue;
+      }
+      var newId = detectedBarcodes.add(content);
+      if (newId) {
+        scans.add(content);
+      }
     }
-    detectedBarcodes.value = barcodes.barcodes;
+    if (scans.isNotEmpty) {
+      _api.putAttendedUsers(groupId, scans);
+    }
   }
+
+  @override
+  void onInit() {
+    super.onInit();
+    cameraController.start();
+  }
+
+  @override
+  void onClose() {
+    cameraController.dispose();
+    super.onClose();
+  }
+}
+
+class CameraPage extends StatelessWidget {
+  final String? groupId;
+  late final _CameraPageController _controller = Get.put(
+    _CameraPageController(groupId: groupId),
+  );
+  CameraPage({super.key, required this.groupId});
 
   @override
   Widget build(BuildContext context) {
@@ -29,14 +63,17 @@ class CameraPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Get.toNamed("/");
+            Get.back();
           },
         ),
       ),
       body: SafeArea(
         child: Stack(
           children: [
-            MobileScanner(controller: controller, onDetect: _handleBarcode),
+            MobileScanner(
+              controller: _controller.cameraController,
+              onDetect: _controller._handleBarcode,
+            ),
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
@@ -46,10 +83,9 @@ class CameraPage extends StatelessWidget {
                 child: Column(
                   children: [
                     Obx(() {
-                      if (detectedBarcodes.length > 0) {
-                        return Text(
-                          "${detectedBarcodes.length} codes" ?? "Unknown",
-                        );
+                      var detectedBarcodes = _controller.detectedBarcodes;
+                      if (detectedBarcodes.isNotEmpty) {
+                        return Text("${detectedBarcodes.length} codes");
                       }
                       return Text("Scan something!");
                     }),

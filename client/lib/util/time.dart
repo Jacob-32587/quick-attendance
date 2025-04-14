@@ -1,5 +1,12 @@
 import 'package:intl/intl.dart';
 
+int? getWeekOfMonthNullable(DateTime? date) {
+  if (date == null) {
+    return null;
+  }
+  return getWeekOfMonth(date);
+}
+
 int getWeekOfMonth(DateTime date) {
   final int month = date.month;
   final int year = date.year;
@@ -36,4 +43,13 @@ String _getDaySuffix(int day) {
     default:
       return 'th';
   }
+}
+
+/// Returns a 12hour AM PM string from the provided DateTime object. Returns blank if null.
+String displayTimeOfDateTime(DateTime? date) {
+  if (date == null) {
+    return "";
+  }
+  final DateFormat timeFormat = DateFormat('hh:mm a');
+  return timeFormat.format(date);
 }

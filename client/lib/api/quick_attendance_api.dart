@@ -64,6 +64,7 @@ class QuickAttendanceApi extends GetxService {
   Future<ApiResponse<UserModel>> getUser() async {
     // Get the authenticated user's profile
     final Response response = await apiClient.get("/auth/account");
+    print(response.body.toString());
     final UserModel parsedBody = UserModel.fromJson(response.body);
     final apiResponse = ApiResponse(
       statusCode: HttpStatusCode.from(response.statusCode),
@@ -146,6 +147,23 @@ class QuickAttendanceApi extends GetxService {
     return apiResponse;
   }
 
+  Future<ApiResponse<Null>> respondToGroupInvite({
+    required String groupInviteJwt,
+    required String? uniqueId,
+    required bool accept,
+  }) async {
+    final Response response = await apiClient.put("/auth/account/invite", {
+      "account_invite_jwt": groupInviteJwt,
+      "unique_id": uniqueId,
+      "accept": accept,
+    });
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
+
   Future<ApiResponse<GroupAttendanceResponse>> getWeeklyGroupAttendance({
     required String? groupId,
     required DateTime? date,
@@ -154,7 +172,7 @@ class QuickAttendanceApi extends GetxService {
     if (date != null) {
       query["year_num"] = date.year.toString();
       query["month_num"] = date.month.toString();
-      query["week_num"] = getWeekOfMonth(date);
+      query["week_num"] = getWeekOfMonth(date).toString();
     }
 
     final Response response = await apiClient.get(
@@ -169,14 +187,68 @@ class QuickAttendanceApi extends GetxService {
     return apiResponse;
   }
 
-  Future<ApiResponse<AttendanceHistoryModel>> getWeeklyUserAttendance() async {
-    final Response response = await apiClient.get("/auth/attendance/user");
-
-    print(response.body.toString());
+  Future<ApiResponse<AttendanceHistoryModel>> getWeeklyUserAttendance(
+    int? year,
+    int? month,
+    int? weekOfMonth,
+  ) async {
+    Map<String, String> query = {};
+    if (year != null) {
+      query["year_num"] = year.toString();
+    }
+    if (month != null) {
+      // Javascript months start from 0
+      query["month_num"] = (month - 1).toString();
+    }
+    if (weekOfMonth != null) {
+      query["week_num"] = weekOfMonth.toString();
+    }
+    final Response response = await apiClient.get(
+      "/auth/attendance/user",
+      query: query,
+    );
 
     final apiResponse = ApiResponse<AttendanceHistoryModel>(
       statusCode: HttpStatusCode.from(response.statusCode),
       body: AttendanceHistoryModel.fromJson(response.body),
+    );
+    return apiResponse;
+  }
+
+  Future<ApiResponse<Null>> updateGroup(GroupModel group) async {
+    final Response response = await apiClient.put(
+      "/auth/group",
+      group.toJson(),
+    );
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
+
+  Future<ApiResponse<Null>> startAttendanceSession(String? groupId) async {
+    final Response response = await apiClient.post("/auth/attendance", {
+      "group_id": groupId,
+    });
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
+
+  Future<ApiResponse<Null>> putAttendedUsers(
+    String? groupId,
+    List<String> userIds,
+  ) async {
+    final Response response = await apiClient.put("/auth/attendance", {
+      "group_id": groupId,
+      "user_ids": userIds,
+    });
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
     );
     return apiResponse;
   }

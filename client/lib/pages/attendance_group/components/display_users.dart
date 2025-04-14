@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quick_attendance/components/binary_choice.dart';
 import 'package:quick_attendance/components/group_header.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer_list.dart';
-import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/public_user_model.dart';
 import 'package:quick_attendance/pages/attendance_group/components/user_list.dart';
 
@@ -63,7 +61,11 @@ class DisplayUsers extends StatelessWidget {
         SkeletonShimmerList(
           isLoading: isLoading,
           isListView: true,
-          widget: UserList(users: users, isListView: true),
+          widget: UserList(
+            users: users,
+            isListView: true,
+            displayAttended: displayAttended,
+          ),
         ),
       ],
     );

@@ -9,13 +9,13 @@ class SkeletonShimmer extends StatelessWidget {
   final RxBool isLoading;
 
   /// The widget to render when not in loading state.
-  final Widget widget;
+  final Widget? widget;
   final double skeletonHeight;
   final double skeletonWidth;
   const SkeletonShimmer({
     super.key,
     required this.isLoading,
-    required this.widget,
+    this.widget,
     this.skeletonHeight = 100,
     this.skeletonWidth = double.infinity,
   });

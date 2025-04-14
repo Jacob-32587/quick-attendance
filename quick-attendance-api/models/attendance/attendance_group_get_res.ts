@@ -7,6 +7,7 @@ export interface AttendanceGroupGetRes {
 
 export interface AttendanceGroupGetData {
   attendance_id: Uuid;
-  attendance_time: Date;
+  attendance_start_time: Date;
+  attendance_end_time: Date | null;
   users: PublicAccountGetModel[];
 }

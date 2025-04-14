@@ -2,25 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/group_model.dart';
-import 'package:quick_attendance/models/responses/group_attendance_response.dart';
 
 /// Handles the logic for retrieving group information
 class GroupController extends GetxController {
   late final QuickAttendanceApi _api = Get.find();
-  late final GroupController groupController;
+  late final ProfileController _profileController = Get.find();
   String? get groupId => group.value?.groupId.value;
   final RxBool isLoadingGroup = RxBool(true);
   final RxBool isEditingGroup = RxBool(false);
   final RxBool hasLoadedGroup = RxBool(false);
 
-  // Some state variables for viewing member attendance
-  final RxBool isLoadingAttendance = false.obs;
-  final RxBool hasLoadedAttendance = false.obs;
-  final Rx<DateTime> attendanceDate = Rx<DateTime>(DateTime.now());
-
   /// The active group being accessed
   final group = Rxn<GroupModel>();
+
+  String? get currentAttendanceId => group.value?.currentAttendanceId.value;
+
+  /// Checks if the authenticated user is the owner of this group
+  bool get isOwner {
+    final group = this.group.value;
+    if (group == null || _profileController.userId == null) {
+      return false;
+    }
+    if (group.owner.value?.userId.value == _profileController.userId) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Checks if the authenticated user is a manager of this group
+  bool get isManager {
+    final group = this.group.value;
+    if (group == null || _profileController.userId == null) {
+      return false;
+    }
+    if (group.managers?.any(
+          (user) => user.userId.value == _profileController.userId,
+        ) ==
+        true) {
+      return true;
+    }
+    return false;
+  }
+
+  bool get isOwnerOrManager {
+    return isManager || isOwner;
+  }
 
   /// Fetch group information for the provided group id
   Future<void> fetchGroup(String? groupId) async {
@@ -51,17 +79,6 @@ class GroupController extends GetxController {
       groupId: groupId!,
       inviteAsManager: inviteAsManager,
     );
-  }
-
-  /// Get the group's weekly attendance records.
-  Future<ApiResponse<GroupAttendanceResponse>>
-  getWeeklyGroupAttendance() async {
-    isLoadingAttendance.value = true;
-    ApiResponse<GroupAttendanceResponse> response = await _api
-        .getWeeklyGroupAttendance(groupId: groupId, date: null);
-    isLoadingAttendance.value = false;
-    hasLoadedAttendance.value = true;
-    return response;
   }
 }
 
