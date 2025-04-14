@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
@@ -33,6 +34,9 @@ class ProfileController extends GetxController {
   /// Loading state for fetching group list information
   final RxBool isLoadingGroups = false.obs;
   final RxBool hasLoadedGroups = false.obs;
+
+  /// Loading state for fetching profile information
+  final RxBool isFetchingProfile = false.obs;
 
   /// Getter for the user's list view preference
   bool get prefersListView => userSettings.value.prefersListView.value;
@@ -70,12 +74,10 @@ class ProfileController extends GetxController {
   }
 
   Future<void> fetchProfileData() async {
+    isFetchingProfile.value = true;
     final response = await _api.getUser();
-    if (response.statusCode == HttpStatusCode.ok) {
-      user.value = response.body;
-    } else {
-      // TODO: Handle failure getting account information
-    }
+    user.value = response.body;
+    isFetchingProfile.value = false;
   }
 
   void _clearProfileData() {
@@ -95,11 +97,14 @@ class ProfileController extends GetxController {
       'first_name': firstName,
       'last_name': lastName,
     });
-
-    if (response.statusCode == HttpStatusCode.ok) {
-      user.value = response.body;
-    } else {
-      // TODO: Show error message or log issue
+    if (response.statusCode != HttpStatusCode.ok) {
+      Get.snackbar(
+        "Failed",
+        "The server was unable to update your profile.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
