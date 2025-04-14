@@ -58,19 +58,49 @@ class GroupPageContainer extends StatelessWidget {
                     isLoading: _controller.isLoadingGroup,
                     skeletonHeight: 35,
                     skeletonWidth: 300,
-                    widget: Text(
-                      title,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black54,
-                            blurRadius: 10,
-                            offset: Offset(1, 1),
+                    widget: Row(
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black54,
+                                blurRadius: 10,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 10),
+                        if (_controller.isOwner)
+                          TextButton(
+                            onPressed: _controller.isEditingGroup.toggle,
+                            style: TextButton.styleFrom(
+                              textStyle: TextStyle(
+                                color: Colors.grey,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black38,
+                                    blurRadius: 4,
+                                    offset: Offset(1, 1),
+                                  ),
+                                ],
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            child: Obx(
+                              () =>
+                                  _controller.isEditingGroup.value
+                                      ? Text("Cancel")
+                                      : Text("Edit"),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],

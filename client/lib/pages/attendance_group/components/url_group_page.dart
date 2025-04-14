@@ -80,6 +80,17 @@ class GroupController extends GetxController {
       inviteAsManager: inviteAsManager,
     );
   }
+
+  /// Sends the group model to the server to update it
+  Future<ApiResponse<Null>?> updateGroup() async {
+    if (group.value == null) {
+      return null;
+    }
+    final response = await _api.updateGroup(group.value!);
+    if (response.statusCode == HttpStatusCode.ok) {
+      await fetchGroup(groupId);
+    }
+  }
 }
 
 /// A basic class for retrieving a :groupId from the route

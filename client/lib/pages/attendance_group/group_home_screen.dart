@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/components/binary_choice.dart';
+import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
 import 'package:quick_attendance/pages/attendance_group/attendees_screen.dart';
 import 'package:quick_attendance/pages/attendance_group/components/group_scroll_view.dart';
@@ -32,12 +33,16 @@ class _GroupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return GroupPageContainer(
       title: controller.group.value?.name.value ?? "Unknown Group",
-      content: Obx(
-        () => BinaryChoice(
-          choice: controller.isEditingGroup.value,
-          widget1: _GroupEditScreen(controller: controller),
-          widget2: _GroupDetailsScreen(controller: controller),
-        ),
+      content: Column(
+        children: [
+          Obx(
+            () => BinaryChoice(
+              choice: controller.isEditingGroup.value,
+              widget1: _GroupEditScreen(controller: controller),
+              widget2: _GroupDetailsScreen(controller: controller),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -76,6 +81,7 @@ class _GroupDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SkeletonShimmer(
           isLoading: controller.isLoadingGroup,
@@ -86,6 +92,7 @@ class _GroupDetailsScreen extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: 32),
         GroupAttendees(),
       ],
     );
@@ -95,8 +102,10 @@ class _GroupDetailsScreen extends StatelessWidget {
 class _GroupEditScreen extends StatelessWidget {
   final GroupController controller;
 
+  final RxBool isSaving = false.obs;
   late final TextEditingController nameController;
   late final TextEditingController descriptionController;
+
   _GroupEditScreen({required this.controller}) {
     nameController = TextEditingController(
       text: controller.group.value?.name.value,
@@ -104,6 +113,22 @@ class _GroupEditScreen extends StatelessWidget {
     descriptionController = TextEditingController(
       text: controller.group.value?.description.value,
     );
+  }
+
+  void saveChanges() async {
+    isSaving.value = true;
+    final group = controller.group;
+    final groupName = group.value?.name;
+    if (groupName != null) {
+      groupName.value = nameController.text.trim();
+    }
+    final groupDescription = group.value?.description;
+    if (groupDescription != null) {
+      groupDescription.value = descriptionController.text.trim();
+    }
+
+    await controller.updateGroup();
+    isSaving.value = false;
   }
 
   @override
@@ -136,7 +161,7 @@ class _GroupEditScreen extends StatelessWidget {
           ),
         ),
         SizedBox(height: 16),
-        SizedBox(height: 1000, width: 10),
+        PrimaryButton(text: "Submit", onPressed: saveChanges),
       ],
     );
   }
