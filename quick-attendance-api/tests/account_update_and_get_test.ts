@@ -3,6 +3,8 @@ import AccountGetModel from "../models/account/account_get_model.ts";
 import { cleanup_test_step, init_test_step, test_fetch, test_fetch_json } from "../util/testing.ts";
 import { AccountPutReq } from "../models/account/account_put_req.ts";
 import { ACCOUNT_AUTH_URL, create_and_login_test_users, URL } from "./main_test.ts";
+import { HTTPException } from "@hono/hono/http-exception";
+import HttpStatusCode from "../util/http_status_code.ts";
 
 // Ensure user information can be updated
 Deno.test(
@@ -81,6 +83,23 @@ Deno.test(
         assert(account?.first_name == user_data?.first_name);
         assert(account?.last_name == user_data?.last_name);
       }
+
+      await test_fetch_json(
+        ACCOUNT_AUTH_URL(test_num),
+        "PUT",
+        logged_in_users_jwts[0],
+        {
+          "username": "HankyS17",
+          "email": "hankschrader_1987@bb.com",
+          "first_name": "Hank",
+          "last_name": "Schrader",
+        } as AccountPutReq,
+        async (res) => {
+          return res.status === HttpStatusCode.CONFLICT;
+        },
+        true,
+        false,
+      );
     });
 
     await cleanup_test_step(test_num, t, sp);
