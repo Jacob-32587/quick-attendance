@@ -12,6 +12,7 @@ import { add_to_maybe_map } from "../util/map.ts";
 import { UserType } from "../models/user_type.ts";
 import { GroupUserEntity } from "../entities/group_user_entity.ts";
 import { GroupPendingUserEntity } from "../entities/group_pending_user_entity.ts";
+import { HTTPException } from "@hono/hono/http-exception";
 
 //#region Query
 
@@ -325,6 +326,13 @@ export async function accounts_for_group_invite(
   group_is_owned_by_account(owner_entity.value, group_id);
 
   const account_entities = await account_dal.get_accounts_by_usernames(invitees_usernames);
+
+  if (account_entities.some((x) => x.value.user_id === owner_id)) {
+    throw new HTTPException(
+      HttpStatusCode.CONFLICT,
+      { message: "Can not invite the group owner to the group" },
+    );
+  }
 
   add_pending_group_users_tran(group_id, account_entities.map((x) => x.value.user_id), tran);
 

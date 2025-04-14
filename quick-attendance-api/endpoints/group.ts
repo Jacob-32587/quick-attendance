@@ -156,6 +156,7 @@ group.put(
       group_entity.value.group_name,
       owner_entity.value.user_id,
       req.is_manager_invite,
+      group_entity.value.unique_id_settings,
       account_entities,
       tran,
     );
