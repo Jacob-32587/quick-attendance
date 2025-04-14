@@ -55,12 +55,12 @@ class UniqueIdSettingsModel extends BaseApiModel {
     this.requiredForManager,
   });
 
-  factory UniqueIdSettingsModel.fromJson(Map<String, dynamic> json) {
-    return UniqueIdSettingsModel(
-      promptMessage: json["prompt_message"],
-      minLength: json["min_length"],
-      maxLength: json["max_length"],
-      requiredForManager: json["required_for_manager"],
+  factory UniqueIdSettings.fromJson(Map<String, dynamic>? json) {
+    return UniqueIdSettings(
+      promptMessage: json?["prompt_message"],
+      minLength: json?["min_length"],
+      maxLength: json?["max_length"],
+      requiredForManager: json?["required_for_manager"],
     );
   }
 
