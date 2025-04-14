@@ -5,11 +5,11 @@ import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 
 class ProfileInfo extends StatelessWidget {
-  String user;
-   String email;
-   String firstName;
-   String lastName;
-  List<GroupModel>? groups;
+  final String user;
+  final String email;
+  final String firstName;
+  final String lastName;
+  final List<GroupModel>? groups;
   final _formKey = GlobalKey<FormState>();
 
   final ProfileController profileController = Get.find();
@@ -29,15 +29,24 @@ class ProfileInfo extends StatelessWidget {
       if (_formKey.currentState!.validate() == false) {
         return;
       }
-      await profileController.updateUserAccount(
+      profileController.updateUserAccount(
         username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim()
       );
+
+      // Now update the observable user in the controller
+      final updatedUser = profileController.user.value!;
+      updatedUser.username.value = _usernameController.text.trim();
+      updatedUser.email.value = _emailController.text.trim();
+      updatedUser.firstName.value = _firstNameController.text.trim();
+      updatedUser.lastName.value = _lastNameController.text.trim();
+
+      // Trigger UI update
+      profileController.user.refresh();
       
-      Get.snackbar("Success", "Profile updated successfully", snackPosition: SnackPosition.BOTTOM);
-      // TODO: variable to trigger restart
+      Get.snackbar("Success!", "Profile updated successfully.", snackPosition: SnackPosition.BOTTOM);
   }
 
   @override
