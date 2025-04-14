@@ -1,8 +1,11 @@
+import 'package:calendar_view/calendar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:infinite_calendar_view/infinite_calendar_view.dart';
+import 'package:quick_attendance/api/_api_client.dart';
+import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/history_controller.dart';
-import 'package:intl/intl.dart';
+import 'package:quick_attendance/models/attendance_history_model.dart';
 import 'package:quick_attendance/util/time.dart';
 
 class _AttendanceEventData {
@@ -19,25 +22,37 @@ class _AttendanceEventData {
   String getEventId() {
     return attendanceId + groupId;
   }
-
-  static _AttendanceEventData? castObj(Object? obj) {
-    if (obj == _AttendanceEventData) {
-      return obj as _AttendanceEventData;
-    }
-    return null;
-  }
 }
 
 class HistoryScreen extends StatelessWidget {
-  final HistoryController _historyController = Get.find();
-  final EventsController _calendarEventController = EventsController();
+  late final HistoryController _historyController = Get.find();
+  late final AuthController _authController = Get.find();
+  final _calendarEventController = EventController<_AttendanceEventData?>();
   final clearedData = RxBool(false);
-  final currentTime = Rx<DateTime>(DateTime.now());
+  final currentDate = Rx<DateTime>(DateTime.now());
+
+  late final QuickAttendanceApi _api = Get.find();
+  final attendanceHistory = Rxn<AttendanceHistoryModel>();
 
   HistoryScreen({super.key});
 
+  Future<void> getAttendanceHistoryForWeek(DateTime? time) async {
+    // isLoadingHistory.value = true;
+    final response = await _api.getWeeklyUserAttendance(
+      time?.year,
+      time?.month,
+      getWeekOfMonthNullable(time),
+    );
+    if (response.statusCode == HttpStatusCode.ok) {
+      attendanceHistory.value = response.body;
+    } else {
+      // TODO: What should we do when this request fails
+    }
+    // isLoadingHistory.value = false;
+  }
+
   Future<void> onRefresh() async {
-    await _historyController.getAttendanceHistoryForWeek(currentTime.value);
+    await _historyController.getAttendanceHistoryForWeek(currentDate.value);
     var events =
         _historyController.attendanceHistory.value?.attendance
             .map(
@@ -57,29 +72,24 @@ class HistoryScreen extends StatelessWidget {
             .toList() ??
         [];
 
-    _calendarEventController.updateCalendarData((z) {
-      var storedEventsIds = z.dayEvents.values
-          .expand((e) => e)
-          .map((x) => _AttendanceEventData.castObj(x.data)?.getEventId());
+    var storedEventsIds =
+        _calendarEventController.allEvents
+            .map((x) => x.event?.getEventId())
+            .nonNulls
+            .toSet();
 
-      var newEvents =
-          events
-              .where(
-                (x) =>
-                    !storedEventsIds.contains(
-                      _AttendanceEventData.castObj(x.data)?.getEventId(),
-                    ),
-              )
-              .toList();
+    var newEvents =
+        events
+            .where((x) => !storedEventsIds.contains(x.event?.getEventId()))
+            .toList();
 
-      if (newEvents.isEmpty) {
-        return;
-      }
-      return z.addEvents(newEvents);
-    });
+    if (newEvents.isEmpty) {
+      return;
+    }
+    _calendarEventController.addAll(newEvents);
   }
 
-  Event? _getCalendarEventData(
+  CalendarEventData<_AttendanceEventData>? _getCalendarEventData(
     String? groupName,
     String? groupId,
     DateTime? attendanceStartTime,
@@ -93,52 +103,59 @@ class HistoryScreen extends StatelessWidget {
         groupId != null &&
         attendanceId != null &&
         present != null) {
-      return Event(
-        title: groupName,
-        startTime: attendanceStartTime.toLocal(),
-        endTime: attendanceStartTime.add(const Duration(minutes: 60)).toLocal(),
-        color: present ? Colors.blue : Colors.red,
-        data: _AttendanceEventData(
-          attendanceId: attendanceId,
-          groupId: groupId,
-        ),
-      );
+      if (attendanceStartTime.toLocal().day ==
+          attendanceEndTime.toLocal().day) {
+        return CalendarEventData<_AttendanceEventData>(
+          title: groupName,
+          date: attendanceStartTime.toLocal(),
+          endDate: attendanceEndTime.toLocal().add(const Duration(minutes: 10)),
+          startTime: attendanceStartTime.toLocal(),
+          endTime: attendanceEndTime.toLocal().add(const Duration(minutes: 10)),
+          color: present ? Colors.blue : Colors.red,
+          event: _AttendanceEventData(
+            attendanceId: attendanceId,
+            groupId: groupId,
+          ),
+        );
+      }
     }
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    _calendarEventController.updateCalendarData((x) {
-      x.clearAll();
-      onRefresh();
-    });
+    _calendarEventController.removeWhere((x) => true);
+    onRefresh();
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: Scaffold(
-        appBar: AppBar(title: Text("Attendance Calendar")),
         body: SafeArea(
-          child: EventsPlanner(
+          child: DayView(
             controller: _calendarEventController,
-            heightPerMinute: 0.9,
-            daysShowed: 3,
-            onAutomaticAdjustHorizontalScroll: (dateTime) {
-              if (getWeekOfMonth(currentTime.value) !=
-                      getWeekOfMonth(dateTime) ||
-                  currentTime.value.month != dateTime.month ||
-                  currentTime.value.year != dateTime.year) {
-                onRefresh();
-              }
-              currentTime.value = dateTime;
-            },
-            fullDayParam: FullDayParam(fullDayEventsBarVisibility: false),
-            daysHeaderParam: DaysHeaderParam(
-              dayHeaderBuilder: (day, isToday) {
-                return DefaultDayHeader(
-                  dayText: DateFormat("E d").format(day).toString(),
-                );
-              },
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            heightPerMinute: 2,
+            headerStyle: HeaderStyle(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+              ),
+              leftIconConfig: IconDataConfig(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              rightIconConfig: IconDataConfig(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
+            scrollPhysics: BouncingScrollPhysics(),
+            onPageChange: (DateTime? time, int? i) {
+              if (time != null) {
+                if (getWeekOfMonth(time) != getWeekOfMonth(currentDate.value)) {
+                  currentDate.value = time;
+                  onRefresh();
+                } else {
+                  currentDate.value = time;
+                }
+              }
+            },
           ),
         ),
       ),

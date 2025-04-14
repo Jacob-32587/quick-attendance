@@ -156,6 +156,7 @@ group.put(
       group_entity.value.group_name,
       owner_entity.value.user_id,
       req.is_manager_invite,
+      group_entity.value.unique_id_settings,
       account_entities,
       tran,
     );
@@ -214,11 +215,6 @@ group.put(
       dal.update_group_tran(group, tran);
 
       await DbErr.err_on_commit_async(tran.commit(), "Unable to stop attendance");
-
-      // If no users were marked as present no need to disconnect websockets
-      if (group_users.length <= 0) {
-        return ctx.text("", HttpStatusCode.OK);
-      }
 
       // Get all rooms for the users and disconnect sockets
       const rooms = [];

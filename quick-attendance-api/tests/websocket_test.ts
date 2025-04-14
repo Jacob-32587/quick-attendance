@@ -15,6 +15,17 @@ Deno.test(
     await t.step("test", async (_) => {
       const create_group_ret = await create_users_and_group(test_num);
 
+      {
+        // Hit the server with a bad websocket request
+        await open_ws(
+          DOMAIN_AND_PORT(test_num),
+          // deno-lint-ignore no-explicit-any
+          null as any,
+          // deno-lint-ignore no-explicit-any
+          null as any,
+          false,
+        );
+      }
       // Open a websocket connection
       const socket = await open_ws(
         DOMAIN_AND_PORT(test_num),

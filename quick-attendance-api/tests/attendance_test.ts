@@ -87,6 +87,15 @@ Deno.test(
       await test_fetch_json(
         ATTENDANCE_AUTH_URL(test_num),
         "PUT",
+        rocco.group.jwt,
+        {
+          group_id: rocco.group.group_id,
+          user_ids: [maeve.account.user_id],
+        } as AttendancePutReq,
+      );
+      await test_fetch_json(
+        ATTENDANCE_AUTH_URL(test_num),
+        "PUT",
         indie.group.jwt,
         {
           group_id: indie.group.group_id,
@@ -261,14 +270,17 @@ Deno.test(
 
       let users = pair_array(additonal_users);
 
-      for (let i = 1; i <= 20; i++) {
+      let last_start_time_offset = 0;
+      for (let i = 1; i <= 50; i++) {
         // Shuffle order of users
         users = users.map((value) => ({ value, sort: Math.random() }))
           .sort((a, b) => a.sort - b.sort)
           .map(({ value }) => value);
 
-        const rand_start_time_offset = rand_int_from_interval(1, 360) * i * -1;
+        const rand_start_time_offset = rand_int_from_interval(120, 360) * -1 +
+          last_start_time_offset;
         const rand_end_time_offest = rand_start_time_offset + rand_int_from_interval(20, 90);
+        last_start_time_offset = rand_start_time_offset;
 
         // Start attendance
         await test_fetch_json(

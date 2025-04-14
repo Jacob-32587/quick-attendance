@@ -217,7 +217,12 @@ export function assertNever(): never {
  * first 3 seconds this function will throw an assertion error.
  * @returns Websocket connection
  */
-export async function open_ws(domain_and_port: string, jwt: string, group_id: Uuid) {
+export async function open_ws(
+  domain_and_port: string,
+  jwt: string,
+  group_id: Uuid,
+  check_connection: boolean = true,
+) {
   const socket = io(`ws://${domain_and_port}?group_id=${group_id}`, {
     auth(cb) {
       cb({
@@ -225,6 +230,10 @@ export async function open_ws(domain_and_port: string, jwt: string, group_id: Uu
       });
     },
   });
+
+  if (!check_connection) {
+    return socket;
+  }
 
   let connected = false;
 

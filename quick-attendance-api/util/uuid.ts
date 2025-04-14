@@ -12,7 +12,10 @@ export function new_uuid(timestamp?: number) {
 }
 
 // Validate uuid as version 7
-export function val_uuid(maybe_uuid: string): maybe_uuid is Uuid {
+export function val_uuid(maybe_uuid?: string | null): maybe_uuid is Uuid {
+  if (maybe_uuid === undefined || maybe_uuid === null) {
+    return false;
+  }
   return Array.from(maybe_uuid).every((cs) => {
     const c = cs.charCodeAt(0);
     if ((c >= 97 && c <= 102) || (c >= 48 && c <= 57) || c === 45) {

@@ -4,6 +4,7 @@ import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/models/group_list_response_model.dart';
 import 'package:quick_attendance/models/group_settings_model.dart';
+import 'package:quick_attendance/models/pending_invite_jwt_model.dart';
 import 'package:quick_attendance/models/user_model.dart';
 import 'package:quick_attendance/models/account_settings_model.dart';
 import 'package:quick_attendance/models/group_model.dart';
@@ -22,6 +23,9 @@ class ProfileController extends GetxController {
   RxList<GroupModel>? get managedGroups =>
       _groupListResponse.value?.managedGroups;
   RxList<GroupModel>? get ownedGroups => _groupListResponse.value?.ownedGroups;
+
+  RxList<PendingInviteJwtModel>? get pendingGroupJwts =>
+      user()?.pendingGroupJwts;
 
   /// Loading state for creating a group
   final RxBool isCreatingGroup = false.obs;
@@ -57,7 +61,7 @@ class ProfileController extends GetxController {
     // Create a listener to the auth controller's logged in status
     ever(authController.isLoggedIn, (loggedIn) {
       if (loggedIn) {
-        futureUser = _fetchProfileData();
+        futureUser = fetchProfileData();
         fetchGroups();
       } else {
         _clearProfileData();
@@ -65,7 +69,7 @@ class ProfileController extends GetxController {
     });
   }
 
-  Future<void> _fetchProfileData() async {
+  Future<void> fetchProfileData() async {
     final response = await _api.getUser();
     if (response.statusCode == HttpStatusCode.ok) {
       user.value = response.body;
@@ -112,9 +116,23 @@ class ProfileController extends GetxController {
       }
       return newGroupId;
     }
+    return null;
   }
 
-  void joinGroup(String groupCode) {
-    // TODO: Connect to backend
+  Future<void> respondToInvite({
+    required String groupInviteJwt,
+    required String? uniqueId,
+    required bool accept,
+  }) async {
+    var ret = await _api.respondToGroupInvite(
+      groupInviteJwt: groupInviteJwt,
+      uniqueId: uniqueId,
+      accept: accept,
+    );
+    if (!ret.isSuccess) {
+      // TODO Add error handling
+    }
+    fetchProfileData();
+    fetchGroups();
   }
 }

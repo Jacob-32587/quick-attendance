@@ -7,7 +7,7 @@ import kv, { DbErr } from "../dal/db.ts";
 import * as group_dal from "../dal/group.ts";
 import { get_jwt_payload, QuickAttendanceJwtPayload } from "../main.ts";
 import AccountGetModel from "../models/account/account_get_model.ts";
-import { account_invite_accept_put_req } from "../models/account/account_invite_accept_put_req.ts";
+import { account_invite_put_req } from "../models/account/account_invite_accept_put_req.ts";
 import { account_login_post_req } from "../models/account/account_login_post_req.ts";
 import { AccountLoginPostRes } from "../models/account/account_login_post_res.ts";
 import { account_post_req_val } from "../models/account/account_post_req.ts";
@@ -95,8 +95,9 @@ account.post(
 // Accept or deny a group invitation
 account.put(
   `${auth_account_base_path}/invite`,
-  zValidator("json", account_invite_accept_put_req),
+  zValidator("json", account_invite_put_req),
   async (ctx) => {
+    console.log("Hit");
     // Parse request and send to dal
     const req = ctx.req.valid("json");
     let jwt_payload;
@@ -122,8 +123,6 @@ account.put(
     }
 
     const invite_jwt = maybe_invite_jwt.data;
-
-    console.log(req.unique_id);
 
     const tran = kv.atomic();
     // Accept or deny the group invitation, update the account information appropriately
