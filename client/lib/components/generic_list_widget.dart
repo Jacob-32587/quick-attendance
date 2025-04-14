@@ -20,6 +20,7 @@ class GenericListWidget extends StatelessWidget {
         ? ListView.builder(
           shrinkWrap: true,
           itemCount: itemCount,
+          physics: NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) => buildListItem(context, index, true),
         )
         : GridView.builder(
