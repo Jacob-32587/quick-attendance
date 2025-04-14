@@ -214,11 +214,13 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
                       onPressed: _controller.leaveAttendanceSession,
                       child: Text("Disconnect"),
                     );
-                  } else {
+                  } else if (_controller.isOwner == false) {
                     return FlatButton(
                       onPressed: _controller.joinAttendance,
                       child: Text("Join Attendance"),
                     );
+                  } else {
+                    return SizedBox.shrink();
                   }
                 }),
                 Obx(
@@ -369,7 +371,7 @@ class QrAttendanceView extends StatelessWidget {
           } else if (_controller.isConnectedToSession &&
               _controller.showAttendanceTaken.value == false) {
             status = "Waiting to be scanned...";
-          } else {
+          } else if (_controller.showAttendanceTaken.value) {
             status = "You have been marked as attended!";
           }
           return Text(

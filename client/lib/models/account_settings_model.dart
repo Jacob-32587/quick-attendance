@@ -5,7 +5,7 @@ final class AccountSettingsModel implements BaseApiModel {
   late final RxBool prefersListView;
 
   AccountSettingsModel({bool prefersListView = false}) {
-    this.prefersListView = prefersListView.obs;
+    this.prefersListView = true.obs;
   }
 
   factory AccountSettingsModel.fromJson(Map<String, dynamic> json) {

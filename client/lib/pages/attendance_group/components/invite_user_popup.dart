@@ -125,13 +125,17 @@ class _InviteUserFormState extends State<_InviteUserForm> {
     }
     if (response.statusCode == HttpStatusCode.notFound) {
       _usernameError.value = "This user does not exist";
+      return;
     } else if (response.statusCode == HttpStatusCode.forbidden) {
       _usernameError.value = "Only the owner can invite users";
       disableInvite.value = true;
+      return;
     } else if (response.statusCode == HttpStatusCode.conflict) {
       _usernameError.value = "This user is already invited";
+      return;
     } else if (response.statusCode != HttpStatusCode.ok) {
       _usernameError.value = "The server failed to invite the user";
+      return;
     }
     // Temporarily show the successfully invited message
     inviteSent.value = true;
