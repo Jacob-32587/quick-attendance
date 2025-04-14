@@ -45,19 +45,6 @@ class GroupPageContainer extends StatelessWidget {
               icon: const Icon(Icons.arrow_back),
               onPressed: onLeaveGroupPage,
             ),
-            actions: [
-              Obx(
-                () => IconButton(
-                  onPressed:
-                      () =>
-                          _controller.isEditingGroup.value =
-                              !_controller.isEditingGroup.value,
-                  icon: Icon(
-                    _controller.isEditingGroup.value ? Icons.save : Icons.edit,
-                  ),
-                ),
-              ),
-            ],
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.parallax,
               background: Image.network(backgroundImageUrl, fit: BoxFit.cover),
