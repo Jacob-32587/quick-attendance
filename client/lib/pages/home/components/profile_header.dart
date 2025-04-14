@@ -19,8 +19,9 @@ class ProfileHeader extends StatelessWidget {
     return Container(
       width: 500,
       padding: EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
         children: [
           CircleAvatar(
             radius: 40,
@@ -42,7 +43,6 @@ class ProfileHeader extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: 10),
           SkeletonShimmer(
             skeletonWidth: 100,
             skeletonHeight: 30,
@@ -52,7 +52,6 @@ class ProfileHeader extends StatelessWidget {
               style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
             ),
           ),
-          SizedBox(width: 10),
           SkeletonShimmer(
             skeletonWidth: 100,
             skeletonHeight: 30,

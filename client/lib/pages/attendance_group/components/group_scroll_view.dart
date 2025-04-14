@@ -58,7 +58,9 @@ class GroupPageContainer extends StatelessWidget {
                     isLoading: _controller.isLoadingGroup,
                     skeletonHeight: 35,
                     skeletonWidth: 300,
-                    widget: Row(
+                    widget: Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
                       children: [
                         Text(
                           title,
@@ -74,7 +76,6 @@ class GroupPageContainer extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 10),
                         if (_controller.isOwner)
                           TextButton(
                             onPressed: _controller.isEditingGroup.toggle,
