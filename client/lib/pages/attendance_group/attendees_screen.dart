@@ -14,7 +14,6 @@ import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/models/public_user_model.dart';
 import 'package:quick_attendance/models/responses/group_attendance_response.dart';
 import 'package:quick_attendance/pages/attendance_group/components/display_users.dart';
-import 'package:quick_attendance/pages/attendance_group/components/group_scroll_view.dart';
 import 'package:quick_attendance/pages/attendance_group/components/invite_user_popup.dart';
 import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 import 'package:quick_attendance/util/time.dart';
@@ -232,7 +231,6 @@ class _AttendanceController extends GetxController {
               time?.day == selected.day;
         }).toList() ??
         [];
-    print("Session count: ${result.length}");
     return result;
   }
 
@@ -258,7 +256,6 @@ class _AttendanceController extends GetxController {
     final currentKey = dateKey;
     if (currentKey != _lastDateKey) {
       _lastDateKey = currentKey;
-      print("New week selected");
       getAttendance();
     }
   }
@@ -273,7 +270,15 @@ class _AttendanceController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    checkDate();
+    // Handle race condition of trying to retrieve attendance
+    // before the group has loaded.
+    if (_groupController.groupId != null) {
+      checkDate();
+    } else {
+      ever(_groupController.group, (_) {
+        checkDate();
+      });
+    }
     ever(selectedDate, (_) {
       checkDate();
     });
