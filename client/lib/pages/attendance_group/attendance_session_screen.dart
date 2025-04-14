@@ -366,8 +366,11 @@ class QrAttendanceView extends StatelessWidget {
           String status = "Waiting for connection";
           if (_controller.isConnecting) {
             status = "Connecting...";
-          } else if (_controller.isConnectedToSession) {
+          } else if (_controller.isConnectedToSession &&
+              _controller.showAttendanceTaken.value == false) {
             status = "Waiting to be scanned...";
+          } else {
+            status = "You have been marked as attended!";
           }
           return Text(
             status,
