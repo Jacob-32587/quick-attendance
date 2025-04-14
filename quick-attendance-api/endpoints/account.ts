@@ -97,7 +97,6 @@ account.put(
   `${auth_account_base_path}/invite`,
   zValidator("json", account_invite_put_req),
   async (ctx) => {
-    console.log("Hit");
     // Parse request and send to dal
     const req = ctx.req.valid("json");
     let jwt_payload;

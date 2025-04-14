@@ -23,25 +23,53 @@ class JoinedGroupsScreen extends StatelessWidget {
   String _getGroupInviteMessage(PendingInviteJwtModel jwtModel) {
     String uniqueIdMessage = "";
     if (jwtModel.uniqueIdSettings != null) {
-      // Make if statements readable
       var minLength = jwtModel.uniqueIdSettings?.minLength;
       var maxLength = jwtModel.uniqueIdSettings?.maxLength;
 
       if (minLength != null && maxLength == null) {
-        uniqueIdMessage +=
-            ", a unique id of at least $minLength characters is required.";
+        uniqueIdMessage =
+            "A unique id of at least $minLength characters is required.";
       } else if (minLength == null && maxLength != null) {
-        uniqueIdMessage += ", a unique id of at most $maxLength is required.";
+        uniqueIdMessage = "A unique id of at most $maxLength is required.";
       } else if (minLength != null && maxLength != null) {
         if (minLength == maxLength) {
-          ", a unique id with $minLength characters is required";
+          uniqueIdMessage =
+              "A unique id with $minLength characters is required";
         } else {
-          uniqueIdMessage +=
-              ", a unique id between $minLength and $maxLength characters is required";
+          uniqueIdMessage =
+              "A unique id between $minLength and $maxLength characters is required";
         }
       }
     }
-    return "${jwtModel.groupName} is inviting you as a ${jwtModel.isManagerInvite ? "manager" : "member"}$uniqueIdMessage";
+    return uniqueIdMessage;
+  }
+
+  bool uniqueIdRequired(PendingInviteJwtModel jwtModel) {
+    if (jwtModel.uniqueIdSettings != null) {
+      if ((jwtModel.uniqueIdSettings?.requiredForManager ?? false) &&
+          jwtModel.isManagerInvite) {
+        return true;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  String? validateUniqueId(String uniqueId, PendingInviteJwtModel jwtModel) {
+    if (uniqueId.isEmpty) return "Unique ID cannot be empty.";
+
+    var minLength = jwtModel.uniqueIdSettings?.minLength;
+    var maxLength = jwtModel.uniqueIdSettings?.maxLength;
+
+    if (minLength != null && uniqueId.length < minLength) {
+      return _getGroupInviteMessage(jwtModel);
+    }
+
+    if (maxLength != null && uniqueId.length > maxLength) {
+      return _getGroupInviteMessage(jwtModel);
+    }
+
+    return null; // No error
   }
 
   @override
@@ -119,11 +147,114 @@ class JoinedGroupsScreen extends StatelessWidget {
                               children: [
                                 AsyncIconButton(
                                   onPressed: () async {
-                                    await _profileController.respondToInvite(
-                                      groupInviteJwt: jwtModel.jwt,
-                                      uniqueId: null,
-                                      accept: true,
-                                    );
+                                    if (uniqueIdRequired(jwtModel)) {
+                                      final TextEditingController
+                                      _uniqueIdController =
+                                          TextEditingController();
+                                      String? errorMessage;
+
+                                      final result = await showDialog<String?>(
+                                        context: context,
+                                        builder: (context) {
+                                          return StatefulBuilder(
+                                            builder: (context, setState) {
+                                              return AlertDialog(
+                                                title: Text('Enter Unique ID'),
+                                                content: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    ...(() {
+                                                      var promptMessage =
+                                                          jwtModel
+                                                              .uniqueIdSettings
+                                                              ?.promptMessage;
+                                                      var v = [];
+                                                      if (promptMessage !=
+                                                          null) {
+                                                        v = [
+                                                          Text(promptMessage),
+                                                        ];
+                                                      }
+                                                      return v;
+                                                    })(),
+                                                    SizedBox(height: 12),
+                                                    TextField(
+                                                      controller:
+                                                          _uniqueIdController,
+                                                      decoration: InputDecoration(
+                                                        hintText: 'Unique ID',
+                                                        errorText:
+                                                            errorMessage ==
+                                                                        null ||
+                                                                    errorMessage
+                                                                            ?.isNotEmpty ==
+                                                                        true
+                                                                ? errorMessage
+                                                                : null,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed:
+                                                        () => Navigator.of(
+                                                          context,
+                                                        ).pop(null),
+                                                    child: Text('Cancel'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      final enteredUniqueId =
+                                                          _uniqueIdController
+                                                              .text
+                                                              .trim();
+                                                      errorMessage =
+                                                          validateUniqueId(
+                                                            enteredUniqueId,
+                                                            jwtModel,
+                                                          );
+                                                      if (errorMessage ==
+                                                              null ||
+                                                          errorMessage
+                                                                  ?.isEmpty ==
+                                                              true) {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop(enteredUniqueId);
+                                                      } else {
+                                                        setState(
+                                                          () {},
+                                                        ); // Update the UI
+                                                      }
+                                                    },
+                                                    child: Text('Submit'),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                      );
+
+                                      if (result != null && result.isNotEmpty) {
+                                        await _profileController
+                                            .respondToInvite(
+                                              groupInviteJwt: jwtModel.jwt,
+                                              uniqueId: result,
+                                              accept: true,
+                                            );
+                                      }
+                                    } else {
+                                      await _profileController.respondToInvite(
+                                        groupInviteJwt: jwtModel.jwt,
+                                        uniqueId: null,
+                                        accept: true,
+                                      );
+                                    }
                                   },
                                   icon: Icons.check,
                                   iconColor: Colors.green.shade800,
@@ -157,3 +288,4 @@ class JoinedGroupsScreen extends StatelessWidget {
     );
   }
 }
+

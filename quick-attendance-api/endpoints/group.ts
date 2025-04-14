@@ -61,11 +61,13 @@ group.get(
     const user_get_promise = account_dal.get_public_account_models(
       group_users.map((x) => x.value.user_id),
       req.group_id,
+      user_type,
     );
 
     const owner_get_promise = account_dal.get_public_account_models(
       [group.value.owner_id],
       req.group_id,
+      user_type,
     );
 
     let pending_accounts = Promise.resolve(
