@@ -229,7 +229,7 @@ class _AttendanceController extends GetxController {
     final selected = selectedDate.value;
     var result =
         attendanceData.value?.attendance?.where((entry) {
-          final time = entry.attendanceTime.value;
+          final time = entry.attendanceStartTime.value;
           return time?.year == selected.year &&
               time?.month == selected.month &&
               time?.day == selected.day;
@@ -361,7 +361,7 @@ class _AttendanceSection extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "Session ${index + 1} @ ${displayTimeOfDateTime(attendance.attendanceTime.value)}",
+                    "Session ${index + 1} (${displayTimeOfDateTime(attendance.attendanceStartTime.value)}-${displayTimeOfDateTime(attendance.attendanceEndTime.value)})",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 2),
