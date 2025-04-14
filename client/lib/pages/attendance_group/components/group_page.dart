@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/pages/attendance_group/attendance_session_screen.dart';
-import 'package:quick_attendance/pages/attendance_group/attendees_screen.dart';
 import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 import 'package:quick_attendance/pages/attendance_group/group_home_screen.dart';
 
 /// The parent page for attendance group pages which
 /// handles navigation between them.
 class GroupPage extends UrlGroupPage {
-  final RxInt _currentIndex = 1.obs;
+  final RxInt _currentIndex = 0.obs;
 
   GroupPage({super.key});
 
@@ -33,7 +32,6 @@ class GroupPage extends UrlGroupPage {
           controller: _pageController,
           onPageChanged: onPageChanged,
           children: [
-            GroupAttendeesScreen(),
             GroupHomeScreen(),
             GroupAttendanceSessionScreen(group: controller.group),
           ],
@@ -49,10 +47,6 @@ class GroupPage extends UrlGroupPage {
                   unselectedItemColor: Theme.of(context).colorScheme.onSurface,
                   enableFeedback: true,
                   items: [
-                    BottomNavigationBarItem(
-                      icon: const Icon(Icons.group),
-                      label: "Members",
-                    ),
                     BottomNavigationBarItem(
                       icon: const Icon(Icons.home),
                       label: "Home",
