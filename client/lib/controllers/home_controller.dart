@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-const int initialHomePageIndex = 2;
+const int initialHomePageIndex = 1;
 
 /// Provides the state for navigating the home pages
 class HomeController extends GetxController {

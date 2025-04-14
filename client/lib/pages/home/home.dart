@@ -36,7 +36,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   final List<Widget> _pages = [
-    HistoryScreen(),
     JoinedGroupsScreen(),
     HomeScreen(),
     ManagedGroupsScreen(),
@@ -67,10 +66,6 @@ class _HomePageState extends State<HomePage> {
             unselectedItemColor: Theme.of(context).colorScheme.onSurface,
             enableFeedback: true,
             items: [
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.history),
-                label: "History",
-              ),
               BottomNavigationBarItem(
                 icon: const Icon(Icons.calendar_today_rounded),
                 label: "Attend",
