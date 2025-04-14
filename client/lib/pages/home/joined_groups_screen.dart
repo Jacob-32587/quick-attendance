@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/components/group_header.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/pending_invite_jwt_model.dart';
 import 'package:quick_attendance/pages/home/components/display_groups.dart';
@@ -52,24 +53,25 @@ class JoinedGroupsScreen extends StatelessWidget {
           physics: AlwaysScrollableScrollPhysics(),
           children: [
             Text(
-              "Joined Groups",
+              "Attend Groups",
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
             Text(
-              "Manage the groups you attend",
+              "Here you can manage the groups you attend",
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             SizedBox(height: 24),
             DisplayGroups(
+              title: "Joined Groups",
               isLoading: _profileController.isLoadingGroups,
               hasLoaded: _profileController.hasLoadedGroups,
               groups: _profileController.memberGroups,
               emptyMessage:
                   "You are not apart of any groups, accept an invite to join one!",
             ),
-            SizedBox(height: 24),
-
+            SizedBox(height: 36),
+            ListHeader(title: "Group Invites", children: []),
             Obx(() {
               final jwtModel = _profileController.pendingGroupJwts;
               if (jwtModel == null || jwtModel.isEmpty) {
