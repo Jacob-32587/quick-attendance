@@ -24,37 +24,15 @@ import 'package:quick_attendance/util/time.dart';
 class GroupAttendeesController extends GetxController {
   late final GroupController _controller = Get.find();
   late final ProfileController _profileController = Get.find();
-  String? get currentUserId => _profileController.user.value?.userId.value;
-  bool get isOwnerOrManager {
-    return isManager || isOwner;
-  }
+  String? get currentUserId => _profileController.userId;
+
+  bool get isOwner => _controller.isOwner;
+  bool get isManager => _controller.isManager;
+  bool get isOwnerOrManager => _controller.isOwnerOrManager;
 
   Rxn<GroupModel> get group => _controller.group;
 
   final RxBool showAttendance = false.obs;
-
-  bool get isManager {
-    final group = _controller.group.value;
-    if (group == null || currentUserId == null) {
-      return false;
-    }
-    if (group.managers?.any((user) => user.userId.value == currentUserId) ==
-        true) {
-      return true;
-    }
-    return false;
-  }
-
-  bool get isOwner {
-    final group = _controller.group.value;
-    if (group == null || currentUserId == null) {
-      return false;
-    }
-    if (group.owner.value?.userId.value == currentUserId) {
-      return true;
-    }
-    return false;
-  }
 }
 
 class GroupAttendeesScreen extends StatelessWidget {
@@ -251,7 +229,7 @@ class _AttendanceController extends GetxController {
     final selected = selectedDate.value;
     var result =
         attendanceData.value?.attendance?.where((entry) {
-          final time = entry.attendanceTime.value;
+          final time = entry.attendanceStartTime.value;
           return time?.year == selected.year &&
               time?.month == selected.month &&
               time?.day == selected.day;
@@ -383,7 +361,7 @@ class _AttendanceSection extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "Session ${index + 1} @ ${displayTimeOfDateTime(attendance.attendanceTime.value)}",
+                    "Session ${index + 1} (${displayTimeOfDateTime(attendance.attendanceStartTime.value)}-${displayTimeOfDateTime(attendance.attendanceEndTime.value)})",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 2),

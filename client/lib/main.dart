@@ -7,7 +7,6 @@ import 'package:quick_attendance/controllers/history_controller.dart';
 import 'package:quick_attendance/controllers/home_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/pages/api_address.dart';
-import 'package:quick_attendance/pages/attendance_group/attend_group_page.dart';
 import 'package:quick_attendance/pages/attendance_group/camera_page.dart';
 import 'package:quick_attendance/pages/attendance_group/group_page_auth.dart';
 import 'package:quick_attendance/pages/auth/login.dart';
@@ -35,7 +34,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Quick Attendance',
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       theme: ThemeData(
         useMaterial3: true,
         // This is where you can configure the light theme of our application.
@@ -58,12 +57,6 @@ class MyApp extends StatelessWidget {
         GetPage(name: "/signup/", page: () => Signup()),
         GetPage(name: "/login/", page: () => Login()),
         GetPage(name: "/group/:groupId/", page: () => GroupPageAuth()),
-        GetPage(
-          name: "/capture-attendance",
-          page: () => CameraPage(),
-          middlewares: [],
-        ),
-        GetPage(name: "/group/:groupId/attend", page: () => AttendGroupAuth()),
         GetPage(name: "/manual-address", page: () => ApiAddress()),
       ],
     );
