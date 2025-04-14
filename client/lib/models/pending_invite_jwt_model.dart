@@ -31,7 +31,7 @@ class PendingInviteJwtModel extends BaseApiModel {
       jwt: jwt,
       groupName: json["group_name"],
       isManagerInvite: json["is_manager_invite"],
-      uniqueIdSettings: json["unique_id_settings"],
+      uniqueIdSettings: UniqueIdSettings.fromJson(json["unique_id_settings"]),
     );
   }
 
@@ -54,12 +54,12 @@ class UniqueIdSettings extends BaseApiModel {
     this.requiredForManager,
   });
 
-  factory UniqueIdSettings.fromJson(Map<String, dynamic> json) {
+  factory UniqueIdSettings.fromJson(Map<String, dynamic>? json) {
     return UniqueIdSettings(
-      promptMessage: json["prompt_message"],
-      minLength: json["min_length"],
-      maxLength: json["max_length"],
-      requiredForManager: json["required_for_manager"],
+      promptMessage: json?["prompt_message"],
+      minLength: json?["min_length"],
+      maxLength: json?["max_length"],
+      requiredForManager: json?["required_for_manager"],
     );
   }
 
