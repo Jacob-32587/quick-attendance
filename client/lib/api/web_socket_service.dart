@@ -77,7 +77,6 @@ abstract class WebSocketService extends GetxService {
 
   void disconnect() {
     socket?.dispose();
-    onDisconnect();
   }
 
   @override
