@@ -41,6 +41,7 @@ class ProfileInfo extends StatelessWidget {
       return;
     }
     _isSavingProfile.value = true;
+    _responseError.value = null;
     final response = await profileController.updateUserAccount(
       username: _usernameController.text.trim(),
       email: _emailController.text.trim(),
@@ -49,9 +50,9 @@ class ProfileInfo extends StatelessWidget {
     );
     if (response.statusCode == HttpStatusCode.conflict) {
       _responseError.value = "Username or email already taken";
+    } else {
+      await profileController.fetchProfileData();
     }
-
-    await profileController.fetchProfileData();
     _isSavingProfile.value = false;
   }
 
