@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/components/binary_choice.dart';
 import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
+import 'package:quick_attendance/pages/attendance_group/attendees_screen.dart';
 import 'package:quick_attendance/pages/attendance_group/components/group_scroll_view.dart';
 import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 
@@ -78,39 +79,14 @@ class _GroupDetailsScreen extends StatelessWidget {
       children: [
         SkeletonShimmer(
           isLoading: controller.isLoadingGroup,
-          widget: SizedBox(
-            width: double.infinity,
-            child: Card(
-              margin: const EdgeInsets.all(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Obx(
-                      () => Text(
-                        controller.group.value?.name.value ?? "",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Obx(
-                      () => Text(
-                        controller.group.value?.description.value ?? "",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          widget: Obx(
+            () => Text(
+              controller.group.value?.description.value ?? "",
+              style: TextStyle(fontSize: 16),
             ),
           ),
         ),
+        GroupAttendees(),
       ],
     );
   }

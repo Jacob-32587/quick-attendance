@@ -35,34 +35,31 @@ class GroupAttendeesController extends GetxController {
   final RxBool showAttendance = false.obs;
 }
 
-class GroupAttendeesScreen extends StatelessWidget {
+class GroupAttendees extends StatelessWidget {
   late final GroupAttendeesController _controller = Get.put(
     GroupAttendeesController(),
   );
-  GroupAttendeesScreen({super.key});
+  GroupAttendees({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GroupPageContainer(
-      title: _controller.group.value?.name.value ?? "Unknown Group",
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ManagementSection(
-            isOwner: _controller.isOwner,
-            isOwnerOrManager: _controller.isOwnerOrManager,
-            showAttendance: _controller.showAttendance,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ManagementSection(
+          isOwner: _controller.isOwner,
+          isOwnerOrManager: _controller.isOwnerOrManager,
+          showAttendance: _controller.showAttendance,
+        ),
+        const SizedBox(height: 64),
+        Obx(
+          () => BinaryChoice(
+            choice: _controller.showAttendance.value,
+            widget1: _AttendanceSection(),
+            widget2: _MembersSection(),
           ),
-          const SizedBox(height: 64),
-          Obx(
-            () => BinaryChoice(
-              choice: _controller.showAttendance.value,
-              widget1: _AttendanceSection(),
-              widget2: _MembersSection(),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
