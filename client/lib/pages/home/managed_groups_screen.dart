@@ -59,7 +59,7 @@ class ManagedGroupsScreen extends StatelessWidget
               emptyMessage: "You do not own any groups yet.",
               groups: _profileController.ownedGroups,
             ),
-            SizedBox(height: 24),
+            SizedBox(height: 36),
             DisplayGroups(
               title: "Managed Groups",
               isLoading: _profileController.isLoadingGroups,

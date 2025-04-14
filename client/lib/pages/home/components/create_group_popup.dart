@@ -139,13 +139,13 @@ class _CreateGroupFormController extends GetxController {
       return;
     }
 
-    GroupSettingsModel? unique_id_settings = null;
+    GroupSettingsModel? uniqueIdSettings = null;
     if (promptUsers.value) {
-      unique_id_settings = settings.value;
+      uniqueIdSettings = settings.value;
       var maxLength = int.tryParse(maxLengthController.text);
       var minLength = int.tryParse(minLengthController.text);
-      var prompt_message = promptController.text;
-      if (maxLength == null || minLength == null || prompt_message == null) {
+      var promptMessage = promptController.text;
+      if (maxLength == null || minLength == null || promptMessage == null) {
         Get.snackbar(
           "Error",
           "Failed to create group",
@@ -155,12 +155,12 @@ class _CreateGroupFormController extends GetxController {
         );
         return;
       }
-      unique_id_settings.maxLength.value = maxLength;
-      unique_id_settings.minLength.value = minLength;
-      unique_id_settings.promptMessage.value = prompt_message;
+      uniqueIdSettings.maxLength.value = maxLength;
+      uniqueIdSettings.minLength.value = minLength;
+      uniqueIdSettings.promptMessage.value = promptMessage;
     }
     String? newGroupId = await profileController.createGroup(
-      settings: unique_id_settings,
+      settings: uniqueIdSettings,
     );
     if (newGroupId == null) {
       return;

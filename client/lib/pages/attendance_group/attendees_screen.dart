@@ -14,7 +14,6 @@ import 'package:quick_attendance/models/group_model.dart';
 import 'package:quick_attendance/models/public_user_model.dart';
 import 'package:quick_attendance/models/responses/group_attendance_response.dart';
 import 'package:quick_attendance/pages/attendance_group/components/display_users.dart';
-import 'package:quick_attendance/pages/attendance_group/components/group_scroll_view.dart';
 import 'package:quick_attendance/pages/attendance_group/components/invite_user_popup.dart';
 import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 import 'package:quick_attendance/util/time.dart';
@@ -35,34 +34,31 @@ class GroupAttendeesController extends GetxController {
   final RxBool showAttendance = false.obs;
 }
 
-class GroupAttendeesScreen extends StatelessWidget {
+class GroupAttendees extends StatelessWidget {
   late final GroupAttendeesController _controller = Get.put(
     GroupAttendeesController(),
   );
-  GroupAttendeesScreen({super.key});
+  GroupAttendees({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GroupPageContainer(
-      title: _controller.group.value?.name.value ?? "Unknown Group",
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ManagementSection(
-            isOwner: _controller.isOwner,
-            isOwnerOrManager: _controller.isOwnerOrManager,
-            showAttendance: _controller.showAttendance,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ManagementSection(
+          isOwner: _controller.isOwner,
+          isOwnerOrManager: _controller.isOwnerOrManager,
+          showAttendance: _controller.showAttendance,
+        ),
+        const SizedBox(height: 64),
+        Obx(
+          () => BinaryChoice(
+            choice: _controller.showAttendance.value,
+            widget1: _AttendanceSection(),
+            widget2: _MembersSection(),
           ),
-          const SizedBox(height: 64),
-          Obx(
-            () => BinaryChoice(
-              choice: _controller.showAttendance.value,
-              widget1: _AttendanceSection(),
-              widget2: _MembersSection(),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -95,8 +91,9 @@ class _ManagementSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
+          Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
             children: [
               OutlinedButton.icon(
                 label: Obx(
@@ -126,7 +123,6 @@ class _ManagementSection extends StatelessWidget {
                 ),
                 onPressed: showAttendance.toggle,
               ),
-              const SizedBox(width: 20),
               if (isOwner)
                 OutlinedButton.icon(
                   label: Text(
@@ -235,7 +231,6 @@ class _AttendanceController extends GetxController {
               time?.day == selected.day;
         }).toList() ??
         [];
-    print("Session count: ${result.length}");
     return result;
   }
 
@@ -261,7 +256,6 @@ class _AttendanceController extends GetxController {
     final currentKey = dateKey;
     if (currentKey != _lastDateKey) {
       _lastDateKey = currentKey;
-      print("New week selected");
       getAttendance();
     }
   }
@@ -276,7 +270,15 @@ class _AttendanceController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    checkDate();
+    // Handle race condition of trying to retrieve attendance
+    // before the group has loaded.
+    if (_groupController.groupId != null) {
+      checkDate();
+    } else {
+      ever(_groupController.group, (_) {
+        checkDate();
+      });
+    }
     ever(selectedDate, (_) {
       checkDate();
     });

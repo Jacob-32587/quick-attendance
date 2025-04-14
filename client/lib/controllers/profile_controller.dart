@@ -106,7 +106,10 @@ class ProfileController extends GetxController {
 
   /// Attempts to create a group and then navigate to its page
   Future<String?> createGroup({GroupSettingsModel? settings}) async {
-    final response = await _api.createGroup(groupName: "Default");
+    final response = await _api.createGroup(
+      groupName: "Default",
+      settings: settings,
+    );
     if (response.statusCode == HttpStatusCode.ok) {
       fetchGroups();
       final String? newGroupId = response.body?.groupId.value;
