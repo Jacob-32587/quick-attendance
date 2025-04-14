@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/components/group_header.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
 import 'package:quick_attendance/models/pending_invite_jwt_model.dart';
+import 'package:quick_attendance/pages/home/components/async_icon_button.dart';
 import 'package:quick_attendance/pages/home/components/display_groups.dart';
 
 class JoinedGroupsScreen extends StatelessWidget {
@@ -70,8 +71,9 @@ class JoinedGroupsScreen extends StatelessWidget {
               emptyMessage:
                   "You are not apart of any groups, accept an invite to join one!",
             ),
-            SizedBox(height: 36),
+            const SizedBox(height: 36),
             ListHeader(title: "Group Invites", children: []),
+            const SizedBox(height: 12),
             Obx(() {
               final jwtModel = _profileController.pendingGroupJwts;
               if (jwtModel == null || jwtModel.isEmpty) {
@@ -83,11 +85,6 @@ class JoinedGroupsScreen extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Accept or Deny Group Invites",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
                   ...jwtModel.map((jwtModel) {
                     return Card(
                       margin: EdgeInsets.symmetric(vertical: 6),
@@ -100,15 +97,27 @@ class JoinedGroupsScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
-                                _getGroupInviteMessage(jwtModel),
-                                style: TextStyle(fontSize: 16),
-                                overflow: TextOverflow.clip,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    jwtModel.groupName,
+                                    style: TextStyle(fontSize: 16),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (jwtModel.uniqueIdSettings != null)
+                                    Text(
+                                      "This group requires a unique ID",
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                ],
                               ),
                             ),
                             Row(
+                              spacing: 16,
                               children: [
-                                TextButton(
+                                AsyncIconButton(
                                   onPressed: () async {
                                     await _profileController.respondToInvite(
                                       groupInviteJwt: jwtModel.jwt,
@@ -116,12 +125,11 @@ class JoinedGroupsScreen extends StatelessWidget {
                                       accept: true,
                                     );
                                   },
-                                  child: Text("Accept"),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.green,
-                                  ),
+                                  icon: Icons.check,
+                                  iconColor: Colors.green.shade800,
+                                  backgroundColor: Colors.green.shade100,
                                 ),
-                                TextButton(
+                                AsyncIconButton(
                                   onPressed: () async {
                                     await _profileController.respondToInvite(
                                       groupInviteJwt: jwtModel.jwt,
@@ -129,10 +137,9 @@ class JoinedGroupsScreen extends StatelessWidget {
                                       accept: false,
                                     );
                                   },
-                                  child: Text("Deny"),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red,
-                                  ),
+                                  icon: Icons.close,
+                                  iconColor: Colors.red.shade800,
+                                  backgroundColor: Colors.red.shade100,
                                 ),
                               ],
                             ),
