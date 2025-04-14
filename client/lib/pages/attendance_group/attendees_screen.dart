@@ -95,8 +95,9 @@ class _ManagementSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
+          Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
             children: [
               OutlinedButton.icon(
                 label: Obx(
@@ -126,7 +127,6 @@ class _ManagementSection extends StatelessWidget {
                 ),
                 onPressed: showAttendance.toggle,
               ),
-              const SizedBox(width: 20),
               if (isOwner)
                 OutlinedButton.icon(
                   label: Text(
