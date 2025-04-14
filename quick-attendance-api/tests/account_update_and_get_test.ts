@@ -88,12 +88,7 @@ Deno.test(
         ACCOUNT_AUTH_URL(test_num),
         "PUT",
         logged_in_users_jwts[0],
-        {
-          "username": "HankyS17",
-          "email": "hankschrader_1987@bb.com",
-          "first_name": "Hank",
-          "last_name": "Schrader",
-        } as AccountPutReq,
+        random_account_array[1],
         async (res) => {
           return res.status === HttpStatusCode.CONFLICT;
         },
