@@ -73,21 +73,12 @@ class UserCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              user.username.value,
+              "${user.username.value} ${user.uniqueId.value != null ? "(${user.uniqueId.value ?? ""})" : ""}",
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600]!.withAlpha(200),
               ),
             ),
-            if (user.uniqueId.value != null) const SizedBox(height: 2),
-            if (user.uniqueId.value != null)
-              Text(
-                user.uniqueId.value!,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600]!.withAlpha(200),
-                ),
-              ),
           ],
         ),
         leading: CircleAvatar(
@@ -98,16 +89,6 @@ class UserCard extends StatelessWidget {
             size: 30,
             color: Theme.of(context).colorScheme.onSurface,
           ),
-        ),
-        subtitle: Padding(
-          padding: EdgeInsets.only(top: 4),
-          child:
-              user.uniqueId.value != null
-                  ? Text(
-                    "ID: ${user.uniqueId.value}",
-                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                  )
-                  : null,
         ),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: []),
       ),

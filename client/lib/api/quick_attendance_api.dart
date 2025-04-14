@@ -64,7 +64,6 @@ class QuickAttendanceApi extends GetxService {
   Future<ApiResponse<UserModel>> getUser() async {
     // Get the authenticated user's profile
     final Response response = await apiClient.get("/auth/account");
-    print(response.body.toString());
     final UserModel parsedBody = UserModel.fromJson(response.body);
     final apiResponse = ApiResponse(
       statusCode: HttpStatusCode.from(response.statusCode),
@@ -78,6 +77,7 @@ class QuickAttendanceApi extends GetxService {
       "/auth/group",
       query: {"group_id": groupId},
     );
+    print(response.body.toString());
     if (response.statusCode == 200) {
       return GroupModel.fromJson(response.body);
     } else if (response.statusCode == 404) {

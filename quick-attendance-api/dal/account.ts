@@ -87,6 +87,7 @@ export async function get_accounts(user_ids: Uuid[]) {
 export async function get_public_account_models(
   user_ids: Uuid[] | null | undefined,
   group_id?: Uuid,
+  user_type?: UserType,
 ): Promise<PublicAccountGetModel[]> {
   // Return nothing if given nothing
   if (user_ids === null || user_ids === undefined || user_ids.length === 0) {
@@ -110,14 +111,14 @@ export async function get_public_account_models(
 
   return (await get_accounts(user_ids)).map(
     (x) => {
-      const user_type = group_id != undefined ? determine_user_type(x.value, group_id) : null;
+      const group_user_type = group_id != undefined ? determine_user_type(x.value, group_id) : null;
       return {
         username: x.value.username,
         first_name: x.value.first_name,
         last_name: x.value.last_name,
         user_id: x.value.user_id,
-        unique_id: maybe_unique_id(x.value, user_type),
-        user_type: user_type,
+        unique_id: maybe_unique_id(x.value, user_type ?? null),
+        user_type: group_user_type,
       };
     },
   );

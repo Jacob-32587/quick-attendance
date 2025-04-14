@@ -361,7 +361,7 @@ export async function respond_to_group_invite(
   const group_entity = (await get_group(group_id)).value;
 
   // Validate unique id if unique ids are enabled for this group
-  if (group_entity.unique_id_settings !== null) {
+  if (group_entity.unique_id_settings !== null && accept) {
     // Get message suffix based on the group settings
     let bad_unique_id_setting_message: string;
     if (
