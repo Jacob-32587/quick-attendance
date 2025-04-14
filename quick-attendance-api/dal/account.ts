@@ -362,21 +362,14 @@ export async function update_account_from_req(user_id: Uuid, req: AccountPutReq)
   account_entity.value.first_name = req.first_name;
   account_entity.value.last_name = req.last_name;
 
-  DbErr.err_on_commit_async(
+  await DbErr.err_on_commit_async(
     tran
       .check({ key: ["account", user_id], versionstamp: account_entity.versionstamp })
       .set(["account", user_id], account_entity.value).commit(),
     "Unable to update account, username or email address is in use",
-  );
-  return account_entity;
-}
-
-export function update_account(entity: Deno.KvEntry<AccountEntity>) {
-  return DbErr.err_on_commit_async(
-    update_account_tran(entity, kv.atomic()).commit(),
-    "Unable to update account",
     HttpStatusCode.CONFLICT,
   );
+  return account_entity;
 }
 
 export function update_account_tran(
