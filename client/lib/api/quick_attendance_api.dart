@@ -138,6 +138,23 @@ class QuickAttendanceApi extends GetxService {
     return apiResponse;
   }
 
+  Future<ApiResponse<Null>> respondToGroupInvite({
+    required String groupInviteJwt,
+    required String? uniqueId,
+    required bool accept,
+  }) async {
+    final Response response = await apiClient.put("/auth/account/invite", {
+      "account_invite_jwt": groupInviteJwt,
+      "unique_id": uniqueId,
+      "accept": accept,
+    });
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
+
   Future<ApiResponse<GroupAttendanceResponse>> getWeeklyGroupAttendance({
     required String? groupId,
     required DateTime? date,
@@ -181,8 +198,6 @@ class QuickAttendanceApi extends GetxService {
       "/auth/attendance/user",
       query: query,
     );
-
-    print("Body: ${response.body.toString()}");
 
     final apiResponse = ApiResponse<AttendanceHistoryModel>(
       statusCode: HttpStatusCode.from(response.statusCode),

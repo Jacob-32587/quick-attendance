@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
+import 'package:quick_attendance/models/pending_invite_jwt_model.dart';
 import 'package:quick_attendance/pages/home/components/display_groups.dart';
 
 class JoinedGroupsScreen extends StatelessWidget {
@@ -14,6 +15,31 @@ class JoinedGroupsScreen extends StatelessWidget {
 
   Future<void> onRefresh() async {
     _profileController.fetchGroups();
+    _profileController.fetchProfileData();
+  }
+
+  String _getGroupInviteMessage(PendingInviteJwtModel jwtModel) {
+    String uniqueIdMessage = "";
+    if (jwtModel.uniqueIdSettings != null) {
+      // Make if statements readable
+      var minLength = jwtModel.uniqueIdSettings?.minLength;
+      var maxLength = jwtModel.uniqueIdSettings?.maxLength;
+
+      if (minLength != null && maxLength == null) {
+        uniqueIdMessage +=
+            ", a unique id of at least $minLength characters is required.";
+      } else if (minLength == null && maxLength != null) {
+        uniqueIdMessage += ", a unique id of at most $maxLength is required.";
+      } else if (minLength != null && maxLength != null) {
+        if (minLength == maxLength) {
+          ", a unique id with $minLength characters is required";
+        } else {
+          uniqueIdMessage +=
+              ", a unique id between $minLength and $maxLength characters is required";
+        }
+      }
+    }
+    return "${jwtModel.groupName} is inviting you as a ${jwtModel.isManagerInvite ? "manager" : "member"}$uniqueIdMessage";
   }
 
   @override
@@ -45,9 +71,8 @@ class JoinedGroupsScreen extends StatelessWidget {
             SizedBox(height: 24),
 
             Obx(() {
-              final jwts =
-                  _profileController.pendingGroupJwts; // <-- RxList<String>
-              if (jwts == null || jwts.isEmpty) {
+              final jwtModel = _profileController.pendingGroupJwts;
+              if (jwtModel == null || jwtModel.isEmpty) {
                 return Text(
                   "No pending invites",
                   style: TextStyle(color: Colors.grey),
@@ -61,7 +86,7 @@ class JoinedGroupsScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 8),
-                  ...jwts.map((jwt) {
+                  ...jwtModel.map((jwtModel) {
                     return Card(
                       margin: EdgeInsets.symmetric(vertical: 6),
                       child: Padding(
@@ -74,16 +99,20 @@ class JoinedGroupsScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                jwt,
+                                _getGroupInviteMessage(jwtModel),
                                 style: TextStyle(fontSize: 16),
-                                overflow: TextOverflow.ellipsis,
+                                overflow: TextOverflow.clip,
                               ),
                             ),
                             Row(
                               children: [
                                 TextButton(
-                                  onPressed: () {
-                                    // TODO: Add accept logic
+                                  onPressed: () async {
+                                    await _profileController.respondToInvite(
+                                      groupInviteJwt: jwtModel.jwt,
+                                      uniqueId: null,
+                                      accept: true,
+                                    );
                                   },
                                   child: Text("Accept"),
                                   style: TextButton.styleFrom(
@@ -91,8 +120,12 @@ class JoinedGroupsScreen extends StatelessWidget {
                                   ),
                                 ),
                                 TextButton(
-                                  onPressed: () {
-                                    // TODO: Add deny logic
+                                  onPressed: () async {
+                                    await _profileController.respondToInvite(
+                                      groupInviteJwt: jwtModel.jwt,
+                                      uniqueId: null,
+                                      accept: false,
+                                    );
                                   },
                                   child: Text("Deny"),
                                   style: TextButton.styleFrom(

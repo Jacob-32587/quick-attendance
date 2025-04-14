@@ -61,7 +61,7 @@ async function cleanup_test(
   test_num: number,
   server_process: Deno.ChildProcess | null,
 ) {
-  Deno.remove(`./test-${test_num}`, { recursive: true });
+  // Deno.remove(`./test-${test_num}`, { recursive: true });
 
   // If there is a server process kill it and wait for it to end
   if (server_process != null) {

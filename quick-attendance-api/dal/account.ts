@@ -14,6 +14,7 @@ import HttpStatusCode from "../util/http_status_code.ts";
 import { add_to_maybe_map } from "../util/map.ts";
 import { new_uuid, Uuid } from "../util/uuid.ts";
 import kv, { DbErr, KvHelper } from "./db.ts";
+import { UniqueIdSettings } from "../models/group/group_post_req.ts";
 
 /**
  * @param password - The string password to merge with the salt value
@@ -302,6 +303,7 @@ export async function invite_accounts_to_group(
   group_name: string,
   owner_id: Uuid,
   is_manager_invite: boolean,
+  unique_id_settings: UniqueIdSettings | null,
   invitees_accounts: Deno.KvEntry<AccountEntity>[],
   tran: Deno.AtomicOperation,
 ) {
@@ -321,6 +323,7 @@ export async function invite_accounts_to_group(
             owner_id,
             group_id,
             is_manager_invite,
+            unique_id_settings: unique_id_settings,
           } as GroupInviteJwtPayload,
           jwt_secret,
           jwt_alg,

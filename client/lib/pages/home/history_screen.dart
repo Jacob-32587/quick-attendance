@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/api/_api_client.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
+import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/history_controller.dart';
 import 'package:quick_attendance/models/attendance_history_model.dart';
 import 'package:quick_attendance/util/time.dart';
@@ -25,6 +26,7 @@ class _AttendanceEventData {
 
 class HistoryScreen extends StatelessWidget {
   late final HistoryController _historyController = Get.find();
+  late final AuthController _authController = Get.find();
   final _calendarEventController = EventController<_AttendanceEventData?>();
   final clearedData = RxBool(false);
   final currentDate = Rx<DateTime>(DateTime.now());
@@ -32,10 +34,7 @@ class HistoryScreen extends StatelessWidget {
   late final QuickAttendanceApi _api = Get.find();
   final attendanceHistory = Rxn<AttendanceHistoryModel>();
 
-  HistoryScreen({super.key}) {
-    _calendarEventController.removeWhere((x) => true);
-    onRefresh();
-  }
+  HistoryScreen({super.key});
 
   Future<void> getAttendanceHistoryForWeek(DateTime? time) async {
     // isLoadingHistory.value = true;
@@ -118,8 +117,6 @@ class HistoryScreen extends StatelessWidget {
             groupId: groupId,
           ),
         );
-      } else {
-        print("Did not add");
       }
     }
     return null;
@@ -127,6 +124,8 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _calendarEventController.removeWhere((x) => true);
+    onRefresh();
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: Scaffold(
