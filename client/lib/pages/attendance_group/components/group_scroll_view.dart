@@ -21,8 +21,8 @@ class GroupPageContainer extends StatelessWidget {
     if (_websocketService.socketConnectionState.value ==
         SocketConnectionState.connected) {
       _websocketService.disconnect();
-      Get.toNamed("/"); // Navigate to home page
     }
+    Get.toNamed("/"); // Navigate to home page
   }
 
   GroupPageContainer({super.key, required this.title, this.content});
