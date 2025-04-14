@@ -85,7 +85,7 @@ class ProfileController extends GetxController {
     user.value = UserModel();
   }
 
-  Future<void> updateUserAccount({
+  Future<ApiResponse<Null>> updateUserAccount({
     required String username,
     required String email,
     String? firstName,
@@ -97,15 +97,7 @@ class ProfileController extends GetxController {
       'first_name': firstName,
       'last_name': lastName,
     });
-    if (response.statusCode != HttpStatusCode.ok) {
-      Get.snackbar(
-        "Failed",
-        "The server was unable to update your profile.",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }
+    return response;
   }
 
   /// Get the groups the user owns, manages, or has joined from the server

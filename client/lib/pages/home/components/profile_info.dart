@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:quick_attendance/api/_api_client.dart';
+import 'package:quick_attendance/components/binary_choice.dart';
 import 'package:quick_attendance/models/group_model.dart';
 import 'package:get/get.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
@@ -11,7 +13,8 @@ class ProfileInfo extends StatelessWidget {
   final String lastName;
   final List<GroupModel>? groups;
   final _formKey = GlobalKey<FormState>();
-  final RxBool isSavingProfile = false.obs;
+  final RxBool _isSavingProfile = false.obs;
+  final RxnString _responseError = RxnString();
 
   late final ProfileController profileController = Get.find();
   TextEditingController _emailController = TextEditingController();
@@ -37,16 +40,19 @@ class ProfileInfo extends StatelessWidget {
     if (_formKey.currentState!.validate() == false) {
       return;
     }
-    isSavingProfile.value = true;
-    await profileController.updateUserAccount(
+    _isSavingProfile.value = true;
+    final response = await profileController.updateUserAccount(
       username: _usernameController.text.trim(),
       email: _emailController.text.trim(),
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
     );
+    if (response.statusCode == HttpStatusCode.conflict) {
+      _responseError.value = "Username or email already taken";
+    }
 
     await profileController.fetchProfileData();
-    isSavingProfile.value = false;
+    _isSavingProfile.value = false;
   }
 
   @override
@@ -110,10 +116,27 @@ class ProfileInfo extends StatelessWidget {
                 ),
                 SizedBox(height: 25),
                 Obx(
+                  () => BinaryChoice(
+                    choice: _responseError.value != null,
+                    widget1: Column(
+                      children: [
+                        Text(
+                          _responseError.value ?? "",
+                          style: TextStyle(
+                            color: Colors.red.shade400,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
+                ),
+                Obx(
                   () => PrimaryButton(
                     text: "Save",
                     onPressed: updateInfo,
-                    isLoading: isSavingProfile.value,
+                    isLoading: _isSavingProfile.value,
                   ),
                 ),
                 SizedBox(height: 10),
