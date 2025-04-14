@@ -8,7 +8,7 @@ class PendingInviteJwtModel extends BaseApiModel {
   String userId;
   String groupName;
   bool isManagerInvite;
-  UniqueIdSettings? uniqueIdSettings;
+  UniqueIdSettingsModel? uniqueIdSettings;
 
   PendingInviteJwtModel({
     required this.iss,
@@ -21,7 +21,6 @@ class PendingInviteJwtModel extends BaseApiModel {
     required this.uniqueIdSettings,
   });
 
-  /// Throws a [FormatException]
   factory PendingInviteJwtModel.fromJson(Map<String, dynamic> json, jwt) {
     return PendingInviteJwtModel(
       iss: json["iss"],
@@ -31,7 +30,9 @@ class PendingInviteJwtModel extends BaseApiModel {
       jwt: jwt,
       groupName: json["group_name"],
       isManagerInvite: json["is_manager_invite"],
-      uniqueIdSettings: json["unique_id_settings"],
+      uniqueIdSettings: UniqueIdSettingsModel.fromJson(
+        json["unique_id_settings"],
+      ),
     );
   }
 
@@ -41,21 +42,21 @@ class PendingInviteJwtModel extends BaseApiModel {
   }
 }
 
-class UniqueIdSettings extends BaseApiModel {
+class UniqueIdSettingsModel extends BaseApiModel {
   String? promptMessage;
   int? minLength;
   int? maxLength;
   bool? requiredForManager;
 
-  UniqueIdSettings({
+  UniqueIdSettingsModel({
     required this.promptMessage,
     required this.minLength,
     required this.maxLength,
     this.requiredForManager,
   });
 
-  factory UniqueIdSettings.fromJson(Map<String, dynamic> json) {
-    return UniqueIdSettings(
+  factory UniqueIdSettingsModel.fromJson(Map<String, dynamic> json) {
+    return UniqueIdSettingsModel(
       promptMessage: json["prompt_message"],
       minLength: json["min_length"],
       maxLength: json["max_length"],
