@@ -76,7 +76,7 @@ class UserCard extends StatelessWidget {
               "${user.username.value} ${user.uniqueId.value != null ? "(${user.uniqueId.value ?? ""})" : ""}",
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600]!.withAlpha(200),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
