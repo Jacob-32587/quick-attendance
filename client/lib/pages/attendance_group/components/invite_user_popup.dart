@@ -22,12 +22,36 @@ void showInviteUserPopup(BuildContext context) {
   } else {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return _InviteUserPopover();
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: SingleChildScrollView(
+                controller: scrollController, // connect scroll
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text("Invite User", style: TextStyle(fontSize: 20)),
+                    SizedBox(height: 16),
+                    _InviteUserForm(), // your form here
+                  ],
+                ),
+              ),
+            );
+          },
+        );
       },
     );
   }
