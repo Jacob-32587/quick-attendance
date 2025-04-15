@@ -45,12 +45,12 @@ class ManagedGroupsScreen extends StatelessWidget
               "Managed Groups",
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 4),
             Text(
               "Take attendance for any group you manage",
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
-            SizedBox(height: 24),
+            SizedBox(height: 36),
             DisplayGroups(
               title: "Owned Groups",
               isLoading: _profileController.isLoadingGroups,

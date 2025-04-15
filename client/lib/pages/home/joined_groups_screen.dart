@@ -85,12 +85,12 @@ class JoinedGroupsScreen extends StatelessWidget {
               "Attend Groups",
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 4),
             Text(
               "Here you can manage the groups you attend",
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
-            SizedBox(height: 24),
+            SizedBox(height: 36),
             Obx(
               () => DisplayGroups(
                 title: "Joined Groups",
@@ -101,15 +101,16 @@ class JoinedGroupsScreen extends StatelessWidget {
                     "You are not apart of any groups, accept an invite to join one!",
               ),
             ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 48),
             ListHeader(title: "Group Invites", children: []),
-            const SizedBox(height: 12),
             Obx(() {
               final jwtModel = _profileController.pendingGroupJwts;
               if (jwtModel == null || jwtModel.isEmpty) {
                 return Text(
-                  "No pending invites",
-                  style: TextStyle(color: Colors.grey),
+                  "You have no pending invites",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 );
               }
               return Column(
