@@ -68,17 +68,12 @@ class ProfileInfo extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
           ),
-          Divider(
-            color: Colors.grey, // Line color
-            thickness: 1, // Line thickness
-            indent: 5, // Start padding
-            endIndent: 5, // End padding
-          ),
+          const SizedBox(height: 20),
           Form(
             key: _formKey,
             child: Column(
+              spacing: 24,
               children: [
-                SizedBox(height: 10),
                 TextFormField(
                   controller: _usernameController,
                   decoration: InputDecoration(labelText: 'Username'),
@@ -89,7 +84,6 @@ class ProfileInfo extends StatelessWidget {
                     return null;
                   },
                 ),
-                SizedBox(height: 20),
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(labelText: 'Email'),
@@ -105,17 +99,14 @@ class ProfileInfo extends StatelessWidget {
                     return null;
                   },
                 ),
-                SizedBox(height: 20),
                 TextFormField(
                   controller: _firstNameController,
                   decoration: InputDecoration(labelText: 'First Name'),
                 ),
-                SizedBox(height: 20),
                 TextFormField(
                   controller: _lastNameController,
                   decoration: InputDecoration(labelText: 'Last Name'),
                 ),
-                SizedBox(height: 25),
                 Obx(
                   () => BinaryChoice(
                     choice: _responseError.value != null,
