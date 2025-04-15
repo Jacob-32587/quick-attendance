@@ -88,8 +88,10 @@ final class AttendanceRecordData extends BaseApiModel<AttendanceRecordData> {
   factory AttendanceRecordData.fromJson(Map<String, dynamic>? json) {
     return AttendanceRecordData(
       attendanceId: json?["attendance_id"],
-      attendanceStartTime: DateTime.tryParse(json?["attendance_start_time"]),
-      attendanceEndTime: DateTime.tryParse(json?["attendance_end_time"]),
+      attendanceStartTime: DateTime.tryParse(
+        json?["attendance_start_time"] ?? "",
+      ),
+      attendanceEndTime: DateTime.tryParse(json?["attendance_end_time"] ?? ""),
       present: json?["present"],
     );
   }
