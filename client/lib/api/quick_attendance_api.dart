@@ -64,22 +64,21 @@ class QuickAttendanceApi extends GetxService {
   Future<ApiResponse<UserModel>> getUser() async {
     // Get the authenticated user's profile
     final Response response = await apiClient.get("/auth/account");
-    final UserModel parsedBody = UserModel.fromJson(response.body);
     final apiResponse = ApiResponse(
-      statusCode: HttpStatusCode.from(response.statusCode),
-      body: parsedBody,
-    );
-    return apiResponse;
-  }
-
-  Future<ApiResponse<UserModel>> updateUserAccount(Map<String, dynamic> data) async {
-    final Response response = await apiClient.put("/auth/account", data);
-    final apiResponse = ApiResponse<UserModel>(
       statusCode: HttpStatusCode.from(response.statusCode),
       body: UserModel.fromJson(response.body),
     );
     return apiResponse;
-}
+  }
+
+  Future<ApiResponse<Null>> updateUserAccount(Map<String, dynamic> data) async {
+    final Response response = await apiClient.put("/auth/account", data);
+    final apiResponse = ApiResponse<Null>(
+      statusCode: HttpStatusCode.from(response.statusCode),
+      body: null,
+    );
+    return apiResponse;
+  }
 
   Future<GroupModel?> getGroup({required String groupId}) async {
     final Response response = await apiClient.get(

@@ -34,7 +34,39 @@ class _GroupScreen extends StatelessWidget {
     return GroupPageContainer(
       title: controller.group.value?.name.value ?? "Unknown Group",
       content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (controller.isOwner)
+            Row(
+              children: [
+                Spacer(),
+                TextButton(
+                  onPressed: controller.isEditingGroup.toggle,
+                  style: TextButton.styleFrom(
+                    textStyle: TextStyle(
+                      color: Colors.grey,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black38,
+                          blurRadius: 4,
+                          offset: Offset(1, 1),
+                        ),
+                      ],
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  child: Obx(
+                    () =>
+                        controller.isEditingGroup.value
+                            ? Text("Cancel")
+                            : Text("Edit"),
+                  ),
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
           Obx(
             () => BinaryChoice(
               choice: controller.isEditingGroup.value,

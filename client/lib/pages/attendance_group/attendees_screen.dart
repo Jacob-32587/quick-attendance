@@ -225,7 +225,7 @@ class _AttendanceController extends GetxController {
     final selected = selectedDate.value;
     var result =
         attendanceData.value?.attendance?.where((entry) {
-          final time = entry.attendanceStartTime.value;
+          final time = entry.attendanceStartTime.value?.toLocal();
           return time?.year == selected.year &&
               time?.month == selected.month &&
               time?.day == selected.day;
@@ -276,7 +276,8 @@ class _AttendanceController extends GetxController {
       checkDate();
     } else {
       ever(_groupController.group, (_) {
-        checkDate();
+        // The group attendance information may have changed, refresh.
+        getAttendance();
       });
     }
     ever(selectedDate, (_) {

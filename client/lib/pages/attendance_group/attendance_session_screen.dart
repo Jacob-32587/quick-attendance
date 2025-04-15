@@ -121,6 +121,7 @@ class GroupAttendanceSessionController extends GetxController {
         backgroundColor: Colors.green.shade800,
         colorText: Colors.green.shade50,
       );
+      await _groupController.fetchGroup(_groupController.groupId);
     }
     isEndingSession.value = false;
   }
@@ -214,7 +215,8 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
                       onPressed: _controller.leaveAttendanceSession,
                       child: Text("Disconnect"),
                     );
-                  } else if (_controller.isOwner == false) {
+                  } else if (_controller.isOwner == false &&
+                      _controller.activeSessionId != null) {
                     return FlatButton(
                       onPressed: _controller.joinAttendance,
                       child: Text("Join Attendance"),
@@ -236,6 +238,9 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
                 ),
                 Obx(() {
                   final activeSessionId = _controller.activeSessionId;
+                  if (_controller.isOwnerOrManager == false) {
+                    return SizedBox.shrink();
+                  }
                   if (activeSessionId == null) {
                     return FlatButton(
                       onPressed: _controller.startAttendance,

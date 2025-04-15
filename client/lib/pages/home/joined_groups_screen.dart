@@ -91,13 +91,15 @@ class JoinedGroupsScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             SizedBox(height: 24),
-            DisplayGroups(
-              title: "Joined Groups",
-              isLoading: _profileController.isLoadingGroups,
-              hasLoaded: _profileController.hasLoadedGroups,
-              groups: _profileController.memberGroups,
-              emptyMessage:
-                  "You are not apart of any groups, accept an invite to join one!",
+            Obx(
+              () => DisplayGroups(
+                title: "Joined Groups",
+                isLoading: _profileController.isLoadingGroups,
+                hasLoaded: _profileController.hasLoadedGroups,
+                groups: _profileController.memberGroups,
+                emptyMessage:
+                    "You are not apart of any groups, accept an invite to join one!",
+              ),
             ),
             const SizedBox(height: 36),
             ListHeader(title: "Group Invites", children: []),
@@ -288,4 +290,3 @@ class JoinedGroupsScreen extends StatelessWidget {
     );
   }
 }
-

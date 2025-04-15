@@ -3,10 +3,12 @@ import 'package:get/get.dart';
 import 'package:quick_attendance/api/quick_attendance_api.dart';
 import 'package:quick_attendance/api/web_socket_service.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
+import 'package:quick_attendance/pages/attendance_group/components/url_group_page.dart';
 
 class QuickAttendanceWebsocket extends WebSocketService {
   late final QuickAttendanceApi _api = Get.find();
   late final AuthController _auth = Get.find();
+  late final GroupController _groupController = Get.find();
 
   /// Define a custom handler for when the attendanceTaken event is received
   /// from the server.
@@ -28,6 +30,7 @@ class QuickAttendanceWebsocket extends WebSocketService {
 
   @override
   void onDisconnect() {
+    _groupController.fetchGroup(_groupController.groupId);
     Get.snackbar(
       "Attendance",
       "Disconnected from attendance session",

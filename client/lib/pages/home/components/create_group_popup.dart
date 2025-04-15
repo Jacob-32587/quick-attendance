@@ -19,12 +19,36 @@ void showCreateGroupPopup(BuildContext context) {
   } else {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return _CreateGroupPopover();
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: SingleChildScrollView(
+                controller: scrollController, // connect scroll
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text("Create Group", style: TextStyle(fontSize: 20)),
+                    SizedBox(height: 16),
+                    _CreateGroupForm(), // your form here
+                  ],
+                ),
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -43,35 +67,12 @@ class _CreateGroupModal extends StatelessWidget {
   }
 }
 
-class _CreateGroupPopover extends StatelessWidget {
+class _CreateGroupForm extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      width: MediaQuery.of(context).size.width * 0.9,
-      height: MediaQuery.of(context).size.height * 0.6,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Create Group",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          _CreateGroupForm(),
-        ],
-      ),
-    );
-  }
+  State<StatefulWidget> createState() => _CreateGroupFormState();
 }
 
-class _CreateGroupFormController extends GetxController {
+class _CreateGroupFormState extends State<_CreateGroupForm> {
   late final ProfileController profileController = Get.find();
   final TextEditingController promptController = TextEditingController();
   final TextEditingController minLengthController = TextEditingController(
@@ -85,7 +86,7 @@ class _CreateGroupFormController extends GetxController {
   /// Not part of the settings, but enables/disables adding unique_id_settings
   /// to the create group request
   final RxBool promptUsers = false.obs;
-  final formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   final Rx<GroupSettingsModel> settings = Rx<GroupSettingsModel>(
     GroupSettingsModel(minLength: 1, maxLength: 64),
   );
@@ -134,7 +135,7 @@ class _CreateGroupFormController extends GetxController {
   }
 
   void submitForm() async {
-    if (!formKey.currentState!.validate()) {
+    if (!_formKey.currentState!.validate()) {
       // Form was invalid
       return;
     }
@@ -177,19 +178,9 @@ class _CreateGroupFormController extends GetxController {
   }
 
   @override
-  void onClose() {
-    promptController.dispose();
-    super.onClose();
-  }
-}
-
-class _CreateGroupForm extends StatelessWidget {
-  late final _CreateGroupFormController controller =
-      _CreateGroupFormController();
-  @override
   Widget build(BuildContext context) {
     return Form(
-      key: controller.formKey,
+      key: _formKey,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.start,
@@ -222,9 +213,9 @@ class _CreateGroupForm extends StatelessWidget {
                   ),
                 ],
               ),
-              value: controller.promptUsers.value,
+              value: promptUsers.value,
               onChanged: (value) {
-                controller.promptUsers.value = value ?? false;
+                promptUsers.value = value ?? false;
               },
             ),
           ),
@@ -234,21 +225,21 @@ class _CreateGroupForm extends StatelessWidget {
               duration: Duration(milliseconds: 300),
               decoration: BoxDecoration(
                 color:
-                    controller.promptUsers.value
+                    promptUsers.value
                         ? Colors.transparent
                         : Theme.of(context).colorScheme.onSurface.withAlpha(20),
                 borderRadius: BorderRadius.circular(8),
               ),
-              height: controller.promptUsers.value ? null : 0,
+              height: promptUsers.value ? null : 0,
               child:
-                  controller.promptUsers.value
+                  promptUsers.value
                       ? Column(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           TextFormField(
-                            controller: controller.promptController,
+                            controller: promptController,
                             maxLength: 512,
                             minLines: 2,
                             maxLines: null, // expand vertically
@@ -257,27 +248,27 @@ class _CreateGroupForm extends StatelessWidget {
                               labelText: "Prompt Message *",
                               border: OutlineInputBorder(),
                             ),
-                            validator: controller.validatePrompt,
+                            validator: validatePrompt,
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
-                            controller: controller.minLengthController,
+                            controller: minLengthController,
                             decoration: const InputDecoration(
                               labelText: "Minimum Length *",
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.number,
-                            validator: controller.validateMinLength,
+                            validator: validateMinLength,
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
-                            controller: controller.maxLengthController,
+                            controller: maxLengthController,
                             decoration: const InputDecoration(
                               labelText: "Maximum Length *",
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.number,
-                            validator: controller.validateMaxLength,
+                            validator: validateMaxLength,
                           ),
                           const SizedBox(height: 12),
                           Obx(
@@ -287,18 +278,11 @@ class _CreateGroupForm extends StatelessWidget {
                                 style: TextStyle(fontSize: 14),
                               ),
                               value:
-                                  controller
-                                      .settings
-                                      .value
-                                      .requireManagerId
-                                      .value ??
+                                  settings.value.requireManagerId.value ??
                                   false,
                               onChanged: (value) {
-                                controller
-                                    .settings
-                                    .value
-                                    .requireManagerId
-                                    .value = value ?? false;
+                                settings.value.requireManagerId.value =
+                                    value ?? false;
                               },
                             ),
                           ),
@@ -310,9 +294,7 @@ class _CreateGroupForm extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              PrimaryButton(onPressed: controller.submitForm, text: "Finish"),
-            ],
+            children: [PrimaryButton(onPressed: submitForm, text: "Finish")],
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/components/binary_choice.dart';
 import 'package:quick_attendance/components/primary_button.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 
@@ -18,11 +19,13 @@ class SignupForm extends StatelessWidget {
   final RxBool _isPasswordVisible = false.obs;
   final RxBool _isConfirmPasswordVisible = false.obs;
   final RxBool _isLoading = false.obs;
+  final RxnString _responseError = RxnString();
   void signup() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
     _isLoading.value = true;
+    _responseError.value = null;
     Response response = await authController.signUp(
       _emailController.text.trim(),
       _usernameController.text.trim(),
@@ -30,11 +33,19 @@ class SignupForm extends StatelessWidget {
       _lastNameController.text.trim(),
       _passwordController.text.trim(),
     );
-    _isLoading.value = false;
     if (response.statusCode == 200) {
-      Get.snackbar("Awesome!", "You made an account! Now login to get access.");
+      Get.snackbar(
+        "Awesome!",
+        "You made an account! Now login to get access.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.shade800,
+        colorText: Colors.green.shade50,
+      );
       Get.toNamed("/login");
-    } else {}
+    } else if (response.statusCode == 409) {
+      _responseError.value = response.body?["message"];
+    }
+    _isLoading.value = false;
   }
 
   @override
@@ -174,6 +185,20 @@ class SignupForm extends StatelessWidget {
             ),
           ),
           SizedBox(height: 20),
+          Obx(
+            () => BinaryChoice(
+              choice: _responseError.value != null,
+              widget1: Column(
+                children: [
+                  Text(
+                    _responseError.value ?? "",
+                    style: TextStyle(color: Colors.red.shade400, fontSize: 16),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          ),
           Obx(
             () => PrimaryButton(
               text: "Signup",

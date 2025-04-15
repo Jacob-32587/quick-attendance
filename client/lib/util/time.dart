@@ -25,7 +25,7 @@ String formatDate(DateTime? date) {
 
   final day = date.day;
   final suffix = _getDaySuffix(day);
-  final month = DateFormat.MMMM().format(date);
+  final month = DateFormat.MMMM().format(date.toLocal());
   final year = date.year;
 
   return '$month $day$suffix, $year';
@@ -51,5 +51,5 @@ String displayTimeOfDateTime(DateTime? date) {
     return "";
   }
   final DateFormat timeFormat = DateFormat('hh:mm a');
-  return timeFormat.format(date);
+  return timeFormat.format(date.toLocal());
 }

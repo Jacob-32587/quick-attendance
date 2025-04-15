@@ -30,9 +30,10 @@ class PendingInviteJwtModel extends BaseApiModel {
       jwt: jwt,
       groupName: json["group_name"],
       isManagerInvite: json["is_manager_invite"],
-      uniqueIdSettings: UniqueIdSettingsModel.fromJson(
-        json["unique_id_settings"],
-      ),
+      uniqueIdSettings:
+          json["unique_id_settings"] != null
+              ? UniqueIdSettingsModel.fromJson(json["unique_id_settings"])
+              : null,
     );
   }
 
