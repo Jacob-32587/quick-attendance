@@ -50,6 +50,6 @@ String displayTimeOfDateTime(DateTime? date) {
   if (date == null) {
     return "";
   }
-  final DateFormat timeFormat = DateFormat('hh:mm a');
+  final DateFormat timeFormat = DateFormat('h:mm a');
   return timeFormat.format(date.toLocal());
 }
