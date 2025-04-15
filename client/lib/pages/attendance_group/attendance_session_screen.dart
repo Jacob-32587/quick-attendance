@@ -214,7 +214,8 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
                       onPressed: _controller.leaveAttendanceSession,
                       child: Text("Disconnect"),
                     );
-                  } else if (_controller.isOwner == false) {
+                  } else if (_controller.isOwner == false &&
+                      _controller.activeSessionId != null) {
                     return FlatButton(
                       onPressed: _controller.joinAttendance,
                       child: Text("Join Attendance"),
