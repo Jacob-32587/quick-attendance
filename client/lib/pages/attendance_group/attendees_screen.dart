@@ -364,9 +364,22 @@ class _AttendanceSection extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "Session ${index + 1} (${displayTimeOfDateTime(attendance.attendanceStartTime.value)}-${displayTimeOfDateTime(attendance.attendanceEndTime.value)})",
+                    "Session ${index + 1}",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
+                  Row(
+                    children: [
+                      Text(
+                        "${displayTimeOfDateTime(attendance.attendanceStartTime.value)} - ${attendance.attendanceEndTime.value != null ? displayTimeOfDateTime(attendance.attendanceEndTime.value) : 'present'}",
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  if ((attendance.attendees?.length ?? 0) > 5)
+                    Text(
+                      "${attendance.attendees!.length} attendees",
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
                   const SizedBox(height: 2),
                   DisplayUsers(
                     isLoading: _attendanceController.isLoadingAttendance,
