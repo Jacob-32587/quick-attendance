@@ -365,20 +365,30 @@ class _AttendanceSection extends StatelessWidget {
                 children: [
                   Text(
                     "Session ${index + 1}",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                   Row(
                     children: [
                       Text(
                         "${displayTimeOfDateTime(attendance.attendanceStartTime.value)} - ${attendance.attendanceEndTime.value != null ? displayTimeOfDateTime(attendance.attendanceEndTime.value) : 'present'}",
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 16,
+                        ),
                       ),
                     ],
                   ),
                   if ((attendance.attendees?.length ?? 0) > 5)
                     Text(
                       "${attendance.attendees!.length} attendees",
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 14,
+                      ),
                     ),
                   const SizedBox(height: 2),
                   DisplayUsers(
