@@ -121,6 +121,7 @@ class GroupAttendanceSessionController extends GetxController {
         backgroundColor: Colors.green.shade800,
         colorText: Colors.green.shade50,
       );
+      await _groupController.fetchGroup(_groupController.groupId);
     }
     isEndingSession.value = false;
   }
