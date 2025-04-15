@@ -41,17 +41,16 @@ class ManagedGroupsScreen extends StatelessWidget
           padding: EdgeInsets.all(16.0),
           physics: AlwaysScrollableScrollPhysics(),
           children: [
-            // Greeting to the user
             Text(
               "Managed Groups",
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 4),
             Text(
               "Take attendance for any group you manage",
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
-            SizedBox(height: 24),
+            SizedBox(height: 36),
             DisplayGroups(
               title: "Owned Groups",
               isLoading: _profileController.isLoadingGroups,
@@ -59,9 +58,9 @@ class ManagedGroupsScreen extends StatelessWidget
               emptyMessage: "You do not own any groups yet.",
               groups: _profileController.ownedGroups,
             ),
-            SizedBox(height: 36),
+            SizedBox(height: 48),
             DisplayGroups(
-              title: "Managed Groups",
+              title: "Groups you manage",
               isLoading: _profileController.isLoadingGroups,
               hasLoaded: _profileController.hasLoadedGroups,
               emptyMessage: "You are not a manager of any group yet.",

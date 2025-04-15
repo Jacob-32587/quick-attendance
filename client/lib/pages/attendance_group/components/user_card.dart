@@ -66,7 +66,10 @@ class UserCard extends StatelessWidget {
                     ),
                     child: Text(
                       user.userType.value!.value,
-                      style: const TextStyle(fontSize: 10, color: Colors.white),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                   ),
               ],
@@ -76,7 +79,7 @@ class UserCard extends StatelessWidget {
               "${user.username.value} ${user.uniqueId.value != null ? "(${user.uniqueId.value ?? ""})" : ""}",
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600]!.withAlpha(200),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],

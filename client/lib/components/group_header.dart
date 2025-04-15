@@ -15,6 +15,9 @@ class ListHeader extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    if (title.isEmpty && children.isEmpty) {
+      return SizedBox.shrink();
+    }
     return Row(
       children: [
         if (isLoading == null)

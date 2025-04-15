@@ -357,9 +357,14 @@ class QrAttendanceView extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        PrimaryButton(
-                          text: "Disconnect",
-                          onPressed: _controller.leaveAttendanceSession,
+                        Obx(
+                          () => PrimaryButton(
+                            text:
+                                _controller.isConnectedToSession
+                                    ? "Disconnect"
+                                    : "Dismiss",
+                            onPressed: _controller.leaveAttendanceSession,
+                          ),
                         ),
                       ],
                     ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:quick_attendance/components/shimmer_skeletons/skeleton_shimmer.dart';
 import 'package:quick_attendance/controllers/auth_controller.dart';
 import 'package:quick_attendance/controllers/history_controller.dart';
 import 'package:quick_attendance/controllers/profile_controller.dart';
@@ -27,18 +28,42 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Obx(
-                () => Text(
-                  "Hello, ${profileController.firstName}",
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 2,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    "Hello,",
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  SkeletonShimmer(
+                    isLoading: profileController.isFetchingProfile,
+                    skeletonWidth: 200,
+                    skeletonHeight: 32,
+                    widget: Obx(
+                      () => Text(
+                        profileController.firstName,
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 4),
               Text(
                 "Welcome back! Here's what's happening right now.",
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 36),
 
               // Give HistoryScreen a defined height
               SizedBox(
