@@ -236,6 +236,9 @@ class GroupAttendanceSessionScreen extends StatelessWidget {
                 ),
                 Obx(() {
                   final activeSessionId = _controller.activeSessionId;
+                  if (_controller.isOwnerOrManager == false) {
+                    return SizedBox.shrink();
+                  }
                   if (activeSessionId == null) {
                     return FlatButton(
                       onPressed: _controller.startAttendance,
