@@ -1,10 +1,9 @@
 # Description
-Simple app built to allow group management and attendace taking.
-This was created for software Engineering class at the University of
-Toledo. Many of the choices made here were done to ensure the project
-could be completed within a semester with only 2 people.
+A simple app designed for group management and attendance tracking.  
+This project was created for a Software Engineering class at the University of Toledo.
+Many of the design choices were made to ensure the project could be completed within a 
+single semester by a two-person team.
 
 # Technologies
-The back-end is built on Hono JS and Deno which allowed for quick
-development time and iteration. The front-end is built on Flutter,
-this enabled easy cross-platform mobile development.
+The back end is built with Hono.js and Deno, enabling quick development and iteration.  
+The front end is built with Flutter, allowing for easy cross-platform mobile development.
